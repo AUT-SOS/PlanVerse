@@ -1,8 +1,8 @@
 package middlewares
 
 import (
-	"PlanVerse/Tar/messages"
-	"PlanVerse/Tar/models"
+	"PlanVerse/messages"
+	"PlanVerse/models"
 	"github.com/golang-jwt/jwt"
 	"github.com/labstack/echo/v4"
 	"net/http"

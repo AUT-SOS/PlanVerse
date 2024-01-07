@@ -1,8 +1,8 @@
 package helpers
 
 import (
-	"PlanVerse/Tar/configs"
-	"PlanVerse/Tar/models"
+	"PlanVerse/configs"
+	"PlanVerse/models"
 	"errors"
 	"fmt"
 	"github.com/golang-jwt/jwt"

@@ -1,7 +1,7 @@
 package configs
 
 import (
-	"PlanVerse/Tar/models"
+	"PlanVerse/models"
 	"fmt"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"

@@ -1,11 +1,11 @@
 package controllers
 
 import (
-	"PlanVerse/Tar/configs"
-	"PlanVerse/Tar/helpers"
-	"PlanVerse/Tar/messages"
-	"PlanVerse/Tar/models"
-	"PlanVerse/Tar/services"
+	"PlanVerse/configs"
+	"PlanVerse/helpers"
+	"PlanVerse/messages"
+	"PlanVerse/models"
+	"PlanVerse/services"
 	"fmt"
 	"github.com/golang-jwt/jwt"
 	"github.com/labstack/echo/v4"
