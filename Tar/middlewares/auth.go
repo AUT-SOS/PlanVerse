@@ -21,10 +21,8 @@ func AuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 		token, err := jwt.ParseWithClaims(tokenString, &models.Claims{}, func(token *jwt.Token) (interface{}, error) {
 			return os.Getenv("JWTSecret"), nil
 		})
-		if err != nil {
-			return ctx.JSON(http.StatusUnauthorized, messages.Unauthorized)
-		}
-		if !token.Valid {
+		if err != nil || !token.Valid {
+			ctx.Request().Header.Del("Authorization")
 			return ctx.JSON(http.StatusUnauthorized, messages.Unauthorized)
 		}
 		claims, _ := token.Claims.(*models.Claims)

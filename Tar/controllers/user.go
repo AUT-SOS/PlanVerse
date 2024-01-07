@@ -30,11 +30,9 @@ func RegisterHandler(ctx echo.Context) error {
 		return ctx.JSON(http.StatusInternalServerError, messages.FailedToCreateCode)
 	}
 	newUser := models.User{
-		Username:  req.Username,
-		Password:  string(hashedPassword),
-		Email:     req.Email,
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
+		Username: req.Username,
+		Password: string(hashedPassword),
+		Email:    req.Email,
 	}
 	var users []models.User
 	result := configs.DB.Find(&users)
@@ -57,6 +55,21 @@ func RegisterHandler(ctx echo.Context) error {
 	if err != nil {
 		return ctx.JSON(http.StatusInternalServerError, messages.FailedToSendEmail)
 	}
+	accessToken, err := helpers.GenerateToken(int(newUser.ID), time.Hour)
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, messages.FailedToCreateAccessToken)
+	}
+	refreshToken, err := helpers.GenerateToken(int(newUser.ID), time.Hour*24*7)
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, messages.FailedToCreateRefreshToken)
+	}
+	ctx.Response().Header().Set("Authorization", accessToken)
+	cookie := &http.Cookie{
+		Name:  "refresh_token",
+		Value: refreshToken,
+		Path:  "/refresh",
+	}
+	ctx.SetCookie(cookie)
 	return ctx.JSON(http.StatusOK, messages.SentEmailSuccessfully)
 }
 
@@ -76,21 +89,6 @@ func VerifyHandler(ctx echo.Context) error {
 		return ctx.JSON(http.StatusBadRequest, messages.WrongOTP)
 	}
 	configs.Redis.Del(configs.Ctx, strconv.Itoa(userID))
-	accessToken, err := helpers.GenerateToken(userID, time.Hour)
-	if err != nil {
-		return ctx.JSON(http.StatusInternalServerError, messages.FailedToCreateAccessToken)
-	}
-	refreshToken, err := helpers.GenerateToken(userID, time.Hour*24*7)
-	if err != nil {
-		return ctx.JSON(http.StatusInternalServerError, messages.FailedToCreateRefreshToken)
-	}
-	ctx.Response().Header().Set("Authorization", accessToken)
-	cookie := &http.Cookie{
-		Name:  "refresh_token",
-		Value: refreshToken,
-		Path:  "/refresh",
-	}
-	ctx.SetCookie(cookie)
 	return ctx.JSON(http.StatusOK, messages.RegisteredSuccessfully)
 }
 
