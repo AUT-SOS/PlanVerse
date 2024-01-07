@@ -38,39 +38,18 @@ func GenerateRandomCode() (string, error) {
 	return otp, nil
 }
 
-func GenerateTokens(username string, userID uint) (string, string, error) {
-
-	// ACCESS
-	accessClaims := models.Claims{
-		UserID:   userID,
-		Username: username,
+func GenerateToken(userID int, duration time.Duration) (string, error) {
+	claims := models.Claims{
+		UserID: userID,
 		StandardClaims: jwt.StandardClaims{
-			ExpiresAt: time.Now().Add(time.Hour * 24).Unix(),
+			ExpiresAt: time.Now().Add(duration).Unix(),
 		},
 	}
-
-	accessToken := jwt.NewWithClaims(jwt.SigningMethodHS256, accessClaims)
-	accessSignedToken, err := accessToken.SignedString(os.Getenv("JWTSecret"))
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	signedToken, err := token.SignedString(os.Getenv("JWTSecret"))
 	if err != nil {
-		log.Println("(GenerateAccessToken) Error :", err)
-		return "", "", err
+		log.Println("(GenerateToken) Error :", err)
+		return "", err
 	}
-
-	// REFRESH
-	refreshClaims := models.Claims{
-		UserID:   userID,
-		Username: username,
-		StandardClaims: jwt.StandardClaims{
-			ExpiresAt: time.Now().Add(time.Hour * 24 * 7).Unix(),
-		},
-	}
-
-	refreshToken := jwt.NewWithClaims(jwt.SigningMethodHS256, refreshClaims)
-	refreshSignedToken, err := refreshToken.SignedString(os.Getenv("JWTSecret"))
-	if err != nil {
-		log.Println("(GenerateRefreshToken) Error :", err)
-		return "", "", err
-	}
-
-	return accessSignedToken, refreshSignedToken, nil
+	return signedToken, nil
 }

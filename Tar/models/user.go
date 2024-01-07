@@ -13,7 +13,6 @@ type User struct {
 	ProfilePic     string    `gorm:"not null"`
 	CreatedAt      time.Time `gorm:"not null"`
 	UpdatedAt      time.Time `gorm:"not null"`
-	DeletedAt      time.Time `gorm:"not null"`
 	MemberProjects []Project `gorm:"many2many:projects_members"`
 	AdminProjects  []Project `gorm:"many2many:projects_admins;"`
 }
@@ -24,13 +23,16 @@ type RegisterRequest struct {
 	Email    string `json:"email"`
 }
 
+type VerifyRequest struct {
+	OTP string `json:"otp"`
+}
+
 type LoginRequest struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
 }
 
 type Claims struct {
-	UserID   uint   `json:"user_id"`
-	Username string `json:"username"`
+	UserID int `json:"user_id"`
 	jwt.StandardClaims
 }
