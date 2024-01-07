@@ -95,13 +95,13 @@ func VerifyHandler(ctx echo.Context) error {
 func RefreshHandler(ctx echo.Context) error {
 	cookie, err := ctx.Cookie("refresh_token")
 	if err != nil {
-		return ctx.JSON(http.StatusBadRequest, messages.RefreshTokenExpired)
+		return ctx.JSON(http.StatusUnauthorized, messages.RefreshTokenExpired)
 	}
 	refreshToken, err := jwt.ParseWithClaims(cookie.Value, &models.Claims{}, func(token *jwt.Token) (interface{}, error) {
 		return []byte(os.Getenv("JWTSecret")), nil
 	})
 	if err != nil {
-		return ctx.JSON(http.StatusBadRequest, messages.InvalidRefreshToken)
+		return ctx.JSON(http.StatusUnauthorized, messages.InvalidRefreshToken)
 	}
 	if !refreshToken.Valid {
 		deleteCookie := &http.Cookie{
@@ -111,7 +111,7 @@ func RefreshHandler(ctx echo.Context) error {
 			Expires: time.Unix(0, 0),
 		}
 		ctx.SetCookie(deleteCookie)
-		return ctx.JSON(http.StatusBadRequest, messages.InvalidRefreshToken)
+		return ctx.JSON(http.StatusUnauthorized, messages.InvalidRefreshToken)
 	}
 	claims, _ := refreshToken.Claims.(*models.Claims)
 	accessToken, err := helpers.GenerateToken(claims.UserID, time.Hour)
@@ -120,4 +120,35 @@ func RefreshHandler(ctx echo.Context) error {
 	}
 	ctx.Response().Header().Set("Authorization", accessToken)
 	return ctx.JSON(http.StatusOK, messages.NewAccessToken)
+}
+
+func LoginHandler(ctx echo.Context) error {
+	req := new(models.LoginRequest)
+	if err := ctx.Bind(req); err != nil {
+		return ctx.JSON(http.StatusBadRequest, messages.InvalidRequestBody)
+	}
+	var user models.User
+	result := configs.DB.Where("user_name = ?", req.Username).First(&user)
+	if result.Error != nil {
+		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
+	}
+	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password)); err != nil {
+		return ctx.JSON(http.StatusUnauthorized, messages.UsernameOrPasswordIncorrect)
+	}
+	accessToken, err := helpers.GenerateToken(int(user.ID), time.Hour)
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, messages.FailedToCreateAccessToken)
+	}
+	refreshToken, err := helpers.GenerateToken(int(user.ID), time.Hour*24*7)
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, messages.FailedToCreateRefreshToken)
+	}
+	ctx.Response().Header().Set("Authorization", accessToken)
+	cookie := &http.Cookie{
+		Name:  "refresh_token",
+		Value: refreshToken,
+		Path:  "/refresh",
+	}
+	ctx.SetCookie(cookie)
+	return ctx.JSON(http.StatusOK, messages.LoggedInSuccessfully)
 }
