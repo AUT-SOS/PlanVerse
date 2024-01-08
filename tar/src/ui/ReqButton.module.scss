@@ -1,0 +1,10 @@
+.ButtonWrapper {
+      background-color: var(--color-link);
+      border-radius: 10px;
+      cursor: pointer;
+      &.isPending {
+            background-color: rgba(var(--color-link-rgb), 0.5);
+            pointer-events: none;
+            
+      }
+}
