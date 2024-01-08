@@ -1,10 +1,21 @@
 .ButtonWrapper {
-      background-color: var(--color-link);
-      border-radius: 10px;
-      cursor: pointer;
-      &.isPending {
-            background-color: rgba(var(--color-link-rgb), 0.5);
-            pointer-events: none;
-            
-      }
+  border: 1px solid var(--color-button);
+  background-color: var(--color-button);
+  border-radius: 50px;
+  width: 100%;
+  height: auto;
+  padding: 8px;
+
+  cursor: pointer;
+  &.isPending {
+    pointer-events: none;
+  }
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: background-color 250ms ease-in-out;
+  &:hover {
+    background-color: transparent;
+    color: var(--color-button);
+  }
 }

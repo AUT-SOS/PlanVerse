@@ -1,0 +1,32 @@
+.text0 {
+  font-size :40px;
+  font-weight: 600;
+}
+
+.text1 {
+  font-size: xx-large;
+  font-weight: 600;
+}
+
+.text2 {
+  font-size: large;
+  font-weight: 400;
+}
+
+.text3 {
+  font-size: medium;
+  font-weight: normal;
+}
+
+.text4 {
+  font-size: small;
+  font-weight: normal;
+}
+
+.text0,
+.text1,
+.text2,
+.text3,
+.text4 {
+  color: var(--color-neutrals-n-00);
+}

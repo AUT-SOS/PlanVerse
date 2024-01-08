@@ -1,9 +1,10 @@
-*{
+@import url("https://fonts.googleapis.com/css?family=Montserrat:400,800");
+* {
   box-sizing: border-box;
+  font-family: 'Montserrat', sans-serif;
 }
 
 :root {
-  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
 

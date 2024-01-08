@@ -1,0 +1,40 @@
+.authWrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #f3e0e2;
+  width: 100vw;
+  height: 100vh;
+}
+
+.authContainer {
+  position: relative;
+  display: flex;
+  width: 50vw;
+  height: 60vh;
+  background-color: var(--color-neutrals-n-00);
+  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.25), 0 10px 10px rgba(0, 0, 0, 0.22);
+
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.coverWrapper {
+  background: linear-gradient(to right, #ff4b2b, #ff416c);
+  background-size: cover;
+  height: 100%;
+  width: 50%;
+  transition: transform 250ms ease-in-out;
+  transform: translate(0);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  padding: 24px;
+  position: absolute;
+
+  &.isRight {
+    transform: translateX(100%);
+  }
+}
