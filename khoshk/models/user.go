@@ -7,7 +7,7 @@ import (
 
 type User struct {
 	gorm.Model
-	Username       string    `gorm:"unique;not null"`
+	Username       string    `gorm:"not null"`
 	Password       string    `gorm:"not null"`
 	Email          string    `gorm:"unique;not null"`
 	ProfilePic     string    `gorm:"not null"`
@@ -26,7 +26,7 @@ type VerifyRequest struct {
 }
 
 type LoginRequest struct {
-	Username string `json:"username"`
+	Email    string `json:"email"`
 	Password string `json:"password"`
 }
 

@@ -22,7 +22,7 @@ func GenerateRandomCode() (string, error) {
 		otp = fmt.Sprint(otp + randomDigit)
 	}
 	var users []models.User
-	result := configs.DB.Find(&users)
+	result := configs.DB.Select("id").Find(&users)
 	if result.Error != nil {
 		return "", result.Error
 	}

@@ -35,14 +35,12 @@ func RegisterHandler(ctx echo.Context) error {
 		Email:    req.Email,
 	}
 	var users []models.User
-	result := configs.DB.Find(&users)
+	result := configs.DB.Select("email").Find(&users)
 	if result.Error != nil {
 		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
 	for _, otherUser := range users {
-		if otherUser.Username == newUser.Username {
-			return ctx.JSON(http.StatusNotAcceptable, messages.DuplicateUsername)
-		} else if otherUser.Email == newUser.Email {
+		if otherUser.Email == newUser.Email {
 			return ctx.JSON(http.StatusNotAcceptable, messages.DuplicateEmail)
 		}
 	}
@@ -51,16 +49,14 @@ func RegisterHandler(ctx echo.Context) error {
 		return ctx.JSON(http.StatusInternalServerError, messages.FailedToCreateUser)
 	}
 	configs.Redis.Set(configs.Ctx, strconv.Itoa(int(newUser.ID)), otp, time.Minute*5)
-	err = services.SendMail("PlanVerse Verification", fmt.Sprintf("%s is your PlanVerse verification code", otp), []string{newUser.Email})
-	if err != nil {
-		return ctx.JSON(http.StatusInternalServerError, messages.FailedToSendEmail)
-	}
 	accessToken, err := helpers.GenerateToken(int(newUser.ID), time.Hour)
 	if err != nil {
+		configs.DB.Delete(&models.User{}, newUser.ID)
 		return ctx.JSON(http.StatusInternalServerError, messages.FailedToCreateAccessToken)
 	}
 	refreshToken, err := helpers.GenerateToken(int(newUser.ID), time.Hour*24*7)
 	if err != nil {
+		configs.DB.Delete(&models.User{}, newUser.ID)
 		return ctx.JSON(http.StatusInternalServerError, messages.FailedToCreateRefreshToken)
 	}
 	ctx.Response().Header().Set("Authorization", accessToken)
@@ -70,6 +66,11 @@ func RegisterHandler(ctx echo.Context) error {
 		Path:  "/refresh",
 	}
 	ctx.SetCookie(cookie)
+	err = services.SendMail("PlanVerse Verification", fmt.Sprintf("Verification code: %s", otp), []string{newUser.Email})
+	if err != nil {
+		configs.DB.Delete(&models.User{}, newUser.ID)
+		return ctx.JSON(http.StatusInternalServerError, messages.FailedToSendEmail)
+	}
 	return ctx.JSON(http.StatusOK, messages.SentEmailSuccessfully)
 }
 
@@ -128,12 +129,12 @@ func LoginHandler(ctx echo.Context) error {
 		return ctx.JSON(http.StatusBadRequest, messages.InvalidRequestBody)
 	}
 	var user models.User
-	result := configs.DB.Where("user_name = ?", req.Username).First(&user)
+	result := configs.DB.Select("id").Where("email = ?", req.Email).Find(&user)
 	if result.Error != nil {
 		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password)); err != nil {
-		return ctx.JSON(http.StatusUnauthorized, messages.UsernameOrPasswordIncorrect)
+		return ctx.JSON(http.StatusUnauthorized, messages.EmailOrPasswordIncorrect)
 	}
 	accessToken, err := helpers.GenerateToken(int(user.ID), time.Hour)
 	if err != nil {
