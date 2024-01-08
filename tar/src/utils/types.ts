@@ -1,3 +1,20 @@
+export enum AuthState  {
+  Authenticated,
+  Unauthenticated,
+  EmailValidate,
+  Pending,
+}
+
+export type LoginForm = {
+  email?: string;
+  password?: string;
+};
+
+export type SignupForm = {
+  email?: string;
+  password?: string;
+  username?: string;
+};
 
 export type User = {
   id: number;

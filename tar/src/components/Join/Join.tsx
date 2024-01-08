@@ -3,11 +3,14 @@ import { useParams } from "react-router-dom";
 import { ReqButton } from "../../ui/ReqButton";
 import classNames from "classnames";
 import { Members } from "../../ui/Icons/Members";
-import "./Join.scss";
+import "./Join.module.scss";
 import { Project } from "../../utils/types";
 import { project1 } from "../../utils/testCase";
 import { HollowButton } from "../../ui/HollowButton";
 import { Title } from "../../ui/Title";
+import { Background } from "../../ui/BackGround";
+import styles from "./Join.module.scss";
+import strings from "../../utils/text";
 
 export const Join: React.FC = (props) => {
   const params = useParams();
@@ -15,33 +18,33 @@ export const Join: React.FC = (props) => {
 
   return (
     <>
-      <Title text="PlanVerse" href="/"/>
-      <div className={classNames("JoinWrapper")}>
-        <div className={classNames("JoinCard")}>
-          <img className="GroupIMG" src={data.background} alt="" />
-          <div className="GroupName">{data.name}</div>
-          <div className="GroupMemberWrapper">
-            <div className="GroupMembers">
+      <Title text={strings.palverse} href="/" />
+      <Background className={styles.JoinWrapper}>
+        <div className={classNames(styles.JoinCard)}>
+          <img className={styles.GroupIMG} src={data.background} alt="" />
+          <div className={styles.GroupName}>{data.name}</div>
+          <div className={styles.GroupMemberWrapper}>
+            <div className={styles.GroupMembers}>
               {data.members.slice(0, 3).map((item) => {
                 return (
                   <img
                     key={item.id}
                     title={item.username}
                     src={item.profile_pic}
-                    className="MemberPrev"
+                    className={styles.MemberPrev}
                   />
                 );
               })}
             </div>
             <Members size={22} color={"var(--color-neutrals-n-500)"} />
-            <p className="MembersCount">{data.members.length}</p>
+            <p className={styles.MembersCount}>{data.members.length}</p>
           </div>
-          <div className="ButtonWrapper">
-            <HollowButton text="Cancel" width={40} height={20} />
-            <ReqButton text="Join Project" width={40} height={20} />
+          <div className={styles.ButtonWrapper}>
+            <HollowButton text={strings.cancel} width={40} height={20} />
+            <ReqButton text={strings.join.joinProject} width={40} height={20} />
           </div>
         </div>
-      </div>
+      </Background>
     </>
   );
 };
