@@ -1,26 +1,26 @@
 import { PayloadAction, createSlice } from "@reduxjs/toolkit";
 import { AuthState, LoginForm, SignupForm } from "../../utils/types";
 
-type authSliceType = {
+type AuthSliceType = {
   authState: AuthState;
+  exInfo?: any;
 };
 
-const initialState: authSliceType = {
-  authState: AuthState.Unauthenticated,
+const initialState: AuthSliceType = {
+  authState: AuthState.Unauthenticated, 
 };
 
 const AuthSlice = createSlice({
   name: "Auth",
   initialState,
   reducers: {
-    changeAuthState(state, action: PayloadAction<AuthState>) {
-      state.authState = action.payload;
+    changeAuthState(state, action: PayloadAction<AuthSliceType>) {
+      state.authState = action.payload.authState;
+      state.exInfo = action.payload.exInfo;
     },
     login(state, action: PayloadAction<LoginForm>) {
-      state.authState = AuthState.Pending;
     },
     signup(state, action: PayloadAction<SignupForm>) {
-      state.authState = AuthState.Pending;
     },
     
   },

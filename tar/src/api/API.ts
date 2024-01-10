@@ -8,4 +8,11 @@ export const API = {
       password,
     });
   },
+  signup(email: string, password: string, username: string){
+    return ajax.post(END_POINT, {
+      email,
+      password,
+      username
+    })
+  }
 };

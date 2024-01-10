@@ -9,18 +9,57 @@ import {
   PasswordInputBar,
 } from "../../../ui/InputBar";
 import { ReqButton } from "../../../ui/ReqButton";
-import { AuthState, LoginForm } from "../../../utils/types";
+import {
+  AuthState,
+  LoginForm,
+  RequestState,
+  RequestTypes,
+} from "../../../utils/types";
 import { useDispatch, useSelector } from "react-redux";
 import { AuthActions } from "../../../redux/slices/auth.slice";
 import { RootState } from "../../../redux/store";
+import { useShake } from "../../../utils/hooks";
+import { a } from "@react-spring/web";
+import { validateEmail, validatePassword } from "../../../utils/regex";
+import { ReqActions } from "../../../redux/slices/req.slice";
 
 export const Login: React.FC = () => {
-  const [loginForm, setLoginForm] = useState<LoginForm>({email: "", password: ""});
+  const [loginForm, setLoginForm] = useState<LoginForm>({
+    email: "",
+    password: "",
+  });
   const dispatch = useDispatch();
+  const shakeAnimation = useShake(0, 2);
 
-  const authStatus = useSelector((state: RootState) => state.auth.authState);
+  const { isPending } = useSelector((state: RootState) => ({
+    isPending:
+      state.req.requestState === RequestState.Pending &&
+      state.req.reqType === RequestTypes.Login,
+  }));
 
   const handleLogin = useCallback(() => {
+    if (
+      !loginForm.email ||
+      !loginForm.password ||
+      !validateEmail(loginForm.email) ||
+      !validatePassword(loginForm.password)
+    ) {
+      shakeAnimation.api.start({
+        from: {
+          x: 1.5,
+        },
+        to: {
+          x: 0,
+        },
+      });
+      return;
+    }
+    dispatch(
+      ReqActions.setState({
+        requestState: RequestState.Pending,
+        reqType: RequestTypes.Login,
+      })
+    );
     dispatch(AuthActions.login(loginForm));
   }, [loginForm]);
   return (
@@ -45,12 +84,21 @@ export const Login: React.FC = () => {
           }
         />
       </div>
-      <ReqButton
-        isPending={authStatus === AuthState.Pending}
-        text={strings.auth.login}
-        style={{ fontSize: "medium", width: "40%" }}
-        onClick={handleLogin}
-      />
+      <a.div
+        style={{
+          x: shakeAnimation.x,
+          width: "100%",
+          display: "flex",
+          justifyContent: "center",
+        }}
+      >
+        <ReqButton
+          isPending={isPending}
+          text={strings.auth.login}
+          style={{ fontSize: "medium", width: "40%" }}
+          onClick={handleLogin}
+        />
+      </a.div>
       <Text3
         text={strings.auth.forgotPass}
         style={{ color: "var(--color-button)", cursor: "pointer" }}

@@ -2,7 +2,18 @@ export enum AuthState  {
   Authenticated,
   Unauthenticated,
   EmailValidate,
+}
+
+export enum RequestState {
+  None,
   Pending,
+  Error,
+}
+
+export enum RequestTypes {
+  Login,
+  Signup,
+  EmailValidate,
 }
 
 export type LoginForm = {

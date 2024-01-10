@@ -1,0 +1,22 @@
+.otpContentWrapper{
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-evenly;
+}
+
+.otpImg{
+      width: 30%;
+      height: 30%;
+      object-fit: contain;
+}
+
+.otpInputWrapper{
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 3%;
+}

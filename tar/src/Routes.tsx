@@ -15,8 +15,6 @@ export const RoutesFC: React.FC<Props> = (props) => {
         <Route path="/join/:id" element={<Join />} />
         <Route path="/login" element={<Auth />} />
         <Route path="/signup" element={<Auth />} />
-
-
       </Routes>
       {props.children}  
     </Router>

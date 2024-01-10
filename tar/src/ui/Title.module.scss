@@ -1,10 +1,12 @@
 .Title {
-  color: var(--color-neutrals-n-00);
   position: absolute;
   top: 30px;
   left: 30px;
   font-size: 40px;
-  font-weight: 500;
+  font-weight: bolder;
   text-decoration: none;
   margin: 0;
+  background: var(--gradiant);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
