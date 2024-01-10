@@ -8,16 +8,47 @@ import { Text0, Text1, Text2, Text3 } from "../../ui/Text";
 import { Login } from "./Login/Login";
 import { DOC_ADDRESS } from "../../utils/consts";
 import { Signup } from "./Signup/Signup";
+import { useSelector } from "react-redux";
+import { RootState } from "../../redux/store";
+import { AuthState } from "../../utils/types";
+import { a, useTransition } from "@react-spring/web";
+import { EmailValidation } from "./Signup/EmailValidation";
 
 export const Auth: React.FC = () => {
+  const authState = useSelector((state: RootState) => state.auth.authState);
+  const transition = useTransition(authState, {
+    from: {
+      y: 200,
+      opacity: "0",
+    },
+    enter: {
+      y: 0,
+      opacity: "1",
+    },
+    leave: {
+      y: -200,
+      opacity: "0",
+    },
+  });
+
   return (
-    <div className={styles.authWrapper}>
-      <div className={styles.authContainer}>
-        <AuthCover />
-        <Login/>
-        <Signup/>
-      </div>
-    </div>
+    <Background className={styles.authWrapper}>
+      {transition((style, state) =>
+        state === AuthState.Unauthenticated ? (
+          <a.div style={style} className={styles.authContainer}>
+            <AuthCover />
+            <Login />
+            <Signup />
+          </a.div>
+        ) : (
+          state === AuthState.EmailValidate && (
+            <a.div style={style} className={styles.otpContainer}>
+              <EmailValidation/>
+            </a.div>
+          )
+        )
+      )}
+    </Background>
   );
 };
 
@@ -34,18 +65,28 @@ const AuthCover: React.FC = (props) => {
           <Text0 text={strings.auth.loginWelcome} />
           <Text3
             text={strings.auth.signupL}
-            style={{ cursor: "pointer", color: "var(--color-link-light)", textDecoration: "underline"}}
+            style={{
+              cursor: "pointer",
+              color: "var(--color-link-light)",
+              textDecoration: "underline",
+            }}
             onClick={() => setIsLogin((prev) => !prev)}
           />
         </>
       ) : (
         <>
           <Text1 text={strings.auth.signupWelcome} />
-          <Text2 text={strings.info} style={{textAlign: "center"}} />
-          <a href={DOC_ADDRESS} target="_blank">{strings.more}</a>
+          <Text2 text={strings.info} style={{ textAlign: "center" }} />
+          <a href={DOC_ADDRESS} target="_blank">
+            {strings.more}
+          </a>
           <Text3
             text={strings.auth.loginL}
-            style={{ cursor: "pointer", color: "var(--color-link-light)", textDecoration: "underline"}}
+            style={{
+              cursor: "pointer",
+              color: "var(--color-link-light)",
+              textDecoration: "underline",
+            }}
             onClick={() => setIsLogin((prev) => !prev)}
           />
         </>

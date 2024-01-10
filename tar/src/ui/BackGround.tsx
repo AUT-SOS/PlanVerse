@@ -6,7 +6,7 @@ type Props = PropsWithChildren & React.HTMLAttributes<HTMLDivElement>
 
 
 export const Background : React.FC<Props> = (props) => {
-      return <div className={classNames(props.className, styles.bgWrapper)}>
+      return <div {...props} className={classNames(props.className, styles.bgWrapper)} >
             {props.children}
       </div>
 }

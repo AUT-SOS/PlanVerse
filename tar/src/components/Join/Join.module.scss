@@ -6,18 +6,29 @@
 
 .JoinCard {
   width: 50%;
-  height: 50%;
+  height: auto;
   background-color: var(--color-neutrals-n-10);
-  box-shadow: 1px 1px 20px 1px rgba(0, 0, 0, 0.2);
+  box-shadow: var(--shadow);
   border-radius: 15px;
   max-width: 350px;
   max-height: 400px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: space-between;
   padding: 12px;
   padding-top: 60px;
+  position: relative;
+  overflow: hidden;
+  z-index: 0;
+}
+
+.JoinCard::after{
+  content: "";
+  top: 0;
+  left: 0;
+  width: 100%;
+  background: var(--gradiant);
+  height: 35%;
+  position: absolute;
+  z-index: 1;
+
 }
 
 .GroupMemberWrapper {
@@ -28,6 +39,7 @@
 
 .GroupIMG {
   border-radius: 50%;
+  border: 5px solid var(--color-neutrals-n-10);
 }
 
 .GroupName {
@@ -52,4 +64,15 @@
   width: 100%;
   display: flex;
   justify-content: space-between;
+}
+
+.contentWrapper{
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  z-index: 2;
+  position: inherit;
 }

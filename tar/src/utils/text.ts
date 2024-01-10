@@ -7,6 +7,9 @@ const strings = {
   auth: {
     login: "Login",
     signup: "Signup",
+    password_lim: "Password should be minimum 8 characters containing Capital and Small letters",
+    otp_info: "An email containing validation code was sent to your email",
+    username_lim: "Username should be minimum 3 characters",
     loginWelcome: "Welcome Back!",
     signupWelcome: "Welcome To PlanVerse",
     signupL: "Dont have an account? Signup.",

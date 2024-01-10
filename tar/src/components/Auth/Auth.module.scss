@@ -2,9 +2,6 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  background: #f3e0e2;
-  width: 100vw;
-  height: 100vh;
 }
 
 .authContainer {
@@ -13,14 +10,30 @@
   width: 50vw;
   height: 60vh;
   background-color: var(--color-neutrals-n-00);
-  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.25), 0 10px 10px rgba(0, 0, 0, 0.22);
-
+  box-shadow: var(--shadow);
   border-radius: 10px;
   overflow: hidden;
+  min-width: 300px;
+  flex-wrap: wrap;
 }
 
+.otpContainer{
+  position: absolute;
+  display: flex;
+  width: 30vw;
+  height: 50vh;
+  background-color: var(--color-neutrals-n-00);
+  box-shadow: var(--shadow);
+  border-radius: 10px;
+  overflow: hidden;
+  justify-content: center;
+  align-items: center;
+  min-width: 350px;
+}
+
+
 .coverWrapper {
-  background: linear-gradient(to right, #ff4b2b, #ff416c);
+  background: var(--gradiant);
   background-size: cover;
   height: 100%;
   width: 50%;
@@ -33,6 +46,7 @@
   gap: 12px;
   padding: 24px;
   position: absolute;
+  z-index: 3;
 
   &.isRight {
     transform: translateX(100%);
