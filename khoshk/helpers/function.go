@@ -2,6 +2,7 @@ package helpers
 
 import (
 	"PlanVerse/configs"
+	"PlanVerse/messages"
 	"PlanVerse/models"
 	"errors"
 	"fmt"
@@ -10,6 +11,7 @@ import (
 	"math/rand"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -21,18 +23,17 @@ func GenerateRandomCode() (string, error) {
 		randomDigit := strconv.Itoa(random)
 		otp = fmt.Sprint(otp + randomDigit)
 	}
-	var users []models.User
-	result := configs.DB.Select("id").Find(&users)
-	if result.Error != nil {
-		return "", result.Error
+	keys, _, err := configs.Redis.Scan(configs.Ctx, 0, "", 1000).Result()
+	if err != nil {
+		return "", err
 	}
-	for _, u := range users {
-		val, err := configs.Redis.Get(configs.Ctx, strconv.Itoa(int(u.ID))).Result()
-		if err != nil {
-			return "", err
+	for _, key := range keys {
+		val, newErr := configs.Redis.Get(configs.Ctx, key).Result()
+		if newErr != nil {
+			return "", newErr
 		}
 		if val == otp {
-			return "", errors.New("this otp is used")
+			return "", errors.New(strings.ToLower(messages.RepeatedOTP))
 		}
 	}
 	return otp, nil
@@ -46,10 +47,29 @@ func GenerateToken(userID int, duration time.Duration) (string, error) {
 		},
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	signedToken, err := token.SignedString(os.Getenv("JWTSecret"))
+	signedToken, err := token.SignedString([]byte(os.Getenv("JWTSecret")))
 	if err != nil {
 		log.Println("(GenerateToken) Error :", err)
 		return "", err
 	}
 	return signedToken, nil
+}
+
+func CheckDuplicate(email string) error {
+	var users []models.User
+	result := configs.DB.Select([]string{"email", "is_verified"}).Find(&users)
+	if result.Error != nil {
+		return errors.New(strings.ToLower(messages.InternalError))
+	}
+	for _, otherUser := range users {
+		if otherUser.Email == email {
+			if otherUser.IsVerified {
+				return errors.New(strings.ToLower(messages.DuplicateEmail))
+			} else {
+				configs.DB.Raw("delete from users where id = ?", otherUser.ID)
+				break
+			}
+		}
+	}
+	return nil
 }

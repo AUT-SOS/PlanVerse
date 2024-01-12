@@ -11,6 +11,7 @@ type User struct {
 	Password       string    `gorm:"not null"`
 	Email          string    `gorm:"unique;not null"`
 	ProfilePic     string    `gorm:"not null"`
+	IsVerified     bool      `gorm:"not null"`
 	MemberProjects []Project `gorm:"many2many:projects_members"`
 	AdminProjects  []Project `gorm:"many2many:projects_admins;"`
 }

@@ -3,7 +3,6 @@ package services
 import (
 	"fmt"
 	"net/smtp"
-	"os"
 )
 
 type EmailRequest struct {
@@ -17,10 +16,11 @@ type EmailResponse struct {
 }
 
 var (
-	host     = "smtp.gmail.com"
-	port     = "587"
-	from     = "PlanVerse@gmail.com"
-	password = os.Getenv("GmailPassword")
+	host = "smtp.gmail.com"
+	port = "587"
+	from = "PlanVerse@gmail.com"
+	//password = os.Getenv("GmailPassword")
+	password = ""
 )
 
 func SendMail(subject, body string, to []string) error {
