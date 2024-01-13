@@ -18,9 +18,9 @@ type EmailResponse struct {
 var (
 	host = "smtp.gmail.com"
 	port = "587"
-	from = "PlanVerse@gmail.com"
+	from = "planverse.companies@gmail.com"
 	//password = os.Getenv("GmailPassword")
-	password = ""
+	password = "kihhxbbdoinhdwql"
 )
 
 func SendMail(subject, body string, to []string) error {

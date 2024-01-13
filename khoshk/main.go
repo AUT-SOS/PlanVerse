@@ -25,5 +25,6 @@ func main() {
 	server.POST("/verify", controllers.VerifyHandler)
 	server.POST("/refresh", controllers.RefreshHandler)
 	server.POST("/login", controllers.LoginHandler)
+	server.GET("/get-user", controllers.GetUserHandler)
 	log.Fatal(server.Start("localhost:8080"))
 }
