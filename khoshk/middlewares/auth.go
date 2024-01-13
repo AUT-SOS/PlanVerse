@@ -11,7 +11,7 @@ import (
 
 func AuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(ctx echo.Context) error {
-		if ctx.Path() == "/register" || ctx.Path() == "/login" {
+		if ctx.Path() == "/register" || ctx.Path() == "/login" || ctx.Path() == "/refresh" {
 			return next(ctx)
 		}
 		tokenString := ctx.Request().Header.Get("Authorization")
@@ -19,11 +19,11 @@ func AuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 			return ctx.JSON(http.StatusUnauthorized, messages.Unauthorized)
 		}
 		token, err := jwt.ParseWithClaims(tokenString, &models.Claims{}, func(token *jwt.Token) (interface{}, error) {
-			return os.Getenv("JWTSecret"), nil
+			return []byte(os.Getenv("JWTSecret")), nil
 		})
 		if err != nil || !token.Valid {
 			ctx.Request().Header.Del("Authorization")
-			return ctx.JSON(http.StatusUnauthorized, messages.Unauthorized)
+			return ctx.JSON(http.StatusUnauthorized, messages.InvalidAccessToken)
 		}
 		claims, _ := token.Claims.(*models.Claims)
 		ctx.Set("user_id", claims.UserID)
