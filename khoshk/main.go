@@ -4,10 +4,12 @@ import (
 	"PlanVerse/configs"
 	"PlanVerse/controllers"
 	"PlanVerse/middlewares"
-	"github.com/joho/godotenv"
-	"github.com/labstack/echo/v4"
 	"log"
 	"os"
+
+	"github.com/joho/godotenv"
+	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 )
 
 func main() {
@@ -20,6 +22,13 @@ func main() {
 	configs.ConnectToDatabase()
 	configs.ConnectToRedis()
 	server := echo.New()
+	server.Use(middleware.CORSWithConfig(middleware.CORSConfig{
+		AllowOrigins:     []string{"*"},
+		AllowMethods:     []string{"*"},
+		AllowCredentials: true,
+		AllowHeaders:     []string{"*"},
+		ExposeHeaders:    []string{"*"},
+	}))
 	server.Use(middlewares.AuthMiddleware)
 	server.POST("/register", controllers.RegisterHandler)
 	server.POST("/verify", controllers.VerifyHandler)

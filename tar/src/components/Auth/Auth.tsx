@@ -29,8 +29,8 @@ export const Auth: React.FC = () => {
       y: -200,
       opacity: "0",
     },
-  });
-
+  });  
+  
   return (
     <Background className={styles.authWrapper}>
       {transition((style, state) =>

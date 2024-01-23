@@ -7,14 +7,15 @@ import (
 	"PlanVerse/models"
 	"PlanVerse/services"
 	"fmt"
-	"github.com/golang-jwt/jwt"
-	"github.com/labstack/echo/v4"
-	"golang.org/x/crypto/bcrypt"
 	"net/http"
 	"os"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/golang-jwt/jwt"
+	"github.com/labstack/echo/v4"
+	"golang.org/x/crypto/bcrypt"
 )
 
 func RegisterHandler(ctx echo.Context) error {
@@ -60,9 +61,10 @@ func RegisterHandler(ctx echo.Context) error {
 	}
 	ctx.Response().Header().Set("Authorization", accessToken)
 	cookie := &http.Cookie{
-		Name:  "refresh_token",
-		Value: refreshToken,
-		Path:  "/refresh",
+		Name:     "refresh_token",
+		Value:    refreshToken,
+		Path:     "/refresh",
+		HttpOnly: true,
 	}
 	ctx.SetCookie(cookie)
 	err = services.SendMail("PlanVerse Verification", fmt.Sprintf("%s is your PlanVerse verification code", otp), []string{newUser.Email})

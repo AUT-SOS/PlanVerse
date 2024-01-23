@@ -18,7 +18,7 @@ import {
 import { useDispatch, useSelector } from "react-redux";
 import { AuthActions } from "../../../redux/slices/auth.slice";
 import { RootState } from "../../../redux/store";
-import { useShake } from "../../../utils/hooks";
+import { useRequestStates, useShake } from "../../../utils/hooks";
 import { a } from "@react-spring/web";
 import { validateEmail, validatePassword } from "../../../utils/regex";
 import { ReqActions } from "../../../redux/slices/req.slice";
@@ -31,11 +31,8 @@ export const Login: React.FC = () => {
   const dispatch = useDispatch();
   const shakeAnimation = useShake(0, 2);
 
-  const { isPending } = useSelector((state: RootState) => ({
-    isPending:
-      state.req.requestState === RequestState.Pending &&
-      state.req.reqType === RequestTypes.Login,
-  }));
+  const { isPending, errorState } = useRequestStates(RequestTypes.Login);
+
 
   const handleLogin = useCallback(() => {
     if (
@@ -75,6 +72,7 @@ export const Login: React.FC = () => {
           onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
             setLoginForm((prev) => ({ ...prev, email: e.target.value }))
           }
+          error={errorState}
         />
         <PasswordInputBar
           placeholder={strings.auth.enterPass}
@@ -82,6 +80,7 @@ export const Login: React.FC = () => {
           onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
             setLoginForm((prev) => ({ ...prev, password: e.target.value }))
           }
+          error={errorState}
         />
       </div>
       <a.div

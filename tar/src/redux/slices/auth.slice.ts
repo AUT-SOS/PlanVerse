@@ -7,7 +7,7 @@ type AuthSliceType = {
 };
 
 const initialState: AuthSliceType = {
-  authState: AuthState.Unauthenticated, 
+  authState: AuthState.Unauthenticated,
 };
 
 const AuthSlice = createSlice({
@@ -18,11 +18,11 @@ const AuthSlice = createSlice({
       state.authState = action.payload.authState;
       state.exInfo = action.payload.exInfo;
     },
-    login(state, action: PayloadAction<LoginForm>) {
+    login(_state, _action: PayloadAction<LoginForm>) {},
+    signup(state, _action: PayloadAction<SignupForm>) {
+      state.exInfo = { email: _action.payload.email };
     },
-    signup(state, action: PayloadAction<SignupForm>) {
-    },
-    
+    otpVerify(_state, _action: PayloadAction<string>) {},
   },
 });
 
@@ -31,5 +31,6 @@ export const AuthReducers = AuthSlice.reducer;
 
 export type LoginAction = ReturnType<typeof AuthActions.login>;
 export type SignupAction = ReturnType<typeof AuthActions.signup>;
-export type ChangeAuthStateAction = ReturnType<typeof AuthActions.changeAuthState>;
-
+export type ChangeAuthStateAction = ReturnType<
+  typeof AuthActions.changeAuthState
+>;
