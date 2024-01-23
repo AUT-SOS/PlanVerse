@@ -3,11 +3,12 @@ package configs
 import (
 	"PlanVerse/models"
 	"fmt"
-	"gorm.io/driver/postgres"
-	"gorm.io/gorm"
 	"log"
 	"os"
 	"sync"
+
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
 )
 
 var (
@@ -24,7 +25,7 @@ func ConnectToDatabase() {
 				os.Getenv("DATABASE_PORT"),
 				os.Getenv("DATABASE_USERNAME"),
 				os.Getenv("DATABASE_PASSWORD"),
-				os.Getenv("DATABASE_DB"),
+				"postgres",
 			),
 		}), &gorm.Config{})
 

@@ -11,6 +11,7 @@ import {
 } from "../../utils/types";
 import { showFailToastMessage } from "../../main";
 import { ReqActions } from "../slices/req.slice";
+import { toast } from "react-toastify";
 
 export const loginEpic: Epic = (action$, state$) =>
   action$.pipe(
@@ -18,9 +19,15 @@ export const loginEpic: Epic = (action$, state$) =>
     mergeMap((action) => {
       const loginInfo = action.payload as LoginForm;
       return API.login(loginInfo.email!, loginInfo.password!).pipe(
-        mergeMap((res) => {
-          /* const endReq = of(ReqActions.setState({requestState: RequestState.None}))*/
-          return EMPTY;
+        mergeMap(() => {
+          return merge(
+            of(
+              AuthActions.changeAuthState({
+                authState: AuthState.Authenticated,
+              })
+            ),
+            of(ReqActions.setState({ requestState: RequestState.None }))
+          );
         }),
         catchError(() => {
           showFailToastMessage("Invalid username or password");
@@ -45,14 +52,51 @@ export const signupEpic: Epic = (action$, state$) =>
     ofType(AuthActions.signup.type),
     mergeMap((action) => {
       const signupInfo = action.payload as SignupForm;
-      return of(
-        EMPTY
-      ); /*API.signup(action.payload.email!, action.payload.password!, action.payload.username).pipe(
-        mergeMap((res) => EMPTY),
+      return API.signup(
+        signupInfo.email!,
+        signupInfo.password!,
+        signupInfo.username!,
+      ).pipe(
+        mergeMap((res) => {
+          document.cookie = `access_token=${res.responseHeaders.authorization}`
+          
+          return merge(
+            of(
+              AuthActions.changeAuthState({
+                authState: AuthState.EmailValidate,
+              })
+            ),
+            of(ReqActions.setState({ requestState: RequestState.None }))
+          );
+        }),
         catchError(() => {
-          toast.info("HI");
-          return EMPTY;
+          return of(ReqActions.setState({ requestState: RequestState.Error }));
         })
-      );*/
+      );
+    })
+  );
+
+  export const verificationEpic: Epic = (action$, state$) =>
+  action$.pipe(
+    ofType(AuthActions.otpVerify.type),
+    mergeMap((action) => {
+      const otpPayload = action.payload as string;
+      return API.otpVerify(
+        otpPayload,
+      ).pipe(
+        mergeMap(() => {
+          return merge(
+            of(
+              AuthActions.changeAuthState({
+                authState: AuthState.Authenticated,
+              })
+            ),
+            of(ReqActions.setState({ requestState: RequestState.None }))
+          );
+        }),
+        catchError(() => {
+          return of(ReqActions.setState({ requestState: RequestState.Error }));
+        })
+      );
     })
   );

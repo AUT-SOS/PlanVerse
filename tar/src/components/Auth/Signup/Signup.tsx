@@ -13,7 +13,7 @@ import { ReqButton } from "../../../ui/ReqButton";
 import { AuthState, RequestState, RequestTypes, SignupForm } from "../../../utils/types";
 import { useDispatch, useSelector } from "react-redux";
 import { AuthActions } from "../../../redux/slices/auth.slice";
-import { useShake } from "../../../utils/hooks";
+import { useRequestStates, useShake } from "../../../utils/hooks";
 import { a } from "@react-spring/web";
 import {
   validateEmail,
@@ -24,12 +24,10 @@ import { RootState } from "../../../redux/store";
 import { ReqActions } from "../../../redux/slices/req.slice";
 
 export const Signup: React.FC = () => {
-  const [signupForm, setSginupForm] = useState<SignupForm>({});
+  const [signupForm, setSginupForm] = useState<SignupForm>({username: "Shayan", email: "ahmadizadshayan30@gmail.com", password: "K976425j"});
   const shakeAnimation = useShake(0, 2);
   const dispatch = useDispatch();
-  const { isPending } = useSelector((state: RootState) => ({
-    isPending: state.req.requestState === RequestState.Pending && state.req.reqType === RequestTypes.Signup,
-  }));
+  const { isPending, errorState } = useRequestStates(RequestTypes.Signup);
 
   const handleSubmit = () => {
     if (
@@ -69,6 +67,7 @@ export const Signup: React.FC = () => {
           onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
             setSginupForm((prev) => ({ ...prev, username: e.target.value }))
           }
+          error={errorState}
         />
         <EmailInputBar
           placeholder={strings.auth.enterEmail}
@@ -76,6 +75,7 @@ export const Signup: React.FC = () => {
           onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
             setSginupForm((prev) => ({ ...prev, email: e.target.value }))
           }
+          error={errorState}
         />
         <PasswordInputBar
           placeholder={strings.auth.enterPass}
@@ -83,6 +83,7 @@ export const Signup: React.FC = () => {
           onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
             setSginupForm((prev) => ({ ...prev, password: e.target.value }))
           }
+          error={errorState}
         />
       </div>
       <a.div

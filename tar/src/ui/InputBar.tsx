@@ -8,14 +8,18 @@ import {
 } from "../utils/regex";
 import strings from "../utils/text";
 
-type Props = React.HTMLProps<HTMLInputElement>;
+type Props = React.HTMLProps<HTMLInputElement> & {
+  error?: boolean
+};
 
 export const InputBar: React.FC<Props> = (props) => {
   return (
     <input
       type="text"
       {...props}
-      className={classNames(props.className, styles.commonInput)}
+      className={classNames(props.className, styles.commonInput, {
+        [styles.error]: props.error,
+      })}
     />
   );
 };
@@ -31,7 +35,7 @@ export const PasswordInputBar: React.FC<Props> = (props) => {
         styles.commonInput,
         styles.commonInput,
         {
-          [styles.error]: !validatePassword(props.value as string),
+          [styles.error]: props.error || !validatePassword(props.value as string),
         }
       )}
     />
@@ -44,7 +48,7 @@ export const EmailInputBar: React.FC<Props> = (props) => {
       type="text"
       {...props}
       className={classNames(props.className, styles.commonInput, {
-        [styles.error]: !validateEmail(props.value as string),
+        [styles.error]: props.error || !validateEmail(props.value as string),
       })}
       value={props.value}
     />
@@ -58,7 +62,7 @@ export const UsernameInputBar: React.FC<Props> = (props) => {
       title={strings.auth.username_lim}
       {...props}
       className={classNames(props.className, styles.commonInput, {
-        [styles.error]: !validateUsername(props.value as string),
+        [styles.error]: props.error || !validateUsername(props.value as string),
       })}
       value={props.value}
     />
@@ -76,7 +80,9 @@ export const DigitInput = forwardRef<
       ref={ref}
       onChange={props.onChangeInput}
       type="number"
-      className={classNames(props.className, styles.digitInput)}
+      className={classNames(props.className, styles.digitInput, {
+        [styles.error]: props.error
+      })}
       {...props}
     />
   );

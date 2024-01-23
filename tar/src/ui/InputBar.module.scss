@@ -26,6 +26,10 @@
   text-align: center;
   border-radius: 5px;
   font-size: larger;
+
+  &.error {
+    border: 2px solid var(--color-error);
+  }
   
 }
 
