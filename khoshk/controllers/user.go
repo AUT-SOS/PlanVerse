@@ -35,9 +35,6 @@ func RegisterHandler(ctx echo.Context) error {
 	if err != nil {
 		return ctx.JSON(http.StatusInternalServerError, messages.FailedToCreateCode)
 	}
-	go func() {
-		services.SendMail("PlanVerse Verification", fmt.Sprintf("%s is your PlanVerse verification code", otp), []string{req.Email})
-	}()
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 	if err != nil {
 		return ctx.JSON(http.StatusInternalServerError, messages.FailedPasswordHashGeneration)
@@ -51,6 +48,9 @@ func RegisterHandler(ctx echo.Context) error {
 		return ctx.JSON(http.StatusInternalServerError, messages.FailedToCreateUser)
 	}
 	configs.Redis.Set(configs.Ctx, strconv.Itoa(int(newUser.ID)), otp, time.Minute*5)
+	go func() {
+		services.SendMail("PlanVerse Verification", fmt.Sprintf("%s is your PlanVerse verification code", otp), []string{req.Email})
+	}()
 	accessToken, err := helpers.GenerateToken(int(newUser.ID), time.Hour)
 	if err != nil {
 		configs.DB.Unscoped().Where("id = ?", newUser.ID).Delete(&models.User{})
@@ -162,8 +162,30 @@ func LoginHandler(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, res)
 }
 
+func ResendEmailHandler(ctx echo.Context) error {
+	res := new(models.Response)
+	userIDCtx := ctx.Get("user_id")
+	userID := userIDCtx.(int)
+	var user models.User
+	result := configs.DB.Select([]string{"email"}).Where("id = ?", userID).Find(&user)
+	if result.Error != nil {
+		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
+	}
+	otp, err := helpers.GenerateRandomCode()
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, messages.FailedToCreateCode)
+	}
+	configs.Redis.Set(configs.Ctx, strconv.Itoa(userID), otp, time.Minute*5)
+	go func() {
+		services.SendMail("PlanVerse Verification", fmt.Sprintf("%s is your PlanVerse verification code", otp), []string{user.Email})
+	}()
+	res.UserID = int(user.ID)
+	res.Message = messages.RegisteredSuccessfully
+	return ctx.JSON(http.StatusOK, res)
+}
+
 func GetUserHandler(ctx echo.Context) error {
-	userID, err := strconv.Atoi(ctx.Param("user_id"))
+	userID, err := strconv.Atoi(ctx.Param("user-id"))
 	if err != nil {
 		return ctx.JSON(http.StatusBadRequest, messages.WrongUserID)
 	}
