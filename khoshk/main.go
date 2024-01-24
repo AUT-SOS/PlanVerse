@@ -34,6 +34,7 @@ func main() {
 	server.POST("/refresh", controllers.RefreshHandler)
 	server.POST("/login", controllers.LoginHandler)
 	server.POST("/resend-email", controllers.ResendEmailHandler)
-	server.GET("/get-user/user-id", controllers.GetUserHandler)
+	server.GET("/get-user/:user-id", controllers.GetUserHandler)
+	server.GET("/get-my-user", controllers.GetUserIDHandler)
 	log.Fatal(server.Start("localhost:8080"))
 }
