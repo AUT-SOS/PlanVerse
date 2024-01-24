@@ -1,3 +1,5 @@
+@use "sass:map";
+
 :root {
   --color-neutrals-n-100: #b3bac5;
   --color-neutrals-n-100-rgb: 179, 186, 197;
@@ -58,4 +60,40 @@
   --gradiant: linear-gradient(to right, #ff4b2b, #ff416c);
   --dark-gradiant: linear-gradient(to right, #d84025, #d8365b);
   --shadow: 0 14px 28px rgba(0, 0, 0, 0.25), 0 10px 10px rgba(0, 0, 0, 0.22);
+
+  
+  --XSmall: 300px;
+  --Small: 500px;
+  --Medium: 1000px;
+  --Large: 1500px;
+}
+
+$breakpoints: (
+  xsm: 300px,
+  sm: 500px,
+  md: 1000px,
+  lg: 1500px,
+);
+@mixin xsm {
+  @media screen and (min-width: map.get($breakpoints, xsm)) {
+    @content
+  }
+}
+
+@mixin sm {
+  @media screen and (min-width: map.get($breakpoints, sm)) {
+    @content
+  }
+}
+
+@mixin md {
+  @media screen and (min-width: map.get($breakpoints, md)) {
+    @content
+  }
+}
+
+@mixin lg {
+  @media screen and (min-width: map.get($breakpoints, "lg")) {
+    @content
+  }
 }

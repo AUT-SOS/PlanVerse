@@ -64,6 +64,9 @@ export const signupEpic: Epic = (action$, state$) =>
             of(
               AuthActions.changeAuthState({
                 authState: AuthState.EmailValidate,
+                exInfo: {
+                  email: signupInfo.email
+                }
               })
             ),
             of(ReqActions.setState({ requestState: RequestState.None }))

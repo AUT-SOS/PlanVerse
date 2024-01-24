@@ -24,7 +24,7 @@ import { RootState } from "../../../redux/store";
 import { ReqActions } from "../../../redux/slices/req.slice";
 
 export const Signup: React.FC = () => {
-  const [signupForm, setSginupForm] = useState<SignupForm>({username: "Shayan", email: "ahmadizadshayan30@gmail.com", password: "K976425j"});
+  const [signupForm, setSginupForm] = useState<SignupForm>({});
   const shakeAnimation = useShake(0, 2);
   const dispatch = useDispatch();
   const { isPending, errorState } = useRequestStates(RequestTypes.Signup);

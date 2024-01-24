@@ -10,6 +10,7 @@ import { AuthState, RequestState, RequestTypes } from "../../../utils/types";
 import { AuthActions } from "../../../redux/slices/auth.slice";
 import { useRequestStates, useShake } from "../../../utils/hooks";
 import { ReqActions } from "../../../redux/slices/req.slice";
+import { OTPIcon } from "../../../ui/Icons/OTP";
 
 export const EmailValidation: React.FC = (props) => {
   const [otp, setOtp] = useState<string[]>(new Array(5).fill(""));
@@ -47,11 +48,7 @@ export const EmailValidation: React.FC = (props) => {
   }, [otp]);
   return (
     <div className={styles.otpContentWrapper}>
-      <img
-        className={styles.otpImg}
-        src="../../../../public/Email.png"
-        alt=""
-      />
+      <OTPIcon color="var(--color-neutrals-n-500)" size={60}/>
       <Text3
         text={strings.auth.otp_info}
         style={{ color: "var(--color-neutrals-n-500)", textAlign: "center" }}

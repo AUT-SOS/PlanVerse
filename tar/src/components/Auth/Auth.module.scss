@@ -1,3 +1,4 @@
+@use "../../palette.scss";
 .authWrapper {
   display: flex;
   justify-content: center;
@@ -13,13 +14,12 @@
   box-shadow: var(--shadow);
   border-radius: 10px;
   overflow: hidden;
-  min-width: 300px;
+  min-width: 900px;
 }
 
-.otpContainer{
+.otpContainer {
   position: absolute;
   display: flex;
-  width: 30vw;
   height: 50vh;
   background-color: var(--color-neutrals-n-00);
   box-shadow: var(--shadow);
@@ -27,9 +27,14 @@
   overflow: hidden;
   justify-content: center;
   align-items: center;
-  min-width: 350px;
+  min-width: none;
+  width: 90%;
+  padding: 20px;
+  @include palette.sm {
+    min-width: 500px;
+    width: 30vw;
+  }
 }
-
 
 .coverWrapper {
   background: var(--gradiant);
