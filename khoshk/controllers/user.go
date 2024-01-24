@@ -196,3 +196,9 @@ func GetUserHandler(ctx echo.Context) error {
 	}
 	return ctx.JSON(http.StatusOK, user)
 }
+
+func GetUserIDHandler(ctx echo.Context) error {
+	userIDCtx := ctx.Get("user_id")
+	userID := userIDCtx.(int)
+	return ctx.JSON(http.StatusOK, userID)
+}
