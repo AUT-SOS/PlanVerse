@@ -2,6 +2,7 @@ import { useSpring } from "@react-spring/web";
 import { RequestState, RequestTypes } from "./types";
 import { useSelector } from "react-redux";
 import { RootState } from "../redux/store";
+import { useLayoutEffect, useState } from "react";
 
 export const useShake = (shakeXstart: number, shakeXend: number) => {
   const [{ x }, api] = useSpring(() => ({
@@ -28,3 +29,8 @@ export const useRequestStates = (componentType: RequestTypes) => {
   });
   return state
 };
+
+export const useBreakPoints = () => {
+  const breakpoint = useSelector((state : RootState) => state.config.breakpoint);
+  return breakpoint
+}

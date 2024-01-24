@@ -13,6 +13,7 @@ import { RootState } from "../../redux/store";
 import { AuthState } from "../../utils/types";
 import { a, useTransition } from "@react-spring/web";
 import { EmailValidation } from "./Signup/EmailValidation";
+import { useBreakPoints } from "../../utils/hooks";
 
 export const Auth: React.FC = () => {
   const authState = useSelector((state: RootState) => state.auth.authState);
@@ -56,13 +57,16 @@ const AuthCover: React.FC = (props) => {
   const [isLogin, setIsLogin] = useState<boolean>(
     window.location.pathname === "/login"
   );
+  const breakpoint = useBreakPoints();
+  console.log(">>", breakpoint);
+  
   return (
     <div
       className={classNames(styles.coverWrapper, { [styles.isRight]: isLogin })}
     >
       {isLogin ? (
         <>
-          <Text0 text={strings.auth.loginWelcome} />
+          <Text0 style={{ textAlign: "center", color: "var(--color-neutrals-on-primary)" }} text={strings.auth.loginWelcome} />
           <Text3
             text={strings.auth.signupL}
             style={{
@@ -75,8 +79,8 @@ const AuthCover: React.FC = (props) => {
         </>
       ) : (
         <>
-          <Text1 text={strings.auth.signupWelcome} />
-          <Text2 text={strings.info} style={{ textAlign: "center" }} />
+          <Text1 style={{ textAlign: "center", color: "var(--color-neutrals-on-primary)" }}  text={strings.auth.signupWelcome} />
+          <Text2 text={strings.info} style={{ textAlign: "center", color: "var(--color-neutrals-on-primary)" }} />
           <a href={DOC_ADDRESS} target="_blank">
             {strings.more}
           </a>

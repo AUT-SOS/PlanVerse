@@ -71,3 +71,10 @@ export type IconProps = {
   secondColor?: string;
 } & React.SVGProps<SVGSVGElement>;
 export type IconComponent = React.FC<IconProps>;
+
+export enum Breakpoints {
+  XSmall = 300,
+  Small = 500,
+  Medium = 1000,
+  Large = 1500,
+}
