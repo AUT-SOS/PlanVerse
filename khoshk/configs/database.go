@@ -28,11 +28,10 @@ func ConnectToDatabase() {
 				"postgres",
 			),
 		}), &gorm.Config{})
-
 		if err != nil {
 			log.Fatalf("Failed to connect to database: %v", err)
 		}
-
+		//db = db.Exec(fmt.Sprintf("CREATE DATABASE %s;", os.Getenv("DATABASE_DB")))
 		err = db.AutoMigrate(&models.User{})
 		if err != nil {
 			log.Fatalf("Failed to migrate user tabel: %v", err)
@@ -61,7 +60,6 @@ func ConnectToDatabase() {
 		if err != nil {
 			log.Fatalf("Failed to migrate user tabel: %v", err)
 		}
-
 		DB = db
 	})
 

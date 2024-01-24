@@ -35,3 +35,8 @@ type Claims struct {
 	UserID int `json:"user_id"`
 	jwt.StandardClaims
 }
+
+type Response struct {
+	UserID  int    `json:"user_id"`
+	Message string `json:"message"`
+}

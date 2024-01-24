@@ -23,21 +23,7 @@ func RegisterHandler(ctx echo.Context) error {
 	if err := ctx.Bind(req); err != nil {
 		return ctx.JSON(http.StatusBadRequest, messages.InvalidRequestBody)
 	}
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
-	if err != nil {
-		return ctx.JSON(http.StatusInternalServerError, messages.FailedPasswordHashGeneration)
-	}
-	otp, err := helpers.GenerateRandomCode()
-	if err != nil {
-		fmt.Println(err)
-		return ctx.JSON(http.StatusInternalServerError, messages.FailedToCreateCode)
-	}
-	newUser := models.User{
-		Username: req.Username,
-		Password: string(hashedPassword),
-		Email:    req.Email,
-	}
-	err = helpers.CheckDuplicate(newUser.Email)
+	err := helpers.CheckMail(req.Email)
 	if err != nil {
 		if err.Error() == strings.ToLower(messages.InternalError) {
 			return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
@@ -45,18 +31,34 @@ func RegisterHandler(ctx echo.Context) error {
 			return ctx.JSON(http.StatusNotAcceptable, messages.DuplicateEmail)
 		}
 	}
+	otp, err := helpers.GenerateRandomCode()
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, messages.FailedToCreateCode)
+	}
+	go func() {
+		services.SendMail("PlanVerse Verification", fmt.Sprintf("%s is your PlanVerse verification code", otp), []string{req.Email})
+	}()
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, messages.FailedPasswordHashGeneration)
+	}
+	newUser := models.User{
+		Username: req.Username,
+		Password: string(hashedPassword),
+		Email:    req.Email,
+	}
 	if err = configs.DB.Create(&newUser).Error; err != nil {
 		return ctx.JSON(http.StatusInternalServerError, messages.FailedToCreateUser)
 	}
 	configs.Redis.Set(configs.Ctx, strconv.Itoa(int(newUser.ID)), otp, time.Minute*5)
 	accessToken, err := helpers.GenerateToken(int(newUser.ID), time.Hour)
 	if err != nil {
-		configs.DB.Exec("delete from users where id = ?", newUser.ID)
+		configs.DB.Unscoped().Where("id = ?", newUser.ID).Delete(&models.User{})
 		return ctx.JSON(http.StatusInternalServerError, messages.FailedToCreateAccessToken)
 	}
 	refreshToken, err := helpers.GenerateToken(int(newUser.ID), time.Hour*24*7)
 	if err != nil {
-		configs.DB.Exec("delete from users where id = ?", newUser.ID)
+		configs.DB.Unscoped().Where("id = ?", newUser.ID).Delete(&models.User{})
 		return ctx.JSON(http.StatusInternalServerError, messages.FailedToCreateRefreshToken)
 	}
 	ctx.Response().Header().Set("Authorization", accessToken)
@@ -67,16 +69,12 @@ func RegisterHandler(ctx echo.Context) error {
 		HttpOnly: true,
 	}
 	ctx.SetCookie(cookie)
-	err = services.SendMail("PlanVerse Verification", fmt.Sprintf("%s is your PlanVerse verification code", otp), []string{newUser.Email})
-	if err != nil {
-		configs.DB.Exec("delete from users where id = ?", newUser.ID)
-		return ctx.JSON(http.StatusInternalServerError, messages.FailedToSendEmail)
-	}
-	return ctx.JSON(http.StatusOK, messages.SentEmailSuccessfully)
+	return ctx.JSON(http.StatusOK, messages.AddedToDatabase)
 }
 
 func VerifyHandler(ctx echo.Context) error {
 	req := new(models.VerifyRequest)
+	res := new(models.Response)
 	if err := ctx.Bind(req); err != nil {
 		return ctx.JSON(http.StatusBadRequest, messages.InvalidRequestBody)
 	}
@@ -84,7 +82,7 @@ func VerifyHandler(ctx echo.Context) error {
 	userID := userIDCtx.(int)
 	val, err := configs.Redis.Get(configs.Ctx, strconv.Itoa(userID)).Result()
 	if err != nil {
-		configs.DB.Exec("delete from users where id = ?", userID)
+		configs.DB.Unscoped().Where("id = ?", userID).Delete(&models.User{})
 		return ctx.JSON(http.StatusBadRequest, messages.OTPExpired)
 	}
 	if val != req.OTP {
@@ -95,7 +93,9 @@ func VerifyHandler(ctx echo.Context) error {
 		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
 	configs.Redis.Del(configs.Ctx, strconv.Itoa(userID))
-	return ctx.JSON(http.StatusOK, messages.RegisteredSuccessfully)
+	res.UserID = userID
+	res.Message = messages.RegisteredSuccessfully
+	return ctx.JSON(http.StatusOK, res)
 }
 
 func RefreshHandler(ctx echo.Context) error {
@@ -127,6 +127,7 @@ func RefreshHandler(ctx echo.Context) error {
 
 func LoginHandler(ctx echo.Context) error {
 	req := new(models.LoginRequest)
+	res := new(models.Response)
 	if err := ctx.Bind(req); err != nil {
 		return ctx.JSON(http.StatusBadRequest, messages.InvalidRequestBody)
 	}
@@ -156,11 +157,20 @@ func LoginHandler(ctx echo.Context) error {
 		Path:  "/refresh",
 	}
 	ctx.SetCookie(cookie)
-	return ctx.JSON(http.StatusOK, messages.LoggedInSuccessfully)
+	res.UserID = int(user.ID)
+	res.Message = messages.LoggedInSuccessfully
+	return ctx.JSON(http.StatusOK, res)
 }
 
 func GetUserHandler(ctx echo.Context) error {
-	userIDCtx := ctx.Get("user_id")
-	userID := userIDCtx.(int)
-	return ctx.JSON(http.StatusOK, userID)
+	userID, err := strconv.Atoi(ctx.Param("user_id"))
+	if err != nil {
+		return ctx.JSON(http.StatusBadRequest, messages.WrongUserID)
+	}
+	var user models.User
+	result := configs.DB.Where("id = ?", userID).Find(&user)
+	if result.Error != nil {
+		return ctx.JSON(http.StatusBadRequest, messages.UnknownUser)
+	}
+	return ctx.JSON(http.StatusOK, user)
 }

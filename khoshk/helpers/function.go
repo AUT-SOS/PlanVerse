@@ -5,7 +5,6 @@ import (
 	"PlanVerse/messages"
 	"PlanVerse/models"
 	"errors"
-	"fmt"
 	"github.com/golang-jwt/jwt"
 	"log"
 	"math/rand"
@@ -18,24 +17,8 @@ import (
 func GenerateRandomCode() (string, error) {
 	otp := ""
 	rand.Seed(time.Now().UnixNano())
-	for i := 0; i < 5; i++ {
-		random := rand.Intn(9 - 1)
-		randomDigit := strconv.Itoa(random)
-		otp = fmt.Sprint(otp + randomDigit)
-	}
-	keys, _, err := configs.Redis.Scan(configs.Ctx, 0, "", 1000).Result()
-	if err != nil {
-		return "", err
-	}
-	for _, key := range keys {
-		val, newErr := configs.Redis.Get(configs.Ctx, key).Result()
-		if newErr != nil {
-			return "", newErr
-		}
-		if val == otp {
-			return "", errors.New(strings.ToLower(messages.RepeatedOTP))
-		}
-	}
+	random := 10000 + rand.Intn(89999)
+	otp = strconv.Itoa(random)
 	return otp, nil
 }
 
@@ -55,9 +38,9 @@ func GenerateToken(userID int, duration time.Duration) (string, error) {
 	return signedToken, nil
 }
 
-func CheckDuplicate(email string) error {
+func CheckMail(email string) error {
 	var users []models.User
-	result := configs.DB.Select([]string{"email", "is_verified"}).Find(&users)
+	result := configs.DB.Select([]string{"id", "email", "is_verified"}).Find(&users)
 	if result.Error != nil {
 		return errors.New(strings.ToLower(messages.InternalError))
 	}
@@ -66,8 +49,8 @@ func CheckDuplicate(email string) error {
 			if otherUser.IsVerified {
 				return errors.New(strings.ToLower(messages.DuplicateEmail))
 			} else {
-				configs.DB.Raw("delete from users where id = ?", otherUser.ID)
-				break
+				configs.DB.Unscoped().Where("id = ?", otherUser.ID).Delete(&models.User{})
+				return nil
 			}
 		}
 	}

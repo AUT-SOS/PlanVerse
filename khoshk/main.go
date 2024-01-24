@@ -4,12 +4,11 @@ import (
 	"PlanVerse/configs"
 	"PlanVerse/controllers"
 	"PlanVerse/middlewares"
-	"log"
-	"os"
-
 	"github.com/joho/godotenv"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	"log"
+	"os"
 )
 
 func main() {
@@ -25,15 +24,15 @@ func main() {
 	server.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowOrigins:     []string{"*"},
 		AllowMethods:     []string{"*"},
-		AllowCredentials: true,
 		AllowHeaders:     []string{"*"},
 		ExposeHeaders:    []string{"*"},
+		AllowCredentials: true,
 	}))
 	server.Use(middlewares.AuthMiddleware)
 	server.POST("/register", controllers.RegisterHandler)
 	server.POST("/verify", controllers.VerifyHandler)
 	server.POST("/refresh", controllers.RefreshHandler)
 	server.POST("/login", controllers.LoginHandler)
-	server.GET("/get-user", controllers.GetUserHandler)
+	server.GET("/get-user/user_id", controllers.GetUserHandler)
 	log.Fatal(server.Start("localhost:8080"))
 }
