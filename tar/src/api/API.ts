@@ -24,26 +24,51 @@ export const API = {
     );
   },
   otpVerify(verify: string) {
-    const at = getAccessToken() ?? "";
     return ajax.post(
       `${END_POINT}/verify`,
       {
         otp: verify,
       },
-      { ...API_HEADERS, "Authorization" : getAccessToken()}
+      { ...API_HEADERS, Authorization: getAccessToken() }
     );
   },
+  getMyId() {
+    return ajax.get(`${END_POINT}/get-my-user`, {
+      ...API_HEADERS,
+      Authorization: getAccessToken(),
+    });
+  },
+  refresh() {
+    return ajax.post(
+      `${END_POINT}/refresh`,
+      {},
+      {
+        ...API_HEADERS,
+        Authorization: getAccessToken(),
+      }
+    );
+  },
+  resendEmail(){
+    return ajax.post(
+      `${END_POINT}/resend-email`,
+      {},
+      {
+        ...API_HEADERS,
+        Authorization: getAccessToken(),
+      }
+    )
+  }
 };
 
 const getAccessToken = () => getCookie("access_token");
 
-const getCookie = (cname : string) => {
+const getCookie = (cname: string) => {
   let name = cname + "=";
   let decodedCookie = decodeURIComponent(document.cookie);
-  let ca = decodedCookie.split(';');
-  for(let i = 0; i <ca.length; i++) {
+  let ca = decodedCookie.split(";");
+  for (let i = 0; i < ca.length; i++) {
     let c = ca[i];
-    while (c.charAt(0) == ' ') {
+    while (c.charAt(0) == " ") {
       c = c.substring(1);
     }
     if (c.indexOf(name) == 0) {
@@ -51,4 +76,4 @@ const getCookie = (cname : string) => {
     }
   }
   return "";
-}
+};

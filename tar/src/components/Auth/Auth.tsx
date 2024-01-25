@@ -7,15 +7,22 @@ import { Text0, Text1, Text2, Text3 } from "../../ui/Text";
 import { Login } from "./Login/Login";
 import { DOC_ADDRESS } from "../../utils/consts";
 import { Signup } from "./Signup/Signup";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "../../redux/store";
 import { AuthState, Breakpoints } from "../../utils/types";
 import { a, useTransition } from "@react-spring/web";
 import { EmailValidation } from "./Signup/EmailValidation";
 import { useBreakPoints } from "../../utils/hooks";
+import { useNavigate } from "react-router-dom";
+import { ReqButton } from "../../ui/ReqButton";
+import { AuthActions } from "../../redux/slices/auth.slice";
 
 export const Auth: React.FC = () => {
   const authState = useSelector((state: RootState) => state.auth.authState);
+  const navigate = useNavigate();
+  if (authState === AuthState.Authenticated){
+    navigate("/dashboard")
+  }
   const [isLogin, setIsLogin] = useState<boolean>(
     window.location.pathname === "/login"
   );
@@ -48,8 +55,9 @@ export const Auth: React.FC = () => {
     },
     config: {
       duration: 200,
-    }
+    },
   });
+  const dispatch = useDispatch();
   const breakPoint = useBreakPoints();
   return breakPoint > Breakpoints.Medium ? (
     <Background className={styles.authWrapper}>
@@ -85,6 +93,7 @@ export const Auth: React.FC = () => {
                 </a.div>
               )
             )}
+            
           </a.div>
         ) : (
           state === AuthState.EmailValidate && (
@@ -94,15 +103,15 @@ export const Auth: React.FC = () => {
           )
         )
       )}
-      <Text3
-        text={isLogin ? strings.auth.loginL : strings.auth.signupL}
-        style={{
-          cursor: "pointer",
-          color: "var(--color-neutrals-n-400)",
-          textDecoration: "underline",
-        }}
-        onClick={() => setIsLogin((prev) => !prev)}
-      />
+      {authState === AuthState.Unauthenticated && <Text3
+              text={!isLogin ? strings.auth.loginL : strings.auth.signupL}
+              style={{
+                cursor: "pointer",
+                color: "var(--color-neutrals-n-400)",
+                textDecoration: "underline",
+              }}
+              onClick={() => setIsLogin((prev) => !prev)}
+            />}
     </Background>
   );
 };

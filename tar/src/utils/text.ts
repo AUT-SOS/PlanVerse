@@ -4,6 +4,7 @@ const strings = {
   confirm: "Confirm",
   info: `Planverse is a comprehensive project management website that empowers individuals and teams to efficiently organize and collaborate on their projects.     `,
   cancel: "Cancel",
+  error: "An error has occured",
   auth: {
     login: "Login",
     signup: "Signup",

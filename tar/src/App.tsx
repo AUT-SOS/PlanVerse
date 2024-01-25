@@ -2,8 +2,10 @@ import { useDispatch } from "react-redux";
 import { RoutesFC } from "./Routes";
 import { setRootColors } from "./utils/configs";
 import { ConfigActions } from "./redux/slices/configs.slice";
+import { AuthActions } from "./redux/slices/auth.slice";
 function App() {
   const dispatch = useDispatch();
+  dispatch(AuthActions.getMyUserId());
   if (
     window.matchMedia &&
     window.matchMedia("(prefers-color-scheme: dark)").matches
