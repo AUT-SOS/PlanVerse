@@ -73,6 +73,7 @@ export const signupEpic: Epic = (action$, state$) =>
           );
         }),
         catchError(() => {
+          showFailToastMessage("Email is already used");
           return of(ReqActions.setState({ requestState: RequestState.Error }));
         })
       );

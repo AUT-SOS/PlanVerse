@@ -1,23 +1,20 @@
 import React, { useCallback, useState } from "react";
 import styles from "./Login.module.scss";
 import classNames from "classnames";
-import { Text0, Text1, Text3 } from "../../../ui/Text";
+import { Text1, Text3 } from "../../../ui/Text";
 import strings from "../../../utils/text";
 import {
   EmailInputBar,
-  InputBar,
   PasswordInputBar,
 } from "../../../ui/InputBar";
 import { ReqButton } from "../../../ui/ReqButton";
 import {
-  AuthState,
   LoginForm,
   RequestState,
   RequestTypes,
 } from "../../../utils/types";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 import { AuthActions } from "../../../redux/slices/auth.slice";
-import { RootState } from "../../../redux/store";
 import { useRequestStates, useShake } from "../../../utils/hooks";
 import { a } from "@react-spring/web";
 import { validateEmail, validatePassword } from "../../../utils/regex";
