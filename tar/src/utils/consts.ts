@@ -6,7 +6,7 @@ export const DOC_ADDRESS =
 export const API_HEADERS = {
   "Content-Type": "application/json",
   credentials: "include",
-  withCredentiala: "true"
+  withCredentials: "true"
 };
 
 export const THEMES : {light: Record<string, string>, dark: Record<string, string>} = {

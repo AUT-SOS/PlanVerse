@@ -14,6 +14,7 @@ export enum RequestTypes {
   Login,
   Signup,
   EmailValidate,
+  ResendEmail,
 }
 
 export type LoginForm = {
