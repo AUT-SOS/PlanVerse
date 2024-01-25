@@ -13,7 +13,6 @@ type User struct {
 	ProfilePic     string    `gorm:"not null"`
 	IsVerified     bool      `gorm:"not null"`
 	MemberProjects []Project `gorm:"many2many:projects_members"`
-	AdminProjects  []Project `gorm:"many2many:projects_admins;"`
 }
 
 type RegisterRequest struct {
