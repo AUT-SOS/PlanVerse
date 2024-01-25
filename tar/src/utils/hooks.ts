@@ -31,6 +31,6 @@ export const useRequestStates = (componentType: RequestTypes) => {
 };
 
 export const useBreakPoints = () => {
-  const breakpoint = useSelector((state : RootState) => state.config.breakpoint);
+  const breakpoint = useSelector((state : RootState) => state.config.breakpoint) ?? window.innerWidth;
   return breakpoint
 }

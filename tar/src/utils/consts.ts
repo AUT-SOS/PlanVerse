@@ -1,14 +1,12 @@
 export const ICON_COLOR = "var(--color-neutrals-n-500)";
 export const RANDOM_IMAGE = "https://picsum.photos/100/100";
-export const END_POINT = "http://localhost:8080";
+export const END_POINT = "/api";
 export const DOC_ADDRESS =
   "https://docs.google.com/document/d/1PxMYqd9ZbLHtC88sYyzR_MmyfN9CBZcgLuvFWx5X6pE/edit?usp=sharing";
 export const API_HEADERS = {
-  "Access-Control-Allow-Headers": "*",
-  "Access-Control-Allow-Origin": "*",
   "Content-Type": "application/json",
-  "Access-Control-Allow-Methods": "*",
   credentials: "include",
+  withCredentiala: "true"
 };
 
 export const THEMES : {light: Record<string, string>, dark: Record<string, string>} = {
@@ -37,7 +35,7 @@ export const THEMES : {light: Record<string, string>, dark: Record<string, strin
     "--color-neutrals-n-00": " #fcfdfd",
     "--color-neutrals-n-00-rgb": " 252, 253, 253",
 
-    "--color-neutrals-n-10": " #fafbfc",
+    "--color-neutrals-n-10": " #f4f5f7",
     "--color-neutrals-n-10-rgb": " 250, 251, 252",
 
     "--color-neutrals-n-20": " #f4f5f7",

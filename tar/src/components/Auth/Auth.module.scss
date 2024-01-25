@@ -3,18 +3,23 @@
   display: flex;
   justify-content: center;
   align-items: center;
+  flex-direction: column;
+  gap: 20px;
 }
 
 .authContainer {
   position: relative;
   display: flex;
-  width: 50vw;
   height: 60vh;
   background-color: var(--color-neutrals-n-00);
   box-shadow: var(--shadow);
   border-radius: 10px;
   overflow: hidden;
-  min-width: 900px;
+  width: 50vw;
+  min-width: 350px;
+  @include palette.md {
+    min-width: 900px;
+  }
 }
 
 .otpContainer {
@@ -55,4 +60,10 @@
   &.isRight {
     transform: translateX(100%);
   }
+}
+
+.smallCont{
+  position: absolute;
+  width: 100%;
+  height: 100%;
 }
