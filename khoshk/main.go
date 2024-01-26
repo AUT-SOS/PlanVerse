@@ -48,6 +48,7 @@ func main() {
 	//project api
 	server.GET("/list", controllers.ProjectListHandler)
 	server.POST("/create", controllers.CreateProjectHandler)
+	server.POST("/share-link", controllers.ShareProjectHandler)
 
 	//start server
 	log.Fatal(server.Start("localhost:8080"))

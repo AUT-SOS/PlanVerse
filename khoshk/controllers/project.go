@@ -5,6 +5,8 @@ import (
 	"PlanVerse/helpers"
 	"PlanVerse/messages"
 	"PlanVerse/models"
+	"PlanVerse/services"
+	"fmt"
 	"github.com/labstack/echo/v4"
 	"net/http"
 )
@@ -60,4 +62,43 @@ func CreateProjectHandler(ctx echo.Context) error {
 	res.Link = joinLink.Link
 	res.Message = messages.ProjectCreated
 	return ctx.JSON(http.StatusOK, res)
+}
+
+func ShareProjectHandler(ctx echo.Context) error {
+	req := new(models.ShareProjectRequest)
+	if err := ctx.Bind(req); err != nil {
+		return ctx.JSON(http.StatusBadRequest, messages.InvalidRequestBody)
+	}
+	userIDCtx := ctx.Get("user_id")
+	userID := userIDCtx.(int)
+	var user models.User
+	result := configs.DB.Select("username").Where("id = ?", userID).Find(&user)
+	if result.Error != nil {
+		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
+	}
+	var joinLink models.JoinLink
+	result = configs.DB.Select("link").Where("project_id = ?", req.ProjectID).Find(&joinLink)
+	if result.Error != nil {
+		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
+	}
+	var project models.Project
+	result = configs.DB.Select("title").Where("id = ?", req.ProjectID).Find(&project)
+	if result.Error != nil {
+		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
+	}
+	var projectMembers []helpers.ProjectMembers
+	result = configs.DB.Table("projects").Select([]string{"users.email"}).Joins("inner join projects_members on projects.id = projects_members.project_id").Joins("inner join users on users.id = projects_members.user_id").Where("projects.id = ?", req.ProjectID).Scan(&projectMembers)
+	for i, _ := range req.Emails {
+		for j, _ := range projectMembers {
+			if projectMembers[j].Email == req.Emails[i] {
+				return ctx.JSON(http.StatusNotAcceptable, messages.AlreadyMember)
+			}
+		}
+	}
+	for i, _ := range req.Emails {
+		go func(index int) {
+			services.SendMail("PlanVerse Invitation", fmt.Sprintf("you've been invited to %s project by %s!\nclick the link below to join to project:\n%s", project.Title, user.Username, joinLink.Link), []string{req.Emails[index]})
+		}(i)
+	}
+	return ctx.JSON(http.StatusOK, messages.SentInvitationEmail)
 }

@@ -5,17 +5,17 @@ import (
 	"PlanVerse/messages"
 	"PlanVerse/models"
 	"errors"
-	"fmt"
 	"github.com/golang-jwt/jwt"
 	"log"
 	"math/rand"
+	"net/url"
 	"os"
 	"strconv"
 	"strings"
 	"time"
 )
 
-const fixedLink = "http://localhost:8080/project/"
+const fixedLink = "http://localhost:5173/project"
 
 func GenerateRandomCode() (string, error) {
 	otp := ""
@@ -28,14 +28,18 @@ func GenerateRandomCode() (string, error) {
 func GenerateRandomLink(title string) (string, error) {
 	rand.Seed(time.Now().UnixNano())
 	var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
-	link := fixedLink
-	link = fmt.Sprint(link + title + `/`)
 	code := make([]rune, 10)
 	for i := range code {
 		code[i] = letters[rand.Intn(len(letters))]
 	}
-	link = fmt.Sprint(link + string(code))
-	return link, nil
+	baseUrl, err := url.Parse(fixedLink)
+	if err != nil {
+		return "", err
+	}
+	params := url.Values{}
+	params.Add(title, string(code))
+	baseUrl.RawQuery = params.Encode()
+	return baseUrl.String(), nil
 }
 
 func GenerateToken(userID int, duration time.Duration) (string, error) {

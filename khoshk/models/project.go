@@ -20,6 +20,11 @@ type CreateProjectRequest struct {
 	Description string `json:"description"`
 }
 
+type ShareProjectRequest struct {
+	ProjectID string   `json:"project_id"`
+	Emails    []string `json:"emails"`
+}
+
 type ProjectListResponse struct {
 	ID            int    `json:"project_id"`
 	Title         string `json:"title"`
