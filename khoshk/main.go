@@ -22,6 +22,10 @@ func main() {
 	configs.ConnectToDatabase()
 	configs.ConnectToRedis()
 	server := echo.New()
+
+	//middlewares
+	//server.Use(middleware.Logger())
+	//server.Use(middleware.Recover())
 	server.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowOrigins:     []string{"http://localhost:5173"},
 		AllowMethods:     []string{"*"},
@@ -30,6 +34,9 @@ func main() {
 		AllowCredentials: true,
 	}))
 	server.Use(middlewares.AuthMiddleware)
+	server.Use(middlewares.VerifyMiddleware)
+
+	//user api
 	server.POST("/register", controllers.RegisterHandler)
 	server.POST("/verify", controllers.VerifyHandler)
 	server.POST("/refresh", controllers.RefreshHandler)
@@ -37,5 +44,11 @@ func main() {
 	server.POST("/resend-email", controllers.ResendEmailHandler)
 	server.GET("/get-user/:user-id", controllers.GetUserHandler)
 	server.GET("/get-my-user", controllers.GetUserIDHandler)
+
+	//project api
+	server.GET("/list", controllers.ProjectListHandler)
+	server.POST("/create", controllers.CreateProjectHandler)
+
+	//start server
 	log.Fatal(server.Start("localhost:8080"))
 }

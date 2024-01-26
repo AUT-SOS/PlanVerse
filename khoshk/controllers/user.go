@@ -134,10 +134,10 @@ func LoginHandler(ctx echo.Context) error {
 	var user models.User
 	result := configs.DB.Select([]string{"id", "password", "is_verified"}).Where("email = ?", req.Email).Find(&user)
 	if result.Error != nil {
-		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
+		return ctx.JSON(http.StatusBadRequest, messages.WrongEmail)
 	}
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password)); err != nil {
-		return ctx.JSON(http.StatusUnauthorized, messages.EmailOrPasswordIncorrect)
+		return ctx.JSON(http.StatusUnauthorized, messages.PasswordIncorrect)
 	}
 	if !user.IsVerified {
 		return ctx.JSON(http.StatusUnauthorized, messages.UserNotVerified)
@@ -163,11 +163,10 @@ func LoginHandler(ctx echo.Context) error {
 }
 
 func ResendEmailHandler(ctx echo.Context) error {
-	res := new(models.Response)
 	userIDCtx := ctx.Get("user_id")
 	userID := userIDCtx.(int)
 	var user models.User
-	result := configs.DB.Select([]string{"email"}).Where("id = ?", userID).Find(&user)
+	result := configs.DB.Select("email").Where("id = ?", userID).Find(&user)
 	if result.Error != nil {
 		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
@@ -179,9 +178,7 @@ func ResendEmailHandler(ctx echo.Context) error {
 	go func() {
 		services.SendMail("PlanVerse Verification", fmt.Sprintf("%s is your PlanVerse verification code", otp), []string{user.Email})
 	}()
-	res.UserID = int(user.ID)
-	res.Message = messages.RegisteredSuccessfully
-	return ctx.JSON(http.StatusOK, res)
+	return ctx.JSON(http.StatusOK, messages.SentEmail)
 }
 
 func GetUserHandler(ctx echo.Context) error {
@@ -192,7 +189,7 @@ func GetUserHandler(ctx echo.Context) error {
 	var user models.User
 	result := configs.DB.Where("id = ?", userID).Find(&user)
 	if result.Error != nil {
-		return ctx.JSON(http.StatusBadRequest, messages.UnknownUser)
+		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
 	return ctx.JSON(http.StatusOK, user)
 }

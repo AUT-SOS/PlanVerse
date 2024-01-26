@@ -7,13 +7,12 @@ import (
 
 type User struct {
 	gorm.Model
-	Username       string    `gorm:"not null"`
-	Password       string    `gorm:"not null"`
-	Email          string    `gorm:"unique;not null"`
-	ProfilePic     string    `gorm:"not null"`
-	IsVerified     bool      `gorm:"not null"`
-	MemberProjects []Project `gorm:"many2many:projects_members"`
-	AdminProjects  []Project `gorm:"many2many:projects_admins;"`
+	Username   string    `gorm:"not null"`
+	Password   string    `gorm:"not null"`
+	Email      string    `gorm:"unique;not null"`
+	ProfilePic string    `gorm:"not null"`
+	IsVerified bool      `gorm:"not null"`
+	Projects   []Project `gorm:"many2many:projects_members"`
 }
 
 type RegisterRequest struct {
