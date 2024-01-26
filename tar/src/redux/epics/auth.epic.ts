@@ -1,6 +1,15 @@
 import { ofType } from "redux-observable";
 import { AuthActions } from "../slices/auth.slice";
-import { EMPTY, catchError, merge, mergeMap, mergeMapTo, of, timeout } from "rxjs";
+import {
+  EMPTY,
+  Observable,
+  catchError,
+  merge,
+  mergeMap,
+  mergeMapTo,
+  of,
+  timeout,
+} from "rxjs";
 import { API } from "../../api/API";
 import { Epic } from "./epic";
 import {
@@ -27,27 +36,13 @@ export const loginEpic: Epic = (action$, state$) =>
             of(
               AuthActions.changeAuthState({
                 authState: AuthState.Authenticated,
-                myId: uid
-
+                myId: uid,
               })
             ),
             of(ReqActions.setState({ requestState: RequestState.None }))
           );
         }),
-        catchError(() => {
-          showFailToastMessage("Invalid username or password");
-          const endReq = of(
-            ReqActions.setState({ requestState: RequestState.None })
-          );
-          return merge(
-            endReq,
-            of(
-              AuthActions.changeAuthState({
-                authState: AuthState.Unauthenticated,
-              })
-            )
-          );
-        })
+        handleError()
       );
     })
   );
@@ -77,10 +72,7 @@ export const signupEpic: Epic = (action$, state$) =>
             of(ReqActions.setState({ requestState: RequestState.None }))
           );
         }),
-        catchError((error) => {
-          showFailToastMessage(error.message);
-          return of(ReqActions.setState({ requestState: RequestState.Error }));
-        })
+        handleError()
       );
     })
   );
@@ -127,14 +119,12 @@ export const verificationEpic: Epic = (action$, state$) =>
             of(ReqActions.setState({ requestState: RequestState.None }))
           );
         }),
-        catchError(() => {
-          return of(ReqActions.setState({ requestState: RequestState.Error }));
-        })
+        handleError("Wrong Code")
       );
     })
   );
 
-  export const resendEmailEpic: Epic = (action$, state$) =>
+export const resendEmailEpic: Epic = (action$, state$) =>
   action$.pipe(
     ofType(AuthActions.resendEmail.type),
     mergeMap(() => {
@@ -145,10 +135,13 @@ export const verificationEpic: Epic = (action$, state$) =>
             of(ReqActions.setState({ requestState: RequestState.None }))
           );
         }),
-        catchError((error) => {
-          showFailToastMessage(error.message);
-          return of(ReqActions.setState({ requestState: RequestState.Error }));
-        })
+        handleError("There was an error resendig")
       );
     })
   );
+
+const handleError = <T>(message? : string) =>
+  catchError<T, Observable<any>>((error) => {
+    showFailToastMessage(message ?? error.message);
+    return of(ReqActions.setState({ requestState: RequestState.Error }));
+  });

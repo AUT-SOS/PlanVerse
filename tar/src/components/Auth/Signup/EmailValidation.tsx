@@ -1,16 +1,17 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import styles from "./EmailValidation.module.scss";
 import { Text2, Text3 } from "../../../ui/Text";
 import strings from "../../../utils/text";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "../../../redux/store";
 import { DigitInput } from "../../../ui/InputBar";
-import { ReqButton } from "../../../ui/ReqButton";
+import { ReqButton, ResendEmailButton } from "../../../ui/ReqButton";
 import { AuthState, RequestState, RequestTypes } from "../../../utils/types";
 import { AuthActions } from "../../../redux/slices/auth.slice";
 import { useRequestStates, useShake } from "../../../utils/hooks";
 import { ReqActions } from "../../../redux/slices/req.slice";
 import { OTPIcon } from "../../../ui/Icons/OTP";
+import { secToString } from "../../../utils/configs";
 
 export const EmailValidation: React.FC = (props) => {
   const [otp, setOtp] = useState<string[]>(new Array(5).fill(""));
@@ -48,7 +49,7 @@ export const EmailValidation: React.FC = (props) => {
   }, [otp]);
   return (
     <div className={styles.otpContentWrapper}>
-      <OTPIcon color="var(--color-neutrals-n-500)" size={60}/>
+      <OTPIcon color="var(--color-neutrals-n-500)" size={60} />
       <Text3
         text={strings.auth.otp_info}
         style={{ color: "var(--color-neutrals-n-500)", textAlign: "center" }}
@@ -62,8 +63,15 @@ export const EmailValidation: React.FC = (props) => {
         onClick={handleValidation}
         isPending={isPending}
         text="Validate"
-        style={{ width: "40%" , x: shakeAnimation.x}}
+        style={{ width: "40%", x: shakeAnimation.x }}
       />
+      <div className={styles.ResendWrapper}>
+        <Text3
+          text="Did'nt receive email?"
+          style={{ color: "var(--color-neutrals-n-500)", textAlign: "center" }}
+        />
+        <ResendEmail />
+      </div>
     </div>
   );
 };
@@ -122,4 +130,25 @@ const OTPInput: React.FC<OTPInputProps> = (props) => {
       })}
     </div>
   );
+};
+
+const ResendEmail: React.FC = () => {
+  const [time, setTime] = useState(10);
+  const dispatch = useDispatch();
+  useEffect(() => {
+    if (time <= 0) {
+      return
+    }
+    const timer = setTimeout(() => {
+      setTime(time - 1);
+    }, 1000);
+    () => clearTimeout(timer);
+  }, [time]);
+  const text = useMemo(() => time <= 0 ? "Resend" : secToString(time), [time]);
+  const handleClick = () => {
+    dispatch(AuthActions.resendEmail());
+    setTime(10);
+
+  }
+  return <ResendEmailButton onClick={handleClick} text={text} disable={time > 0} />;
 };

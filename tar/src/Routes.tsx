@@ -10,6 +10,7 @@ export const RoutesFC: React.FC<Props> = (props) => {
   return (
     <Router>
       <Routes>
+        <Route path="/*" element={<Auth/>} />
         <Route path="/home" />
         <Route path="/boards/:id" element={<Board/> } />
         <Route path="/join/:id" element={<Join />} />

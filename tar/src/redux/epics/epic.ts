@@ -1,5 +1,5 @@
 import { StateObservable, combineEpics } from "redux-observable";
-import { getMyIdEpic, loginEpic, signupEpic, verificationEpic } from "./auth.epic";
+import { getMyIdEpic, loginEpic, resendEmailEpic, signupEpic, verificationEpic } from "./auth.epic";
 import { Action, AnyAction } from "redux";
 import { Observable } from "rxjs";
 import { RootState } from "../store";
@@ -20,5 +20,6 @@ export const rootEpic = combineEpics(
       signupEpic,
       loginEpic,
       verificationEpic,
-      getMyIdEpic
+      getMyIdEpic,
+      resendEmailEpic
 )
