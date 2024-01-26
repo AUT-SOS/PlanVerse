@@ -102,3 +102,36 @@ func ShareProjectHandler(ctx echo.Context) error {
 	}
 	return ctx.JSON(http.StatusOK, messages.SentInvitationEmail)
 }
+
+func ShowProjectHandler(ctx echo.Context) error {
+	req := new(models.ShowProjectRequest)
+	res := new(models.ShowProjectResponse)
+	if err := ctx.Bind(req); err != nil {
+		return ctx.JSON(http.StatusBadRequest, messages.InvalidRequestBody)
+	}
+	result := configs.DB.Select("project_id").Where("link = ?", req.Link).Scan(res)
+	if result.Error != nil {
+		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
+	}
+	var project models.Project
+	result = configs.DB.Where("id = ?", res.ProjectID).Preload("Members").Find(&project)
+	if result.Error != nil {
+		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
+	}
+	res.Title = project.Title
+	res.BackGroundPic = project.BackGroundPic
+	res.MembersNumber = project.MembersNumber
+	for i := 0; i < len(project.Members); i++ {
+		if i == 3 {
+			break
+		}
+		user := models.GetUserResponse{
+			ID:         int(project.Members[i].ID),
+			Username:   project.Members[i].Username,
+			Email:      project.Members[i].Email,
+			ProfilePic: project.Members[i].ProfilePic,
+		}
+		res.Members = append(res.Members, user)
+	}
+	return ctx.JSON(http.StatusOK, res)
+}

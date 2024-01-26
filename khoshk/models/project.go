@@ -25,6 +25,10 @@ type ShareProjectRequest struct {
 	Emails    []string `json:"emails"`
 }
 
+type ShowProjectRequest struct {
+	Link string `json:"join_link"`
+}
+
 type ProjectListResponse struct {
 	ID            int    `json:"project_id"`
 	Title         string `json:"title"`
@@ -37,4 +41,12 @@ type CreateProjectResponse struct {
 	ProjectID int    `json:"project_id"`
 	Link      string `json:"join_link"`
 	Message   string `json:"message"`
+}
+
+type ShowProjectResponse struct {
+	ProjectID     int               `json:"project_id"`
+	Title         string            `json:"title"`
+	BackGroundPic string            `json:"picture"`
+	MembersNumber int               `json:"members_number"`
+	Members       []GetUserResponse `json:"members"`
 }

@@ -39,3 +39,10 @@ type Response struct {
 	UserID  int    `json:"user_id"`
 	Message string `json:"message"`
 }
+
+type GetUserResponse struct {
+	ID         int    `json:"id"`
+	Username   string `json:"username"`
+	Email      string `json:"email"`
+	ProfilePic string `json:"profile_pic"`
+}
