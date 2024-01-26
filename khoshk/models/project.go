@@ -1,17 +1,20 @@
 package models
 
-import "gorm.io/gorm"
+import (
+	"gorm.io/gorm"
+)
 
 type Project struct {
 	gorm.Model
-	Title         string   `gorm:"not null"`
-	Description   string   `gorm:"not null"`
-	BackGroundPic string   `gorm:"not null"`
-	OwnerID       int      `gorm:"not null"`
-	MembersNumber int      `gorm:"not null"`
-	Members       []User   `gorm:"many2many:projects_members"`
-	States        []State  `gorm:"foreignKey:ProjectID"`
-	JoinLink      JoinLink `gorm:"foreignKey:ProjectID"`
+	Title          string   `gorm:"not null"`
+	Description    string   `gorm:"not null"`
+	BackGroundPic  string   `gorm:"not null"`
+	OwnerID        int      `gorm:"not null"`
+	MembersNumber  int      `gorm:"not null"`
+	InvitedMembers []User   `gorm:"many2many:invited_members"`
+	Members        []User   `gorm:"many2many:projects_members"`
+	States         []State  `gorm:"foreignKey:ProjectID"`
+	JoinLink       JoinLink `gorm:"foreignKey:ProjectID"`
 }
 
 type CreateProjectRequest struct {
@@ -44,9 +47,14 @@ type CreateProjectResponse struct {
 }
 
 type ShowProjectResponse struct {
-	ProjectID     int               `json:"project_id"`
-	Title         string            `json:"title"`
-	BackGroundPic string            `json:"picture"`
-	MembersNumber int               `json:"members_number"`
-	Members       []GetUserResponse `json:"members"`
+	ProjectID     int          `json:"project_id"`
+	Title         string       `json:"title"`
+	BackGroundPic string       `json:"picture"`
+	MembersNumber int          `json:"members_number"`
+	Members       []MemberInfo `json:"members"`
+}
+
+type MemberInfo struct {
+	Username   string
+	ProfilePic string
 }

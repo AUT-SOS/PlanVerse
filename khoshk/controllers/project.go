@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"github.com/labstack/echo/v4"
 	"net/http"
+	"strconv"
 )
 
 func ProjectListHandler(ctx echo.Context) error {
@@ -82,7 +83,7 @@ func ShareProjectHandler(ctx echo.Context) error {
 		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
 	var project models.Project
-	result = configs.DB.Select("title").Where("id = ?", req.ProjectID).Find(&project)
+	result = configs.DB.Where("id = ?", req.ProjectID).Preload("InvitedMembers").Find(&project)
 	if result.Error != nil {
 		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
@@ -99,6 +100,18 @@ func ShareProjectHandler(ctx echo.Context) error {
 		go func(index int) {
 			services.SendMail("PlanVerse Invitation", fmt.Sprintf("you've been invited to %s project by %s!\nclick the link below to join to project:\n%s", project.Title, user.Username, joinLink.Link), []string{req.Emails[index]})
 		}(i)
+	}
+	var users []models.User
+	result = configs.DB.Where("email in ?", req.Emails).Find(&users)
+	if result.Error != nil {
+		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
+	}
+	for _, u := range users {
+		project.InvitedMembers = append(project.InvitedMembers, u)
+	}
+	result = configs.DB.Save(&project)
+	if result.Error != nil {
+		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
 	return ctx.JSON(http.StatusOK, messages.SentInvitationEmail)
 }
@@ -127,13 +140,65 @@ func ShowProjectHandler(ctx echo.Context) error {
 		if i == 3 {
 			break
 		}
-		user := models.GetUserResponse{
-			ID:         int(project.Members[i].ID),
+		user := models.MemberInfo{
 			Username:   project.Members[i].Username,
-			Email:      project.Members[i].Email,
 			ProfilePic: project.Members[i].ProfilePic,
 		}
 		res.Members = append(res.Members, user)
 	}
 	return ctx.JSON(http.StatusOK, res)
+}
+
+func JoinProjectHandler(ctx echo.Context) error {
+	projectID, err := strconv.Atoi(ctx.Param("project-id"))
+	if err != nil {
+		return ctx.JSON(http.StatusBadRequest, messages.WrongProjectID)
+	}
+	userIDCtx := ctx.Get("user_id")
+	userID := userIDCtx.(int)
+	var project models.Project
+	result := configs.DB.Where("id = ?", projectID).Preload("Members").Find(&project)
+	if result.Error != nil {
+		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
+	}
+	for _, member := range project.Members {
+		if int(member.ID) == userID {
+			return ctx.JSON(http.StatusNotAcceptable, messages.AlreadyJoined)
+		}
+	}
+	var user models.User
+	result = configs.DB.Where("id = ?", userID).Find(&user)
+	if result.Error != nil {
+		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
+	}
+	var projectIDStructs []helpers.ProjectID
+	result = configs.DB.Table("invited_members").Select("project_id").Where("user_id = ?", userID).Find(&projectIDStructs)
+	if result.Error != nil {
+		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
+	}
+	isInvited := false
+	for i := 0; i < len(projectIDStructs); i++ {
+		if projectIDStructs[i].ProjectID == projectID {
+			isInvited = true
+			break
+		}
+	}
+	if !isInvited {
+		return ctx.JSON(http.StatusNotAcceptable, messages.Uninvited)
+	}
+	result = configs.DB.Unscoped().Where("project_id = ? and user_id = ?", projectID, userID).Delete(&models.InvitedMembers{})
+	if result.Error != nil {
+		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
+	}
+	project.Members = append(project.Members, user)
+	project.MembersNumber += 1
+	result = configs.DB.Save(&project)
+	if result.Error != nil {
+		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
+	}
+	result = configs.DB.Table("projects_members").Where("project_id = ? and user_id = ?", projectID, userID).Update("is_admin", false)
+	if result.Error != nil {
+		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
+	}
+	return ctx.JSON(http.StatusOK, messages.UserAddedToProject)
 }

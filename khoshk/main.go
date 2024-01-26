@@ -50,6 +50,7 @@ func main() {
 	server.POST("/create", controllers.CreateProjectHandler)
 	server.POST("/share-link", controllers.ShareProjectHandler)
 	server.POST("/show-project", controllers.ShowProjectHandler)
+	server.POST("/join-project/:project-id", controllers.JoinProjectHandler)
 
 	//start server
 	log.Fatal(server.Start("localhost:8080"))
