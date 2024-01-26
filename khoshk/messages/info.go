@@ -2,5 +2,6 @@ package messages
 
 const RegisteredSuccessfully = "Registered successfully"
 const LoggedInSuccessfully = "Logged in successfully"
-const SentEmailSuccessfully = "Verification email sent successfully"
+const SentEmail = "Verification email sent"
 const AddedToDatabase = "User added to database successfully"
+const ProjectCreated = "Project created successfully"
