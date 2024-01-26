@@ -32,6 +32,7 @@ func RegisterHandler(ctx echo.Context) error {
 		}
 	}
 	otp, err := helpers.GenerateRandomCode()
+	fmt.Println(otp)
 	if err != nil {
 		return ctx.JSON(http.StatusInternalServerError, messages.FailedToCreateCode)
 	}
@@ -182,6 +183,7 @@ func ResendEmailHandler(ctx echo.Context) error {
 }
 
 func GetUserHandler(ctx echo.Context) error {
+	res := new(models.GetUserResponse)
 	userID, err := strconv.Atoi(ctx.Param("user-id"))
 	if err != nil {
 		return ctx.JSON(http.StatusBadRequest, messages.WrongUserID)
@@ -191,7 +193,11 @@ func GetUserHandler(ctx echo.Context) error {
 	if result.Error != nil {
 		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
-	return ctx.JSON(http.StatusOK, user)
+	res.ID = userID
+	res.Username = user.Username
+	res.Email = user.Email
+	res.ProfilePic = user.ProfilePic
+	return ctx.JSON(http.StatusOK, res)
 }
 
 func GetUserIDHandler(ctx echo.Context) error {
