@@ -24,7 +24,7 @@ export const Auth: React.FC = () => {
     navigate("/dashboard")
   }
   const [isLogin, setIsLogin] = useState<boolean>(
-    window.location.pathname === "/login"
+    window.location.pathname !== "/signup"
   );
   const transition = useTransition(authState, {
     from: {
@@ -57,7 +57,6 @@ export const Auth: React.FC = () => {
       duration: 200,
     },
   });
-  const dispatch = useDispatch();
   const breakPoint = useBreakPoints();
   return breakPoint > Breakpoints.Medium ? (
     <Background className={styles.authWrapper}>

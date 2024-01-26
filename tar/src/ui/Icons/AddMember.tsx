@@ -1,6 +1,6 @@
 import { IconComponent } from "../../utils/types";
 
-export const Home: IconComponent = (props) => {
+export const AddMember: IconComponent = (props) => {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"

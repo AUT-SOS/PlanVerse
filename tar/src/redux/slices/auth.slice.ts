@@ -33,7 +33,7 @@ const AuthSlice = createSlice({
 export const AuthActions = {
   ...AuthSlice.actions,
   getMyUserId: createAction("Auth/GetMyId"),
-  otpVerify: createAction("Auth/OtpVerify"),
+  otpVerify: createAction<string>("Auth/OtpVerify"),
   resendEmail: createAction("Auth/ResendEmail")
 };
 export const AuthReducers = AuthSlice.reducer;
