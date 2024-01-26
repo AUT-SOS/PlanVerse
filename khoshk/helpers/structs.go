@@ -1,5 +1,9 @@
 package helpers
 
-type ProjectMembers struct {
+type ProjectMember struct {
 	Email string
+}
+
+type ProjectID struct {
+	ProjectID int
 }

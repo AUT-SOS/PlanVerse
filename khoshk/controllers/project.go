@@ -86,7 +86,7 @@ func ShareProjectHandler(ctx echo.Context) error {
 	if result.Error != nil {
 		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
-	var projectMembers []helpers.ProjectMembers
+	var projectMembers []helpers.ProjectMember
 	result = configs.DB.Table("projects").Select([]string{"users.email"}).Joins("inner join projects_members on projects.id = projects_members.project_id").Joins("inner join users on users.id = projects_members.user_id").Where("projects.id = ?", req.ProjectID).Scan(&projectMembers)
 	for i, _ := range req.Emails {
 		for j, _ := range projectMembers {
@@ -109,15 +109,17 @@ func ShowProjectHandler(ctx echo.Context) error {
 	if err := ctx.Bind(req); err != nil {
 		return ctx.JSON(http.StatusBadRequest, messages.InvalidRequestBody)
 	}
-	result := configs.DB.Select("project_id").Where("link = ?", req.Link).Scan(res)
+	var projectID helpers.ProjectID
+	result := configs.DB.Table("join_links").Select("project_id").Where("link = ?", req.Link).Scan(&projectID)
 	if result.Error != nil {
 		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
 	var project models.Project
-	result = configs.DB.Where("id = ?", res.ProjectID).Preload("Members").Find(&project)
+	result = configs.DB.Where("id = ?", projectID.ProjectID).Preload("Members").Find(&project)
 	if result.Error != nil {
 		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
+	res.ProjectID = projectID.ProjectID
 	res.Title = project.Title
 	res.BackGroundPic = project.BackGroundPic
 	res.MembersNumber = project.MembersNumber
