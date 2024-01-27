@@ -10,6 +10,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"net/http"
 	"strconv"
+	"sync"
 )
 
 func ProjectListHandler(ctx echo.Context) error {
@@ -89,14 +90,14 @@ func ShareProjectHandler(ctx echo.Context) error {
 	}
 	var projectMembers []helpers.ProjectMember
 	result = configs.DB.Table("projects").Select([]string{"users.email"}).Joins("inner join projects_members on projects.id = projects_members.project_id").Joins("inner join users on users.id = projects_members.user_id").Where("projects.id = ?", req.ProjectID).Scan(&projectMembers)
-	for i, _ := range req.Emails {
-		for j, _ := range projectMembers {
+	for i := range req.Emails {
+		for j := range projectMembers {
 			if projectMembers[j].Email == req.Emails[i] {
 				return ctx.JSON(http.StatusNotAcceptable, messages.AlreadyMember)
 			}
 		}
 	}
-	for i, _ := range req.Emails {
+	for i := range req.Emails {
 		go func(index int) {
 			services.SendMail("PlanVerse Invitation", fmt.Sprintf("you've been invited to %s project by %s!\nclick the link below to join to project:\n%s", project.Title, user.Username, joinLink.Link), []string{req.Emails[index]})
 		}(i)
@@ -263,3 +264,111 @@ func ChangeRoleAdminHandler(ctx echo.Context) error {
 	}
 	return ctx.JSON(http.StatusOK, messages.AdminRoleChanged)
 }
+
+func GetProjectHandler(ctx echo.Context) error {
+	res := new(models.GetProjectResponse)
+	projectID, err := strconv.Atoi(ctx.Param("project-id"))
+	if err != nil {
+		return ctx.JSON(http.StatusBadRequest, messages.WrongProjectID)
+	}
+	userIDCtx := ctx.Get("user_id")
+	userID := userIDCtx.(int)
+	var projectIDs []helpers.ProjectID
+	result := configs.DB.Table("projects_members").Select([]string{"project_id"}).Where("user_id = ?", userID).Scan(&projectIDs)
+	if result.Error != nil {
+		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
+	}
+	isMember := false
+	for _, project := range projectIDs {
+		if project.ProjectID == projectID {
+			isMember = true
+			break
+		}
+	}
+	if !isMember {
+		return ctx.JSON(http.StatusNotAcceptable, messages.NotMember)
+	}
+	result = configs.DB.Table("projects").Select([]string{"title", "back_ground_pic", "description", "owner_id", "members_number"}).Where("id = ?", projectID).Scan(res)
+	if result.Error != nil {
+		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
+	}
+	res.ID = projectID
+	return ctx.JSON(http.StatusOK, res)
+}
+
+func GetProjectMembersHandler(ctx echo.Context) error {
+	var res []models.GetMemberResponse
+	projectID, err := strconv.Atoi(ctx.Param("project-id"))
+	if err != nil {
+		return ctx.JSON(http.StatusBadRequest, messages.WrongProjectID)
+	}
+	userIDCtx := ctx.Get("user_id")
+	userID := userIDCtx.(int)
+	var projectIDs []helpers.ProjectID
+	result := configs.DB.Table("projects_members").Select([]string{"project_id"}).Where("user_id = ?", userID).Scan(&projectIDs)
+	if result.Error != nil {
+		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
+	}
+	isMember := false
+	for _, p := range projectIDs {
+		if p.ProjectID == projectID {
+			isMember = true
+			break
+		}
+	}
+	if !isMember {
+		return ctx.JSON(http.StatusNotAcceptable, messages.NotMember)
+	}
+	var project models.Project
+	result = configs.DB.Where("id = ?", projectID).Preload("Members").Find(&project)
+	if result.Error != nil {
+		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
+	}
+	res = make([]models.GetMemberResponse, len(project.Members))
+	showRoles := make([]helpers.ShowRole, len(project.Members))
+	var wg sync.WaitGroup
+	for i := range project.Members {
+		wg.Add(1)
+		go func(index int) {
+			defer wg.Done()
+			configs.DB.Table("projects_members").Select("is_admin").Where("project_id = ? and user_id = ?", projectID, project.Members[index].ID).Scan(&showRoles[index])
+			res[index] = models.GetMemberResponse{
+				ID:         int(project.Members[index].ID),
+				Username:   project.Members[index].Username,
+				Email:      project.Members[index].Email,
+				ProfilePic: project.Members[index].ProfilePic,
+				IsAdmin:    showRoles[index].IsAdmin,
+			}
+		}(i)
+	}
+	wg.Wait()
+	return ctx.JSON(http.StatusOK, res)
+}
+
+func EditProjectHandler(ctx echo.Context) error {
+	req := new(models.EditProjectRequest)
+	if err := ctx.Bind(req); err != nil {
+		return ctx.JSON(http.StatusBadRequest, messages.InvalidRequestBody)
+	}
+	projectID, err := strconv.Atoi(ctx.Param("project-id"))
+	if err != nil {
+		return ctx.JSON(http.StatusBadRequest, messages.WrongProjectID)
+	}
+	var project models.Project
+	result := configs.DB.Where("id = ?", projectID).Find(&project)
+	if result.Error != nil {
+		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
+	}
+	project.Title = req.Title
+	project.BackGroundPic = req.BackGroundPic
+	project.Description = req.Description
+	result = configs.DB.Save(&project)
+	if result.Error != nil {
+		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
+	}
+	return ctx.JSON(http.StatusOK, messages.ProjectEdited)
+}
+
+//func DeleteProjectHandler(ctx echo.Context) error {
+//
+//}

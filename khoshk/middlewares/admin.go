@@ -20,7 +20,7 @@ func AdminMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 		var showRole helpers.ShowRole
 		result := configs.DB.Table("projects_members").Select("is_admin").Where("project_id = ? and user_id = ?", projectID, userID).Scan(&showRole)
 		if result.Error != nil {
-			return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
+			return ctx.JSON(http.StatusNotAcceptable, messages.NotMember)
 		}
 		if !showRole.IsAdmin {
 			return ctx.JSON(http.StatusUnauthorized, messages.AdminAccess)

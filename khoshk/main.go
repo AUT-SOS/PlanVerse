@@ -51,8 +51,11 @@ func main() {
 	server.POST("/share-link", controllers.ShareProjectHandler)
 	server.POST("/show-project", controllers.ShowProjectHandler)
 	server.POST("/join-project/:project-id", controllers.JoinProjectHandler)
-	server.POST("/change-member-role/:project-id/:user-id", controllers.ChangeRoleMemberHandler, middlewares.AdminMiddleware)
-	server.POST("/change-admin-role/:project-id/:user-id", controllers.ChangeRoleAdminHandler)
+	server.POST("/promote/:project-id/:user-id", controllers.ChangeRoleMemberHandler, middlewares.AdminMiddleware)
+	server.POST("/demote/:project-id/:user-id", controllers.ChangeRoleAdminHandler)
+	server.GET("/get-project/:project-id", controllers.GetProjectHandler)
+	server.GET("/get-project-members/:project-id", controllers.GetProjectMembersHandler)
+	server.GET("/edit-project/:project-id", controllers.EditProjectHandler, middlewares.AdminMiddleware)
 
 	//start server
 	log.Fatal(server.Start("localhost:8080"))
