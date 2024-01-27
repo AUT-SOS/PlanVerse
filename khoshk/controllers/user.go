@@ -7,15 +7,14 @@ import (
 	"PlanVerse/models"
 	"PlanVerse/services"
 	"fmt"
+	"github.com/golang-jwt/jwt"
+	"github.com/labstack/echo/v4"
+	"golang.org/x/crypto/bcrypt"
 	"net/http"
 	"os"
 	"strconv"
 	"strings"
 	"time"
-
-	"github.com/golang-jwt/jwt"
-	"github.com/labstack/echo/v4"
-	"golang.org/x/crypto/bcrypt"
 )
 
 func RegisterHandler(ctx echo.Context) error {
@@ -32,7 +31,6 @@ func RegisterHandler(ctx echo.Context) error {
 		}
 	}
 	otp, err := helpers.GenerateRandomCode()
-	fmt.Println(otp)
 	if err != nil {
 		return ctx.JSON(http.StatusInternalServerError, messages.FailedToCreateCode)
 	}
@@ -75,7 +73,7 @@ func RegisterHandler(ctx echo.Context) error {
 
 func VerifyHandler(ctx echo.Context) error {
 	req := new(models.VerifyRequest)
-	res := new(models.Response)
+	res := new(models.UserResponse)
 	if err := ctx.Bind(req); err != nil {
 		return ctx.JSON(http.StatusBadRequest, messages.InvalidRequestBody)
 	}
@@ -128,7 +126,7 @@ func RefreshHandler(ctx echo.Context) error {
 
 func LoginHandler(ctx echo.Context) error {
 	req := new(models.LoginRequest)
-	res := new(models.Response)
+	res := new(models.UserResponse)
 	if err := ctx.Bind(req); err != nil {
 		return ctx.JSON(http.StatusBadRequest, messages.InvalidRequestBody)
 	}
@@ -188,15 +186,11 @@ func GetUserHandler(ctx echo.Context) error {
 	if err != nil {
 		return ctx.JSON(http.StatusBadRequest, messages.WrongUserID)
 	}
-	var user models.User
-	result := configs.DB.Where("id = ?", userID).Find(&user)
+	result := configs.DB.Table("users").Select([]string{"username", "email", "profile_pic"}).Where("id = ?", userID).Find(res)
 	if result.Error != nil {
 		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
 	res.ID = userID
-	res.Username = user.Username
-	res.Email = user.Email
-	res.ProfilePic = user.ProfilePic
 	return ctx.JSON(http.StatusOK, res)
 }
 
