@@ -51,6 +51,8 @@ func main() {
 	server.POST("/share-link", controllers.ShareProjectHandler)
 	server.POST("/show-project", controllers.ShowProjectHandler)
 	server.POST("/join-project/:project-id", controllers.JoinProjectHandler)
+	server.POST("/change-member-role/:project-id/:user-id", controllers.ChangeRoleMemberHandler, middlewares.AdminMiddleware)
+	server.POST("/change-admin-role/:project-id/:user-id", controllers.ChangeRoleAdminHandler)
 
 	//start server
 	log.Fatal(server.Start("localhost:8080"))

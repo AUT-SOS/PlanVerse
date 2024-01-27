@@ -202,3 +202,64 @@ func JoinProjectHandler(ctx echo.Context) error {
 	}
 	return ctx.JSON(http.StatusOK, messages.UserAddedToProject)
 }
+
+func ChangeRoleMemberHandler(ctx echo.Context) error {
+	projectID, err := strconv.Atoi(ctx.Param("project-id"))
+	if err != nil {
+		return ctx.JSON(http.StatusBadRequest, messages.WrongProjectID)
+	}
+	memberID, err := strconv.Atoi(ctx.Param("user-id"))
+	if err != nil {
+		return ctx.JSON(http.StatusBadRequest, messages.WrongUserID)
+	}
+	var showRole helpers.ShowRole
+	result := configs.DB.Table("projects_members").Where("project_id = ? and user_id = ?", projectID, memberID).Scan(&showRole)
+	if result.Error != nil {
+		return ctx.JSON(http.StatusNotAcceptable, messages.NotMember)
+	}
+	if showRole.IsAdmin {
+		return ctx.JSON(http.StatusNotAcceptable, messages.AlreadyAdmin)
+	}
+	result = configs.DB.Table("projects_members").Where("project_id = ? and user_id = ?", projectID, memberID).Update("is_admin", true)
+	if result.Error != nil {
+		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
+	}
+	return ctx.JSON(http.StatusOK, messages.MemberRoleChanged)
+}
+
+func ChangeRoleAdminHandler(ctx echo.Context) error {
+	projectID, err := strconv.Atoi(ctx.Param("project-id"))
+	if err != nil {
+		return ctx.JSON(http.StatusBadRequest, messages.WrongProjectID)
+	}
+	adminID, err := strconv.Atoi(ctx.Param("user-id"))
+	if err != nil {
+		return ctx.JSON(http.StatusBadRequest, messages.WrongUserID)
+	}
+	userIDCtx := ctx.Get("user_id")
+	userID := userIDCtx.(int)
+	var owner helpers.Owner
+	result := configs.DB.Table("projects").Select("owner_id").Where("id = ?", projectID).Scan(&owner)
+	if result.Error != nil {
+		return ctx.JSON(http.StatusNotAcceptable, messages.WrongProjectID)
+	}
+	if userID != owner.OwnerID {
+		return ctx.JSON(http.StatusNotAcceptable, messages.OwnerAccess)
+	}
+	if adminID == owner.OwnerID {
+		return ctx.JSON(http.StatusNotAcceptable, messages.OwnerChange)
+	}
+	var showRole helpers.ShowRole
+	result = configs.DB.Table("projects_members").Where("project_id = ? and user_id = ?", projectID, adminID).Scan(&showRole)
+	if result.Error != nil {
+		return ctx.JSON(http.StatusNotAcceptable, messages.NotMember)
+	}
+	if !showRole.IsAdmin {
+
+	}
+	result = configs.DB.Table("projects_members").Where("project_id = ? and user_id = ?", projectID, adminID).Update("is_admin", false)
+	if result.Error != nil {
+		return ctx.JSON(http.StatusNotAcceptable, messages.AlreadyMemberRole)
+	}
+	return ctx.JSON(http.StatusOK, messages.AdminRoleChanged)
+}

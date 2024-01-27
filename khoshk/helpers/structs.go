@@ -7,3 +7,11 @@ type ProjectMember struct {
 type ProjectID struct {
 	ProjectID int
 }
+
+type ShowRole struct {
+	IsAdmin bool
+}
+
+type Owner struct {
+	OwnerID int
+}

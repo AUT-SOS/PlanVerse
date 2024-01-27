@@ -32,7 +32,6 @@ func RegisterHandler(ctx echo.Context) error {
 		}
 	}
 	otp, err := helpers.GenerateRandomCode()
-	fmt.Println(otp)
 	if err != nil {
 		return ctx.JSON(http.StatusInternalServerError, messages.FailedToCreateCode)
 	}
