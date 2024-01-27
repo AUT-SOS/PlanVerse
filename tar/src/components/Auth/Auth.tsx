@@ -21,7 +21,7 @@ export const Auth: React.FC = () => {
   const authState = useSelector((state: RootState) => state.auth.authState);
   const navigate = useNavigate();
   if (authState === AuthState.Authenticated){
-    navigate("/dashboard")
+    navigate("/home")
   }
   const [isLogin, setIsLogin] = useState<boolean>(
     window.location.pathname !== "/signup"

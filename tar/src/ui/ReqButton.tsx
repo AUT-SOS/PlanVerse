@@ -49,3 +49,41 @@ export const ResendEmailButton: React.FC<Props> = (props) => {
     </a.div>
   );
 };
+
+export const ReqButton1: React.FC<Props> = (props) => {
+  return (
+    <a.div
+      {...props}
+      onClick={props.onClick}
+      className={classNames(
+        styles.ButtonWrapper1,
+        { [styles.isPending]: props.isPending, [styles.disable]: props.disable },
+        props.className
+      )}
+      style={{
+        ...props.style,
+      }}
+    >
+      {props.isPending ? <SpinningLoading size={20} /> : props.text}
+    </a.div>
+  );
+};
+
+export const HollowButton: React.FC<Props> = (props) => {
+  return (
+    <a.div
+      {...props}
+      onClick={props.onClick}
+      className={classNames(
+        styles.ButtonWrapperHollow,
+        { [styles.isPending]: props.isPending, [styles.disable]: props.disable },
+        props.className
+      )}
+      style={{
+        ...props.style,
+      }}
+    >
+      {props.isPending ? <SpinningLoading size={20} /> : props.text}
+    </a.div>
+  );
+};

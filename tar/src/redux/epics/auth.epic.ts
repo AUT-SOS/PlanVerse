@@ -1,27 +1,23 @@
 import { ofType } from "redux-observable";
 import { AuthActions } from "../slices/auth.slice";
 import {
-  EMPTY,
-  Observable,
   catchError,
   merge,
   mergeMap,
-  mergeMapTo,
   of,
-  timeout,
 } from "rxjs";
 import { API } from "../../api/API";
-import { Epic } from "./epic";
+import { Epic, handleError } from "./epic";
 import {
   AuthState,
   LoginForm,
   RequestState,
   SignupForm,
+  User,
 } from "../../utils/types";
-import { showFailToastMessage, showSuccessToastMessage } from "../../main";
+import { showSuccessToastMessage } from "../../main";
 import { ReqActions } from "../slices/req.slice";
-import { toast } from "react-toastify";
-import strings from "../../utils/text";
+import { UserActions } from "../slices/user.slice";
 
 export const loginEpic: Epic = (action$, state$) =>
   action$.pipe(
@@ -30,7 +26,7 @@ export const loginEpic: Epic = (action$, state$) =>
       const loginInfo = action.payload as LoginForm;
       return API.login(loginInfo.email!, loginInfo.password!).pipe(
         mergeMap((res) => {
-          document.cookie = `access_token=${res.responseHeaders.authorization}; expires=Tue, 19 Jan 2038 04:14:07 GMT"`;
+          document.cookie = `access_token=${res.responseHeaders.authorization}`;
           const uid = JSON.parse(JSON.stringify(res.response)).user_id;
           return merge(
             of(
@@ -39,7 +35,23 @@ export const loginEpic: Epic = (action$, state$) =>
                 myId: uid,
               })
             ),
-            of(ReqActions.setState({ requestState: RequestState.None }))
+            of(ReqActions.setState({ requestState: RequestState.None })),
+            API.getUser(uid).pipe(
+              mergeMap((res) => {
+                const resObj = res.response as any;
+                return of(
+                  UserActions.setMe({
+                    email: resObj.Email,
+                    username: resObj.Username,
+                    profilePic:
+                      resObj.ProfilePic.length > 0
+                        ? resObj.ProfilePic
+                        : "/public//DefaultPFP.jpg",
+                    id: uid,
+                  } as User)
+                );
+              })
+            )
           );
         }),
         handleError()
@@ -58,7 +70,7 @@ export const signupEpic: Epic = (action$, state$) =>
         signupInfo.username!
       ).pipe(
         mergeMap((res) => {
-          document.cookie = `access_token=${res.responseHeaders.authorization}; expires=Tue, 19 Jan 2038 04:14:07 GMT`;
+          document.cookie = `access_token=${res.responseHeaders.authorization}`;
 
           return merge(
             of(
@@ -83,11 +95,28 @@ export const getMyIdEpic: Epic = (action$, state$) =>
     mergeMap(() => {
       return API.getMyId().pipe(
         mergeMap((res) => {
+          const myId = JSON.stringify(res.response);
           return merge(
             of(AuthActions.setMyUserId(JSON.stringify(res.response))),
             of(
               AuthActions.changeAuthState({
                 authState: AuthState.Authenticated,
+              })
+            ),
+            API.getUser(myId).pipe(
+              mergeMap((res) => {
+                const resObj = res.response as any;
+                return of(
+                  UserActions.setMe({
+                    email: resObj.Email,
+                    username: resObj.Username,
+                    profilePic:
+                      resObj.ProfilePic.length > 0
+                        ? resObj.ProfilePic
+                        : "/public//DefaultPFP.jpg",
+                    id: myId,
+                  } as User)
+                );
               })
             )
           );
@@ -109,14 +138,31 @@ export const verificationEpic: Epic = (action$, state$) =>
     mergeMap((action) => {
       const otpPayload = action.payload as string;
       return API.otpVerify(otpPayload).pipe(
-        mergeMap(() => {
+        mergeMap((res) => {
+          const myId = JSON.stringify(res.response);
           return merge(
             of(
               AuthActions.changeAuthState({
                 authState: AuthState.Authenticated,
               })
             ),
-            of(ReqActions.setState({ requestState: RequestState.None }))
+            of(ReqActions.setState({ requestState: RequestState.None })),
+            API.getUser(myId).pipe(
+              mergeMap((res) => {
+                const resObj = res.response as any;
+                return of(
+                  UserActions.setMe({
+                    email: resObj.Email,
+                    username: resObj.Username,
+                    profilePic:
+                      resObj.ProfilePic.length > 0
+                        ? resObj.ProfilePic
+                        : undefined,
+                    id: myId,
+                  } as User)
+                );
+              })
+            )
           );
         }),
         handleError("Wrong Code")
@@ -139,9 +185,3 @@ export const resendEmailEpic: Epic = (action$, state$) =>
       );
     })
   );
-
-const handleError = <T>(message? : string) =>
-  catchError<T, Observable<any>>((error) => {
-    showFailToastMessage(message ?? error.message);
-    return of(ReqActions.setState({ requestState: RequestState.Error }));
-  });

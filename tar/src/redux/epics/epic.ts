@@ -1,8 +1,12 @@
 import { StateObservable, combineEpics } from "redux-observable";
 import { getMyIdEpic, loginEpic, resendEmailEpic, signupEpic, verificationEpic } from "./auth.epic";
 import { Action, AnyAction } from "redux";
-import { Observable } from "rxjs";
+import { Observable, catchError, of } from "rxjs";
 import { RootState } from "../store";
+import { showFailToastMessage } from "../../main";
+import { RequestState } from "../../utils/types";
+import { ReqActions } from "../slices/req.slice";
+import { createProjectEpic } from "./project.epic";
 
 export interface Epic<
   Input extends Action = any,
@@ -15,11 +19,17 @@ export interface Epic<
 }
 
 
+export const handleError = <T>(message? : string) =>
+  catchError<T, Observable<any>>((error) => {
+    showFailToastMessage(message ?? error.message);
+    return of(ReqActions.setState({ requestState: RequestState.Error }));
+  });
 
 export const rootEpic = combineEpics(
       signupEpic,
       loginEpic,
       verificationEpic,
       getMyIdEpic,
-      resendEmailEpic
+      resendEmailEpic,
+      createProjectEpic
 )

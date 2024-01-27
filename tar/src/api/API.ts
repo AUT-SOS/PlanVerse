@@ -48,7 +48,7 @@ export const API = {
       }
     );
   },
-  resendEmail(){
+  resendEmail() {
     return ajax.post(
       `${END_POINT}/resend-email`,
       {},
@@ -56,7 +56,27 @@ export const API = {
         ...API_HEADERS,
         Authorization: getAccessToken(),
       }
-    )
+    );
+  },
+  getUser(id: string) {
+    return ajax.get(`${END_POINT}/get-user/${id}`, {
+      ...API_HEADERS,
+      Authorization: getAccessToken(),
+    });
+  },
+  createProject(title: string, description: string, picture: string){
+    return ajax.post(
+      `${END_POINT}/create`,
+      {
+        title,
+        picture,
+        description
+      },
+      {
+        ...API_HEADERS,
+        Authorization: getAccessToken(),
+      }
+    );
   }
 };
 

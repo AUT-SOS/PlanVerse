@@ -1,0 +1,231 @@
+@use "/src/palette.scss";
+
+.HomeContainer {
+  position: absolute;
+  display: flex;
+  background-color: var(--color-neutrals-n-00);
+  box-shadow: var(--shadow);
+  border-radius: 10px;
+  overflow: hidden;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  width: auto;
+  
+}
+
+.Background {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+}
+
+.HomeContentWrapper {
+  background-color: transparent;
+  min-width: none;
+  width: 90vw;
+  height: 70vh;
+  @include palette.sm {
+    min-width: 500px;
+    width: 50vw;
+  }
+}
+
+.InfoContainer {
+  width: 100%;
+  height: auto;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  @include palette.sm {
+    flex-wrap: nowrap;
+  }
+  border-image: var(--gradiant) 10;
+  border-width: 0 0 2px 0;
+  border-style: solid;
+  padding-bottom: 30px;
+}
+
+.Email {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  max-width: 250px;
+  color: var(--color-neutrals-n-200);
+}
+
+.UserInitials {
+  display: flex;
+  flex-direction: column;
+}
+
+.img {
+  width: 15%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+}
+
+.EditProfileBtn {
+  width: 100%;
+  min-width: 110px;
+  @include palette.sm {
+    width: 20%;
+    margin-left: auto;
+  }
+}
+
+.ProjectSection {
+  display: flex;
+  padding: 20px 0;
+  width: 100%;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 30px;
+  max-height: 80%;
+}
+
+.ProjectsList {
+  overflow-y: auto;
+  display: flex;
+  padding: 10px;
+  place-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.ProjCard {
+  flex: 1;
+  aspect-ratio: 1;
+  background-color: var(--proj-card-bg);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: transform 250ms ease-in-out;
+  min-width: 90px;
+  &:hover {
+    transform: translateY(-5px);
+  }
+  &.AddMax{
+    max-width: 23%;
+  }
+}
+
+.AddProj {
+  border-image: var(--gradiant) 10;
+  border-width: 2px;
+  border-style: solid;
+  border: 2px solid red;
+  overflow: hidden;
+  background-color: transparent;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+}
+
+
+.ProjCardImg{
+  width: 100%;
+  height: 60%;
+  object-fit: cover;
+  border-radius: 10px 10px 0 0;
+}
+
+.ProjInf{
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 0 5px;
+  justify-content: space-between;
+}
+
+.ProjCardName{
+  max-width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size:large;
+}
+
+.MembersInf{
+  display: flex;
+  align-self: flex-end;
+  align-items: center;
+  gap: 10px;
+}
+
+.EditProfileContentWrapper{
+  background-color: transparent;
+  min-width: none;
+  width: 90%;
+  height: 70vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  @include palette.sm {
+    min-width: 500px;
+    width: 30vw;
+  }
+}
+
+.CreateProjectContentWrapper{
+  background-color: transparent;
+  min-width: none;
+  width: 90%;
+  height: auto;
+  gap: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  @include palette.sm {
+    min-width: 500px;
+    width: 30vw;
+  }
+}
+
+.CreateProjImg{
+  width: 100%;
+  object-fit: cover;
+  height: 100%;
+}
+
+.PicWrapper{
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  cursor: pointer;
+  height: 30vh;
+  border-radius: 10px;
+}
+
+.PicWrapper:hover .ImgCover{
+  opacity: 1;
+
+}
+
+
+
+.ImgCover{
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background: rgba( #000000, 0.5);
+  z-index: 1;
+  top: 0;
+  left: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: white;
+  opacity: 0;
+  transition: opacity 200ms ease-in-out;
+}
+
+.ButtonsWrapper{
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  margin-top: auto;
+}

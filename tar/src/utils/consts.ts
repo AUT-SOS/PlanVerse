@@ -51,7 +51,9 @@ export const THEMES : {light: Record<string, string>, dark: Record<string, strin
     "--color-neutrals-n-50-rgb": " 193, 199, 208",
 
     "--color-background": " #f3e0e2",
-   " --color-pink": "#fc5c7d"
+   " --color-pink": "#fc5c7d",
+   "--proj-card-bg": "var(--color-neutrals-n-30)"
+
   },
   dark: {
     "--color-neutrals-n-50": " #c5c5c5",
@@ -94,7 +96,8 @@ export const THEMES : {light: Record<string, string>, dark: Record<string, strin
     "--color-neutrals-n-100-rgb": " 193, 199, 208",
     
     "--color-background": " #1A1B1C",
-    " --color-pink": "#1b0a0d"
+    " --color-pink": "#1b0a0d",
+    "--proj-card-bg": "var(--color-neutrals-n-10)"
 
   },
 };

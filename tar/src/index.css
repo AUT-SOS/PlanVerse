@@ -1,4 +1,5 @@
 @import url("https://fonts.googleapis.com/css?family=Montserrat:400,800");
+
 * {
   box-sizing: border-box;
   font-family: 'Montserrat', sans-serif;
@@ -19,7 +20,24 @@
   -webkit-text-size-adjust: 100%;
   overflow: hidden;
 }
+
 * {
   margin: 0;
   padding: 0;
+}
+
+::-webkit-scrollbar {
+  width: 7px;
+  height: 10px;
+}
+
+/* Track */
+::-webkit-scrollbar-track {
+  background: var(--lightestgrey);
+}
+
+/* Handle */
+::-webkit-scrollbar-thumb {
+  background: var(--color-neutrals-n-10);
+  border-radius: 5px;
 }

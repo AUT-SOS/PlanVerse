@@ -15,6 +15,7 @@ export enum RequestTypes {
   Signup,
   EmailValidate,
   ResendEmail,
+  CreateProject
 }
 
 export type LoginForm = {
@@ -29,10 +30,10 @@ export type SignupForm = {
 };
 
 export type User = {
-  id: number;
+  id: string;
   email: string;
   username: string;
-  profile_pic: string;
+  profilePic: string;
 };
 
 export type Project = {
@@ -44,6 +45,20 @@ export type Project = {
   background: string;
   link: string;
 };
+
+export type SmallProject = {
+  project_id: string,
+  title: string,
+  picture: string,
+  members_number: string,
+  is_admin: boolean
+}
+
+export type CreateProject = {
+  title: string,
+  picture: string,
+  description: string,
+}
 
 export type Task = {
   id: number;
