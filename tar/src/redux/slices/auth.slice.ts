@@ -18,7 +18,6 @@ const AuthSlice = createSlice({
     changeAuthState(state, action: PayloadAction<AuthSliceType>) {
       state.authState = action.payload.authState;
       state.exInfo = action.payload.exInfo;
-      state.myId = action.payload.myId;
     },
     login(_state, _action: PayloadAction<LoginForm>) {},
     signup(state, _action: PayloadAction<SignupForm>) {

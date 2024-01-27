@@ -8,7 +8,7 @@ import {
 } from "../utils/regex";
 import strings from "../utils/text";
 
-type Props = React.HTMLProps<HTMLInputElement> & {
+type Props = React.HTMLProps<HTMLInputElement>  & {
   error?: boolean
 };
 
@@ -87,3 +87,15 @@ export const DigitInput = forwardRef<
     />
   );
 });
+
+export const TextAreaInputBar: React.FC<React.HTMLProps<HTMLTextAreaElement>> = (props) => {
+  return (
+    <textarea
+      type="text"
+      title={strings.auth.username_lim}
+      {...props}
+      className={classNames(props.className, styles.commonInput)}
+      value={props.value}
+    />
+  );
+};

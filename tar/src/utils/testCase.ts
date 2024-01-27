@@ -1,32 +1,32 @@
 import { RANDOM_IMAGE } from "./consts";
-import { Project, User } from "./types";
+import { Project, SmallProject, User } from "./types";
 
 export const user1 : User = {
-      id: 1,
+      id: "1",
       email: "",
       username: "Shayan",
-      profile_pic: RANDOM_IMAGE,
+      profilePic: RANDOM_IMAGE,
 }
 
 export const user2 : User = {
-      id: 2,
+      id: "2",
       email: "",
       username: "Arshia",
-      profile_pic: RANDOM_IMAGE,
+      profilePic: RANDOM_IMAGE,
 }
 
 export const user3 : User = {
-      id: 3,
+      id: "3",
       email: "",
       username: "Sara",
-      profile_pic: RANDOM_IMAGE,
+      profilePic: RANDOM_IMAGE,
 }
 
 export const user4 : User = {
-      id: 4,
+      id: "4",
       email: "",
       username: "Sepehr",
-      profile_pic: RANDOM_IMAGE,
+      profilePic: RANDOM_IMAGE,
 }
 
 export const project1 : Project = {
@@ -37,4 +37,20 @@ export const project1 : Project = {
       members: [user1, user2, user3],
       background: RANDOM_IMAGE,
       link: ""
+}
+
+export const sProj1 : SmallProject = {
+      project_id: "1",
+      title: "Planverse",
+      picture: RANDOM_IMAGE,
+      members_number: "5",
+      is_admin: true,
+}
+
+export const sProj2 : SmallProject = {
+      project_id: "2",
+      title: "Test2",
+      picture: "",
+      members_number: "5",
+      is_admin: true,
 }

@@ -66,6 +66,8 @@
   --Small: 500px;
   --Medium: 1000px;
   --Large: 1500px;
+
+  --proj-card-bg: var(--color-neutrals-n-30);
 }
 
 $breakpoints: (
@@ -97,3 +99,4 @@ $breakpoints: (
     @content
   }
 }
+
