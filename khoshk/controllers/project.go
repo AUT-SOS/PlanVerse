@@ -369,6 +369,32 @@ func EditProjectHandler(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, messages.ProjectEdited)
 }
 
-//func DeleteProjectHandler(ctx echo.Context) error {
-//
-//}
+func DeleteProjectHandler(ctx echo.Context) error {
+	projectID, err := strconv.Atoi(ctx.Param("project-id"))
+	if err != nil {
+		return ctx.JSON(http.StatusBadRequest, messages.WrongProjectID)
+	}
+	userIDCtx := ctx.Get("user_id")
+	userID := userIDCtx.(int)
+	var owner helpers.Owner
+	result := configs.DB.Table("projects").Select("owner_id").Where("id = ?", projectID).Scan(&owner)
+	if result.Error != nil {
+		return ctx.JSON(http.StatusNotAcceptable, messages.WrongProjectID)
+	}
+	if userID != owner.OwnerID {
+		return ctx.JSON(http.StatusNotAcceptable, messages.OwnerAccess)
+	}
+	result = configs.DB.Unscoped().Where("project_id = ?", projectID).Delete(&models.ProjectsMembers{})
+	if result.Error != nil {
+		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
+	}
+	result = configs.DB.Unscoped().Where("project_id = ?", projectID).Delete(&models.JoinLink{})
+	if result.Error != nil {
+		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
+	}
+	result = configs.DB.Unscoped().Where("id = ?", projectID).Delete(&models.Project{})
+	if result.Error != nil {
+		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
+	}
+	return ctx.JSON(http.StatusOK, messages.ProjectDeleted)
+}

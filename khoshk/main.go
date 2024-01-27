@@ -55,7 +55,8 @@ func main() {
 	server.POST("/demote/:project-id/:user-id", controllers.ChangeRoleAdminHandler)
 	server.GET("/get-project/:project-id", controllers.GetProjectHandler)
 	server.GET("/get-project-members/:project-id", controllers.GetProjectMembersHandler)
-	server.GET("/edit-project/:project-id", controllers.EditProjectHandler, middlewares.AdminMiddleware)
+	server.POST("/edit-project/:project-id", controllers.EditProjectHandler, middlewares.AdminMiddleware)
+	server.POST("/delete-project/:project-id", controllers.DeleteProjectHandler)
 
 	//start server
 	log.Fatal(server.Start("localhost:8080"))
