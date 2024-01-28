@@ -67,6 +67,12 @@ func main() {
 	server.POST("/delete-state/:project-id/:state-id", controllers.DeleteStateHandler, middlewares.AdminMiddleware)
 	server.GET("/get-state/:state-id", controllers.GetStateHandler)
 
+	//task api
+	server.POST("/create-task/:project-id", controllers.CreateTaskHandler, middlewares.AdminMiddleware)
+	server.POST("/change-state/:project-id", controllers.ChangeTaskStateHandler)
+	server.POST("/add-performer/:project-id", controllers.AddPerformerHandler, middlewares.AdminMiddleware)
+	server.POST("/remove-performer/:project-id", controllers.RemovePerformerHandler, middlewares.AdminMiddleware)
+
 	//start server
 	log.Fatal(server.Start("localhost:8080"))
 }

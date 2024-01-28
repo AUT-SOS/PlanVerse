@@ -92,6 +92,10 @@ func DetectMin(projectID int) (int, error) {
 		if result.Error != nil {
 			return 0, errors.New(strings.ToLower(messages.InternalError))
 		}
+		result = configs.DB.Unscoped().Where("project_id = ?", projectID).Delete(&models.State{})
+		if result.Error != nil {
+			return 0, errors.New(strings.ToLower(messages.InternalError))
+		}
 		result = configs.DB.Unscoped().Where("project_id = ?", projectID).Delete(&models.JoinLink{})
 		if result.Error != nil {
 			return 0, errors.New(strings.ToLower(messages.InternalError))
