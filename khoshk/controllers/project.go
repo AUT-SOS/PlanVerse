@@ -45,6 +45,27 @@ func CreateProjectHandler(ctx echo.Context) error {
 	joinLink := models.JoinLink{
 		Link: link,
 	}
+	defaultStates := make([]models.State, 4)
+	defaultStates[0] = models.State{
+		Title:           "Backlog",
+		BackGroundColor: "24D0CD",
+		AdminAccess:     false,
+	}
+	defaultStates[1] = models.State{
+		Title:           "To-Do",
+		BackGroundColor: "D0D613",
+		AdminAccess:     false,
+	}
+	defaultStates[2] = models.State{
+		Title:           "Doing",
+		BackGroundColor: "DE731A",
+		AdminAccess:     false,
+	}
+	defaultStates[3] = models.State{
+		Title:           "Done",
+		BackGroundColor: "54D826",
+		AdminAccess:     true,
+	}
 	newProject := models.Project{
 		Title:         req.Title,
 		Description:   req.Description,
@@ -53,6 +74,7 @@ func CreateProjectHandler(ctx echo.Context) error {
 		MembersNumber: 1,
 		Members:       []models.User{user},
 		JoinLink:      joinLink,
+		States:        defaultStates,
 	}
 	if err = configs.DB.Create(&newProject).Error; err != nil {
 		return ctx.JSON(http.StatusInternalServerError, messages.FailedToCreateProject)
@@ -67,7 +89,6 @@ func CreateProjectHandler(ctx echo.Context) error {
 	}
 	res.ProjectID = int(newProject.ID)
 	res.Link = joinLink.Link
-	res.Message = messages.ProjectCreated
 	return ctx.JSON(http.StatusOK, res)
 }
 
@@ -76,25 +97,44 @@ func ShareProjectHandler(ctx echo.Context) error {
 	if err := ctx.Bind(req); err != nil {
 		return ctx.JSON(http.StatusBadRequest, messages.InvalidRequestBody)
 	}
+	projectID, err := strconv.Atoi(ctx.Param("project-id"))
+	if err != nil {
+		return ctx.JSON(http.StatusBadRequest, messages.WrongProjectID)
+	}
 	userIDCtx := ctx.Get("user_id")
 	userID := userIDCtx.(int)
+	var projectIDs []helpers.ProjectID
+	result := configs.DB.Table("projects_members").Select("project_id").Where("user_id = ?", userID).Scan(&projectIDs)
+	if result.Error != nil {
+		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
+	}
+	exist := false
+	for _, id := range projectIDs {
+		if id.ProjectID == projectID {
+			exist = true
+			break
+		}
+	}
+	if !exist {
+		return ctx.JSON(http.StatusNotAcceptable, messages.NotMember)
+	}
 	var user models.User
-	result := configs.DB.Select("username").Where("id = ?", userID).Find(&user)
+	result = configs.DB.Select("username").Where("id = ?", userID).Find(&user)
 	if result.Error != nil {
 		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
 	var joinLink models.JoinLink
-	result = configs.DB.Select("link").Where("project_id = ?", req.ProjectID).Find(&joinLink)
+	result = configs.DB.Select("link").Where("project_id = ?", projectID).Find(&joinLink)
 	if result.Error != nil {
 		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
 	var project models.Project
-	result = configs.DB.Where("id = ?", req.ProjectID).Preload("InvitedMembers").Find(&project)
+	result = configs.DB.Where("id = ?", projectID).Preload("InvitedMembers").Find(&project)
 	if result.Error != nil {
 		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
 	var projectMembers []helpers.ProjectMember
-	result = configs.DB.Table("projects").Select([]string{"users.email"}).Joins("inner join projects_members on projects.id = projects_members.project_id").Joins("inner join users on users.id = projects_members.user_id").Where("projects.id = ?", req.ProjectID).Scan(&projectMembers)
+	result = configs.DB.Table("projects").Select([]string{"users.email"}).Joins("inner join projects_members on projects.id = projects_members.project_id").Joins("inner join users on users.id = projects_members.user_id").Where("projects.id = ?", projectID).Scan(&projectMembers)
 	for i := range req.Emails {
 		for j := range projectMembers {
 			if projectMembers[j].Email == req.Emails[i] {
@@ -396,6 +436,10 @@ func DeleteProjectHandler(ctx echo.Context) error {
 	}
 	if userID != owner.OwnerID {
 		return ctx.JSON(http.StatusNotAcceptable, messages.OwnerAccess)
+	}
+	result = configs.DB.Unscoped().Where("project_id = ?", projectID).Delete(&models.InvitedMembers{})
+	if result.Error != nil {
+		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
 	result = configs.DB.Unscoped().Where("project_id = ?", projectID).Delete(&models.ProjectsMembers{})
 	if result.Error != nil {
