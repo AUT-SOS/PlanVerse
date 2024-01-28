@@ -28,3 +28,11 @@ type StateObject struct {
 type CreateStateResponse struct {
 	StateID int `json:"state_id"`
 }
+
+type GetStateResponse struct {
+	ID              int    `json:"state_id"`
+	ProjectID       int    `json:"project_id"`
+	Title           string `json:"title"`
+	BackGroundColor string `json:"back_ground_color"`
+	AdminAccess     bool   `json:"admin_access"`
+}
