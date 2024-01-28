@@ -38,6 +38,13 @@ type PerformerRequest struct {
 	PerformerID int `json:"performer_id"`
 }
 
+type EditTaskRequest struct {
+	TaskID          int    `json:"task_id"`
+	Title           string `json:"title"`
+	BackGroundColor string `json:"back_ground_color"`
+	Description     string `json:"description"`
+}
+
 type CreateTaskResponse struct {
 	TaskID int `json:"task_id"`
 }

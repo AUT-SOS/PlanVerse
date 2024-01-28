@@ -45,23 +45,18 @@ func CreateProjectHandler(ctx echo.Context) error {
 	joinLink := models.JoinLink{
 		Link: link,
 	}
-	defaultStates := make([]models.State, 4)
+	defaultStates := make([]models.State, 3)
 	defaultStates[0] = models.State{
-		Title:           "Backlog",
-		BackGroundColor: "24D0CD",
-		AdminAccess:     false,
-	}
-	defaultStates[1] = models.State{
 		Title:           "To-Do",
 		BackGroundColor: "D0D613",
 		AdminAccess:     false,
 	}
-	defaultStates[2] = models.State{
+	defaultStates[1] = models.State{
 		Title:           "Doing",
 		BackGroundColor: "DE731A",
 		AdminAccess:     false,
 	}
-	defaultStates[3] = models.State{
+	defaultStates[2] = models.State{
 		Title:           "Done",
 		BackGroundColor: "54D826",
 		AdminAccess:     true,
