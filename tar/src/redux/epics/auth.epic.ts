@@ -41,10 +41,9 @@ export const loginEpic: Epic = (action$, state$) =>
                 const resObj = res.response as any;
                 return of(
                   UserActions.setMe({
-                    email: resObj.Email,
-                    username: resObj.Username,
-                    profilePic:
-                      resObj.ProfilePic.length > 0
+                    ...resObj,
+                    profile_pic:
+                      resObj.profile_pic.length > 0
                         ? resObj.ProfilePic
                         : "/public//DefaultPFP.jpg",
                     id: uid,
@@ -106,12 +105,12 @@ export const getMyIdEpic: Epic = (action$, state$) =>
             API.getUser(myId).pipe(
               mergeMap((res) => {
                 const resObj = res.response as any;
+                
                 return of(
                   UserActions.setMe({
-                    email: resObj.Email,
-                    username: resObj.Username,
-                    profilePic:
-                      resObj.ProfilePic.length > 0
+                    ...resObj,
+                    profile_pic:
+                      resObj.profile_pic.length > 0
                         ? resObj.ProfilePic
                         : "/public//DefaultPFP.jpg",
                     id: myId,
@@ -152,12 +151,11 @@ export const verificationEpic: Epic = (action$, state$) =>
                 const resObj = res.response as any;
                 return of(
                   UserActions.setMe({
-                    email: resObj.Email,
-                    username: resObj.Username,
-                    profilePic:
-                      resObj.ProfilePic.length > 0
+                    ...resObj,
+                    profile_pic:
+                      resObj.profile_pic.length > 0
                         ? resObj.ProfilePic
-                        : undefined,
+                        : "/public//DefaultPFP.jpg",
                     id: myId,
                   } as User)
                 );

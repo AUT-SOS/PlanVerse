@@ -1,4 +1,4 @@
-import React, { useCallback, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "../../redux/store";
 import { SpinningLoading } from "../../ui/SpinningLoading";
@@ -34,13 +34,14 @@ enum HomeTypes {
 }
 
 export const Home: React.FC = (props) => {
-  const { userInf, isAuth } = useSelector((state: RootState) => ({
+  const { userInf, isAuth, userId } = useSelector((state: RootState) => ({
     userInf: state.users.me,
     isAuth: state.auth.authState === AuthState.Authenticated,
+    userId: state.auth.myId,
   }));
   const [currState, setCurrState] = useState<HomeTypes>(HomeTypes.Overview);
   const navigate = useNavigate();
-  if (!isAuth) {
+  if (!isAuth && userId === undefined) {
     navigate("/login");
   }
   const transition = useTransition(currState, {
@@ -102,14 +103,17 @@ type OverViewProps = {
 
 const HomeOverview: React.FC<OverViewProps> = (props) => {
   const breakPoint = useBreakPoints();
-  const projects = [];
-  console.log(props.userInfo);
+  const dispatch = useDispatch();
+  useEffect(() => {
+    dispatch(ProjectActions.getMyProjects());
+  }, []);
+  const projList = useSelector((state: RootState) => state.project.myProjects) ?? [];
 
   return (
     <div className={styles.HomeContentWrapper}>
       <div className={styles.InfoContainer}>
         <img
-          src={props.userInfo.profilePic}
+          src={props.userInfo.profile_pic}
           className={classNames(styles.img)}
         />
         <div className={styles.UserInitials}>
@@ -130,7 +134,7 @@ const HomeOverview: React.FC<OverViewProps> = (props) => {
         <div className={styles.ProjectsList}>
           <div
             className={classNames(styles.ProjCard, styles.AddProj, {
-              [styles.AddMax]: projects.length < 4,
+              [styles.AddMax]: projList.length < 4,
             })}
             onClick={() => props.setCurrState(HomeTypes.CreateProject)}
           >
@@ -139,11 +143,9 @@ const HomeOverview: React.FC<OverViewProps> = (props) => {
               color="var(--color-button)"
             />
           </div>
-          <ProjCard project={sProj1} addMax />
-
-          <ProjCard project={sProj1} addMax />
-          <ProjCard project={sProj1} addMax />
-          <ProjCard project={sProj1} addMax />
+          {projList.map((item, index) => {
+            return <ProjCard key={index} project={item} addMax />;
+          })}
         </div>
       </div>
     </div>
@@ -157,7 +159,7 @@ type EditProfileProps = {
 const EditProfile: React.FC<EditProfileProps> = (props) => {
   return (
     <div className={styles.EditProfileContentWrapper}>
-      <img src={props.userInf.profilePic} className={classNames(styles.img)} />
+      <img src={props.userInf.profile_pic} className={classNames(styles.img)} />
       <ReqButton1 text="Save" />
     </div>
   );
@@ -177,11 +179,10 @@ const CreateProject: React.FC<CreajeProjectProps> = (props) => {
   const [info, setInfo] = useState<CreateProjInfo>({
     title: "",
     picture: "/public//defaultProjPFP.png",
-    description: ""
+    description: "",
   });
   const { isPending } = useRequestStates(RequestTypes.CreateProject);
   const ref = useRef<HTMLInputElement>(null);
-  const [file, setFile] = useState<File | undefined>();
 
   const onFileClick = () => {
     ref.current && ref.current.click();
@@ -192,26 +193,37 @@ const CreateProject: React.FC<CreajeProjectProps> = (props) => {
     const selectedFile = target.files && target.files[0];
     const reader = new FileReader();
     reader.onload = function (event) {
-      setInfo((prev) => ({ ...prev, picture: event.target?.result?.toString() ?? prev.picture }));
+      setInfo((prev) => ({
+        ...prev,
+        picture: event.target?.result?.toString() ?? prev.picture,
+      }));
     };
     selectedFile && reader.readAsDataURL(selectedFile);
   };
 
-  const changeUserName = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-    setInfo((prev) => ({...prev, title: event.target.value}))
-  }, [])
+  const changeUserName = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      setInfo((prev) => ({ ...prev, title: event.target.value }));
+    },
+    []
+  );
 
-  const changeDescription = useCallback((event: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setInfo((prev) => ({...prev, description: event.target.value}))
-  }, [])
+  const changeDescription = useCallback(
+    (event: React.ChangeEvent<HTMLTextAreaElement>) => {
+      setInfo((prev) => ({ ...prev, description: event.target.value }));
+    },
+    []
+  );
   const dispatch = useDispatch();
   const handleConfirm = useCallback(() => {
-    dispatch(ReqActions.setState({
-      requestState: RequestState.Pending,
-      reqType: RequestTypes.CreateProject
-    }))
-    dispatch(ProjectActions.createProject(info))
-  }, [])
+    dispatch(
+      ReqActions.setState({
+        requestState: RequestState.Pending,
+        reqType: RequestTypes.CreateProject,
+      })
+    );
+    dispatch(ProjectActions.createProject(info));
+  }, [info]);
 
   return (
     <div className={styles.CreateProjectContentWrapper}>
@@ -245,8 +257,7 @@ const CreateProject: React.FC<CreajeProjectProps> = (props) => {
           onChange={changeUserName}
         />
         <TextAreaInputBar
-        onChange={changeDescription
-        }
+          onChange={changeDescription}
           value={info.description}
           style={{
             maxHeight: "300px",
@@ -263,7 +274,13 @@ const CreateProject: React.FC<CreajeProjectProps> = (props) => {
           onClick={() => props.setCurrState(HomeTypes.Overview)}
           style={{ width: 100 }}
         />
-        <ReqButton1 text="Create Project" style={{ width: 150 }} isPending={isPending} onClick={handleConfirm}/>
+        <ReqButton1
+          text="Create Project"
+          style={{ width: 150 }}
+          isPending={isPending}
+          onClick={handleConfirm}
+          disable={info.title.length < 3}
+        />
       </div>
     </div>
   );
@@ -272,12 +289,14 @@ const CreateProject: React.FC<CreajeProjectProps> = (props) => {
 type ProjCardProps = {
   project: SmallProject;
   addMax?: boolean;
+  key: number;
 };
 
 const ProjCard: React.FC<ProjCardProps> = (props) => {
   const navigate = useNavigate();
   return (
     <div
+      key={props.key}
       className={classNames(styles.ProjCard, { [styles.AddMax]: props.addMax })}
       onClick={() => navigate("/project/" + props.project.project_id)}
     >

@@ -6,7 +6,7 @@ import { RootState } from "../store";
 import { showFailToastMessage } from "../../main";
 import { RequestState } from "../../utils/types";
 import { ReqActions } from "../slices/req.slice";
-import { createProjectEpic } from "./project.epic";
+import { createProjectEpic, getMyProjectsEpic } from "./project.epic";
 
 export interface Epic<
   Input extends Action = any,
@@ -31,5 +31,6 @@ export const rootEpic = combineEpics(
       verificationEpic,
       getMyIdEpic,
       resendEmailEpic,
-      createProjectEpic
+      createProjectEpic,
+      getMyProjectsEpic
 )

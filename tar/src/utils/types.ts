@@ -33,7 +33,7 @@ export type User = {
   id: string;
   email: string;
   username: string;
-  profilePic: string;
+  profile_pic: string;
 };
 
 export type Project = {

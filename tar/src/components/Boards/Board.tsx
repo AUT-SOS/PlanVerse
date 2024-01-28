@@ -8,7 +8,6 @@ type Props = {};
 export const Board: React.FC<Props> = (props) => {
   const groupId = useParams();
   const project = project1;
-  console.log(">>", groupId);
   return (
     <div
       className={styles.BoardWrapper}
