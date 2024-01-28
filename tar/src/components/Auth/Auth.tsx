@@ -18,9 +18,10 @@ import { ReqButton } from "../../ui/ReqButton";
 import { AuthActions } from "../../redux/slices/auth.slice";
 
 export const Auth: React.FC = () => {
-  const authState = useSelector((state: RootState) => state.auth.authState);
+  const {authState, myId }= useSelector((state: RootState) => ({authState: state.auth.authState, myId: state.auth.myId}));
   const navigate = useNavigate();
-  if (authState === AuthState.Authenticated){
+  
+  if (authState === AuthState.Authenticated || myId){    
     navigate("/home")
   }
   const [isLogin, setIsLogin] = useState<boolean>(

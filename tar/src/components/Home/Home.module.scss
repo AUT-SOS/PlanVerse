@@ -93,21 +93,21 @@
   place-items: center;
   gap: 10px;
   flex-wrap: wrap;
+  align-items: center;
 }
 
 .ProjCard {
-  flex: 1;
   aspect-ratio: 1;
   background-color: var(--proj-card-bg);
   border-radius: 10px;
   cursor: pointer;
   transition: transform 250ms ease-in-out;
-  min-width: 90px;
   &:hover {
     transform: translateY(-5px);
   }
-  &.AddMax{
-    max-width: 23%;
+  width: 150px;
+  @include palette.sm{
+    width: 170px;
   }
 }
 
@@ -121,7 +121,11 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 100%;
+  width: 150px;
+  @include palette.sm{
+    width: 170px;
+  }
+  aspect-ratio: 1;
 }
 
 

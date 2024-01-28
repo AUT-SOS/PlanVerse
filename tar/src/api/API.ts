@@ -64,20 +64,26 @@ export const API = {
       Authorization: getAccessToken(),
     });
   },
-  createProject(title: string, description: string, picture: string){
+  createProject(title: string, description: string, picture: string) {
     return ajax.post(
       `${END_POINT}/create`,
       {
         title,
         picture,
-        description
+        description,
       },
       {
         ...API_HEADERS,
         Authorization: getAccessToken(),
       }
     );
-  }
+  },
+  getMyProjects() {
+    return ajax.get(`${END_POINT}/list`, {
+      ...API_HEADERS,
+      Authorization: getAccessToken(),
+    });
+  },
 };
 
 const getAccessToken = () => getCookie("access_token");

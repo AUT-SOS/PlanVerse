@@ -6,6 +6,7 @@ import { combineReducers } from "redux";
 import { ReqReducer } from "./slices/req.slice";
 import { ConfigReducers } from "./slices/configs.slice";
 import { UserReducers } from "./slices/user.slice";
+import { ProjectReducer } from "./slices/project.slice";
 
 const epicMiddleware = createEpicMiddleware<
   AnyAction,
@@ -18,6 +19,7 @@ const reducer = combineReducers({
   req: ReqReducer,
   config: ConfigReducers,
   users: UserReducers,
+  project: ProjectReducer
 });
 export type RootState = ReturnType<typeof reducer>;
 export const store = configureStore({
