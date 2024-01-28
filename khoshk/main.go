@@ -63,6 +63,8 @@ func main() {
 	//state api
 	server.GET("/list-state/:project-id", controllers.StateListHandler)
 	server.POST("/create-state/:project-id", controllers.CreateStateHandler, middlewares.AdminMiddleware)
+	server.POST("/edit-state/:project-id", controllers.EditStateHandler, middlewares.AdminMiddleware)
+	server.POST("/delete-state/:project-id/:state-id", controllers.DeleteStateHandler, middlewares.AdminMiddleware)
 
 	//start server
 	log.Fatal(server.Start("localhost:8080"))

@@ -74,26 +74,29 @@ func EditStateHandler(ctx echo.Context) error {
 	if err := ctx.Bind(req); err != nil {
 		return ctx.JSON(http.StatusBadRequest, messages.InvalidRequestBody)
 	}
-	projectID, err := strconv.Atoi(ctx.Param("project-id"))
-	if err != nil {
-		return ctx.JSON(http.StatusBadRequest, messages.WrongProjectID)
-	}
-	var project models.Project
-	result := configs.DB.Where("id = ?", projectID).Preload("States").Find(&project)
+	var state models.State
+	result := configs.DB.Where("id = ?", req.ID).Find(&state)
 	if result.Error != nil {
-		return ctx.JSON(http.StatusNotAcceptable, messages.WrongProjectID)
+		return ctx.JSON(http.StatusNotAcceptable, messages.WrongStateID)
 	}
-	for i := 0; i < len(project.States); i++ {
-		if int(project.States[i].ID) == req.ID {
-			project.States[i].Title = req.Title
-			project.States[i].BackGroundColor = req.BackGroundColor
-			project.States[i].AdminAccess = req.AdminAccess
-			break
-		}
-	}
-	result = configs.DB.Save(&project)
+	state.Title = req.Title
+	state.BackGroundColor = req.BackGroundColor
+	state.AdminAccess = req.AdminAccess
+	result = configs.DB.Save(&state)
 	if result.Error != nil {
 		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
 	return ctx.JSON(http.StatusOK, messages.StateEdited)
+}
+
+func DeleteStateHandler(ctx echo.Context) error {
+	stateID, err := strconv.Atoi(ctx.Param("state-id"))
+	if err != nil {
+		return ctx.JSON(http.StatusBadRequest, messages.WrongProjectID)
+	}
+	result := configs.DB.Unscoped().Where("id = ?", stateID).Delete(&models.State{})
+	if result.Error != nil {
+		return ctx.JSON(http.StatusNotAcceptable, messages.WrongStateID)
+	}
+	return ctx.JSON(http.StatusOK, messages.StateDeleted)
 }
