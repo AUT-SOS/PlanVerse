@@ -18,6 +18,13 @@ type CreateStateRequest struct {
 	AdminAccess     bool   `json:"admin_access"`
 }
 
+type StateObject struct {
+	ID              int    `json:"state_id"`
+	Title           string `json:"title"`
+	BackGroundColor string `json:"back_ground_color"`
+	AdminAccess     bool   `json:"admin_access"`
+}
+
 type CreateStateResponse struct {
 	StateID int `json:"state_id"`
 }
