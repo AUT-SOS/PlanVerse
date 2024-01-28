@@ -65,6 +65,7 @@ func main() {
 	server.POST("/create-state/:project-id", controllers.CreateStateHandler, middlewares.AdminMiddleware)
 	server.POST("/edit-state/:project-id", controllers.EditStateHandler, middlewares.AdminMiddleware)
 	server.POST("/delete-state/:project-id/:state-id", controllers.DeleteStateHandler, middlewares.AdminMiddleware)
+	server.GET("/get-state/:state-id", controllers.GetStateHandler)
 
 	//start server
 	log.Fatal(server.Start("localhost:8080"))

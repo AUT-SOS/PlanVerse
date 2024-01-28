@@ -92,11 +92,48 @@ func EditStateHandler(ctx echo.Context) error {
 func DeleteStateHandler(ctx echo.Context) error {
 	stateID, err := strconv.Atoi(ctx.Param("state-id"))
 	if err != nil {
-		return ctx.JSON(http.StatusBadRequest, messages.WrongProjectID)
+		return ctx.JSON(http.StatusBadRequest, messages.WrongStateID)
 	}
 	result := configs.DB.Unscoped().Where("id = ?", stateID).Delete(&models.State{})
 	if result.Error != nil {
 		return ctx.JSON(http.StatusNotAcceptable, messages.WrongStateID)
 	}
 	return ctx.JSON(http.StatusOK, messages.StateDeleted)
+}
+
+func GetStateHandler(ctx echo.Context) error {
+	res := new(models.GetStateResponse)
+	stateID, err := strconv.Atoi(ctx.Param("state-id"))
+	if err != nil {
+		return ctx.JSON(http.StatusBadRequest, messages.WrongStateID)
+	}
+	var projectID helpers.ProjectID
+	result := configs.DB.Table("states").Select("project_id").Where("id = ?", stateID).Scan(&projectID)
+	if err != nil {
+		return ctx.JSON(http.StatusBadRequest, messages.WrongStateID)
+	}
+	userIDCtx := ctx.Get("user_id")
+	userID := userIDCtx.(int)
+	var projectIDs []helpers.ProjectID
+	result = configs.DB.Table("projects_members").Select("project_id").Where("user_id = ?", userID).Scan(&projectIDs)
+	if result.Error != nil {
+		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
+	}
+	exist := false
+	for _, id := range projectIDs {
+		if id.ProjectID == projectID.ProjectID {
+			exist = true
+			break
+		}
+	}
+	if !exist {
+		return ctx.JSON(http.StatusNotAcceptable, messages.NotMember)
+	}
+	result = configs.DB.Table("states").Select([]string{"title", "back_ground_color", "admin_access"}).Where("id = ?", stateID).Scan(res)
+	if result.Error != nil {
+		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
+	}
+	res.ID = stateID
+	res.ProjectID = projectID.ProjectID
+	return ctx.JSON(http.StatusOK, res)
 }
