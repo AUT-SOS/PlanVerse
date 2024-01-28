@@ -439,7 +439,7 @@ func DeleteProjectHandler(ctx echo.Context) error {
 	}
 	result = configs.DB.Unscoped().Where("project_id = ?", projectID).Delete(&models.InvitedMembers{})
 	if result.Error != nil {
-		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
+		return ctx.JSON(http.StatusNotAcceptable, messages.WrongProjectID)
 	}
 	result = configs.DB.Unscoped().Where("project_id = ?", projectID).Delete(&models.ProjectsMembers{})
 	if result.Error != nil {
