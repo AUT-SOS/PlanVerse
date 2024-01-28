@@ -91,8 +91,27 @@ func EditStateHandler(ctx echo.Context) error {
 	if err := ctx.Bind(req); err != nil {
 		return ctx.JSON(http.StatusBadRequest, messages.InvalidRequestBody)
 	}
+	projectID, err := strconv.Atoi(ctx.Param("project-id"))
+	if err != nil {
+		return ctx.JSON(http.StatusBadRequest, messages.WrongProjectID)
+	}
+	var stateIDs []int
+	result := configs.DB.Table("states").Select("id").Where("project_id = ?", projectID).Scan(&stateIDs)
+	if result.Error != nil {
+		return ctx.JSON(http.StatusNotAcceptable, messages.WrongProjectID)
+	}
+	exist := false
+	for _, id := range stateIDs {
+		if id == req.ID {
+			exist = true
+			break
+		}
+	}
+	if !exist {
+		return ctx.JSON(http.StatusNotAcceptable, messages.StateNotInProject)
+	}
 	var state models.State
-	result := configs.DB.Where("id = ?", req.ID).Find(&state)
+	result = configs.DB.Where("id = ?", req.ID).Find(&state)
 	if result.Error != nil {
 		return ctx.JSON(http.StatusNotAcceptable, messages.WrongStateID)
 	}
@@ -107,13 +126,50 @@ func EditStateHandler(ctx echo.Context) error {
 }
 
 func DeleteStateHandler(ctx echo.Context) error {
+	projectID, err := strconv.Atoi(ctx.Param("project-id"))
+	if err != nil {
+		return ctx.JSON(http.StatusBadRequest, messages.WrongProjectID)
+	}
 	stateID, err := strconv.Atoi(ctx.Param("state-id"))
 	if err != nil {
 		return ctx.JSON(http.StatusBadRequest, messages.WrongStateID)
 	}
-	result := configs.DB.Unscoped().Where("id = ?", stateID).Delete(&models.State{})
+	var stateIDs []int
+	result := configs.DB.Table("states").Select("id").Where("project_id = ?", projectID).Scan(&stateIDs)
 	if result.Error != nil {
-		return ctx.JSON(http.StatusNotAcceptable, messages.WrongStateID)
+		return ctx.JSON(http.StatusNotAcceptable, messages.WrongProjectID)
+	}
+	exist := false
+	for _, id := range stateIDs {
+		if id == stateID {
+			exist = true
+			break
+		}
+	}
+	if !exist {
+		return ctx.JSON(http.StatusNotAcceptable, messages.StateNotInProject)
+	}
+	var taskIDs []int
+	result = configs.DB.Table("tasks").Select("id").Where("state_id = ?", stateID).Scan(&taskIDs)
+	if result.Error != nil {
+		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
+	}
+	var wg *sync.WaitGroup
+	for i := range taskIDs {
+		wg.Add(1)
+		go func(index int, wg *sync.WaitGroup) {
+			defer wg.Done()
+			configs.DB.Unscoped().Where("task_id = ?", taskIDs[index]).Delete(&models.TasksPerformers{})
+		}(i, wg)
+	}
+	wg.Wait()
+	result = configs.DB.Unscoped().Where("state_id = ?", stateID).Delete(&models.Task{})
+	if result.Error != nil {
+		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
+	}
+	result = configs.DB.Unscoped().Where("id = ?", stateID).Delete(&models.State{})
+	if result.Error != nil {
+		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
 	return ctx.JSON(http.StatusOK, messages.StateDeleted)
 }

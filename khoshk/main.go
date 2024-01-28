@@ -73,6 +73,7 @@ func main() {
 	server.POST("/add-performer/:project-id", controllers.AddPerformerHandler, middlewares.AdminMiddleware)
 	server.POST("/remove-performer/:project-id", controllers.RemovePerformerHandler, middlewares.AdminMiddleware)
 	server.POST("/edit-task/:project-id", controllers.EditTaskHandler, middlewares.AdminMiddleware)
+	server.POST("/delete-task/:project-id/:task-id", controllers.DeleteTaskHandler, middlewares.AdminMiddleware)
 
 	//start server
 	log.Fatal(server.Start("localhost:8080"))

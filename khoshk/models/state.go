@@ -34,7 +34,7 @@ type StateListResponse struct {
 	Title           string     `json:"title"`
 	BackGroundColor string     `json:"back_ground_color"`
 	AdminAccess     bool       `json:"admin_access"`
-	Tasks           []TaskShow `json:"tasks-id"`
+	Tasks           []TaskShow `json:"tasks"`
 }
 
 type GetStateResponse struct {

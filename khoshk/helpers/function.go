@@ -12,6 +12,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -92,6 +93,25 @@ func DetectMin(projectID int) (int, error) {
 		if result.Error != nil {
 			return 0, errors.New(strings.ToLower(messages.InternalError))
 		}
+		var stateIDs []int
+		result = configs.DB.Table("states").Select("id").Where("project_id = ?", projectID).Scan(&stateIDs)
+		if result.Error != nil {
+			return 0, errors.New(strings.ToLower(messages.InternalError))
+		}
+		var wg *sync.WaitGroup
+		for i := range stateIDs {
+			wg.Add(1)
+			go func(index int, wg *sync.WaitGroup) {
+				defer wg.Done()
+				var taskIDs []int
+				result = configs.DB.Table("tasks").Select("id").Where("state_id = ?", stateIDs[index]).Scan(&taskIDs)
+				for j := range taskIDs {
+					configs.DB.Unscoped().Where("task_id = ?", taskIDs[j]).Delete(&models.TasksPerformers{})
+				}
+				result = configs.DB.Unscoped().Where("state_id = ?", stateIDs[index]).Delete(&models.Task{})
+			}(i, wg)
+		}
+		wg.Wait()
 		result = configs.DB.Unscoped().Where("project_id = ?", projectID).Delete(&models.State{})
 		if result.Error != nil {
 			return 0, errors.New(strings.ToLower(messages.InternalError))
