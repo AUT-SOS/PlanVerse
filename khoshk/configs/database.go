@@ -44,6 +44,10 @@ func ConnectToDatabase() {
 		if err != nil {
 			log.Fatalf("Failed to set up join table: %v", err)
 		}
+		err = db.SetupJoinTable(&models.Task{}, "Performers", &models.TasksPerformers{})
+		if err != nil {
+			log.Fatalf("Failed to set up join table: %v", err)
+		}
 		err = db.AutoMigrate(&models.User{})
 		if err != nil {
 			log.Fatalf("Failed to migrate user tabel: %v", err)

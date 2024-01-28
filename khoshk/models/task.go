@@ -28,9 +28,14 @@ type CreateTaskRequest struct {
 	Description     string `json:"description"`
 }
 
-type ChangeTaskState struct {
+type ChangeTaskStateRequest struct {
 	TaskID  int `json:"task_id"`
 	StateID int `json:"state_id"`
+}
+
+type PerformerRequest struct {
+	TaskID      int `json:"task_id"`
+	PerformerID int `json:"performer_id"`
 }
 
 type CreateTaskResponse struct {
