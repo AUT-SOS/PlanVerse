@@ -24,8 +24,7 @@ type CreateProjectRequest struct {
 }
 
 type ShareProjectRequest struct {
-	ProjectID string   `json:"project_id"`
-	Emails    []string `json:"emails"`
+	Emails []string `json:"emails"`
 }
 
 type ShowProjectRequest struct {
@@ -49,7 +48,6 @@ type EditProjectRequest struct {
 type CreateProjectResponse struct {
 	ProjectID int    `json:"project_id"`
 	Link      string `json:"join_link"`
-	Message   string `json:"message"`
 }
 
 type ShowProjectResponse struct {

@@ -48,9 +48,9 @@ func main() {
 	server.POST("/delete-account", controllers.DeleteUserHandler)
 
 	//project api
-	server.GET("/list", controllers.ProjectListHandler)
-	server.POST("/create", controllers.CreateProjectHandler)
-	server.POST("/share-link", controllers.ShareProjectHandler)
+	server.GET("/list-project", controllers.ProjectListHandler)
+	server.POST("/create-project", controllers.CreateProjectHandler)
+	server.POST("/share-link/:project-id", controllers.ShareProjectHandler)
 	server.POST("/show-project", controllers.ShowProjectHandler)
 	server.POST("/join-project/:project-id", controllers.JoinProjectHandler)
 	server.POST("/promote/:project-id/:user-id", controllers.ChangeRoleMemberHandler, middlewares.AdminMiddleware)
@@ -59,6 +59,10 @@ func main() {
 	server.GET("/get-project-members/:project-id", controllers.GetProjectMembersHandler)
 	server.POST("/edit-project/:project-id", controllers.EditProjectHandler, middlewares.AdminMiddleware)
 	server.POST("/delete-project/:project-id", controllers.DeleteProjectHandler)
+
+	//state api
+	server.GET("/list-state/:project-id", controllers.StateListHandler)
+	server.POST("/create-state/:project-id", controllers.CreateStateHandler, middlewares.AdminMiddleware)
 
 	//start server
 	log.Fatal(server.Start("localhost:8080"))

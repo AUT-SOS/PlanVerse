@@ -1,11 +1,23 @@
 package models
 
+import "gorm.io/gorm"
+
 type State struct {
-	ID              uint    `gorm:"primaryKey"`
+	gorm.Model
 	Title           string  `gorm:"not null"`
 	BackGroundColor string  `gorm:"not null"`
 	AdminAccess     bool    `gorm:"not null"`
 	ProjectID       int     `gorm:"not null"`
 	Project         Project `gorm:"foreignKey:ProjectID"`
 	Tasks           []Task  `gorm:"foreignKey:StateID"`
+}
+
+type CreateStateRequest struct {
+	Title           string `json:"title"`
+	BackGroundColor string `json:"back_ground_color"`
+	AdminAccess     bool   `json:"admin_access"`
+}
+
+type CreateStateResponse struct {
+	StateID int `json:"state_id"`
 }
