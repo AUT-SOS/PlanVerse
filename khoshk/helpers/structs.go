@@ -1,5 +1,7 @@
 package helpers
 
+import "time"
+
 type ProjectMember struct {
 	Email string
 }
@@ -14,4 +16,9 @@ type ShowRole struct {
 
 type Owner struct {
 	OwnerID int
+}
+
+type Admin struct {
+	UserID        int
+	PromotionTime time.Time
 }

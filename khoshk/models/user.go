@@ -30,6 +30,13 @@ type LoginRequest struct {
 	Password string `json:"password"`
 }
 
+type EditUserRequest struct {
+	Username   string `json:"username"`
+	Password   string `json:"password"`
+	Email      string `json:"email"`
+	ProfilePic string `json:"profile_pic"`
+}
+
 type Claims struct {
 	UserID int `json:"user_id"`
 	jwt.StandardClaims
