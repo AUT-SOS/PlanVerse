@@ -36,6 +36,10 @@ func ConnectToDatabase() {
 		if err != nil {
 			log.Fatalf("Failed to set up join table: %v", err)
 		}
+		err = db.SetupJoinTable(&models.Project{}, "Members", &models.ProjectsMembers{})
+		if err != nil {
+			log.Fatalf("Failed to set up join table: %v", err)
+		}
 		err = db.SetupJoinTable(&models.Project{}, "InvitedMembers", &models.InvitedMembers{})
 		if err != nil {
 			log.Fatalf("Failed to set up join table: %v", err)

@@ -136,10 +136,10 @@ func LoginHandler(ctx echo.Context) error {
 		return ctx.JSON(http.StatusBadRequest, messages.WrongEmail)
 	}
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password)); err != nil {
-		return ctx.JSON(http.StatusUnauthorized, messages.PasswordIncorrect)
+		return ctx.JSON(http.StatusNotAcceptable, messages.PasswordIncorrect)
 	}
 	if !user.IsVerified {
-		return ctx.JSON(http.StatusUnauthorized, messages.UserNotVerified)
+		return ctx.JSON(http.StatusNotAcceptable, messages.UserNotVerified)
 	}
 	accessToken, err := helpers.GenerateToken(int(user.ID), time.Hour)
 	if err != nil {
@@ -198,4 +198,65 @@ func GetUserIDHandler(ctx echo.Context) error {
 	userIDCtx := ctx.Get("user_id")
 	userID := userIDCtx.(int)
 	return ctx.JSON(http.StatusOK, userID)
+}
+
+func EditUserHandler(ctx echo.Context) error {
+	req := new(models.EditUserRequest)
+	if err := ctx.Bind(req); err != nil {
+		return ctx.JSON(http.StatusBadRequest, messages.InvalidRequestBody)
+	}
+	userIDCtx := ctx.Get("user_id")
+	userID := userIDCtx.(int)
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, messages.FailedPasswordHashGeneration)
+	}
+	var user models.User
+	result := configs.DB.Where("id = ?", userID).Find(&user)
+	if result.Error != nil {
+		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
+	}
+	user.Username = req.Username
+	user.Password = string(hashedPassword)
+	user.Email = req.Email
+	user.ProfilePic = req.ProfilePic
+	result = configs.DB.Save(&user)
+	if result.Error != nil {
+		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
+	}
+	return ctx.JSON(http.StatusOK, messages.UserEdited)
+}
+
+func DeleteUserHandler(ctx echo.Context) error {
+	userIDCtx := ctx.Get("user_id")
+	userID := userIDCtx.(int)
+	var user models.User
+	result := configs.DB.Where("id = ?", uint(userID)).Preload("Projects").Find(&user)
+	if result.Error != nil {
+		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
+	}
+	projects := user.Projects
+	result = configs.DB.Unscoped().Where("user_id = ?", userID).Delete(&models.ProjectsMembers{})
+	if result.Error != nil {
+		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
+	}
+	result = configs.DB.Unscoped().Where("id = ?", userID).Delete(&models.User{})
+	if result.Error != nil {
+		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
+	}
+	for _, project := range projects {
+		if project.OwnerID == userID {
+			newOwnerID, err := helpers.DetectMin(int(project.ID))
+			if err != nil {
+				return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
+			}
+			if newOwnerID != 0 {
+				result = configs.DB.Table("projects").Where("id = ?", project.ID).Update("owner_id", newOwnerID)
+				if result.Error != nil {
+					return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
+				}
+			}
+		}
+	}
+	return ctx.JSON(http.StatusOK, messages.UserAccountDeleted)
 }

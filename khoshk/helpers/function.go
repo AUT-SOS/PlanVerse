@@ -76,3 +76,65 @@ func CheckMail(email string) error {
 	}
 	return nil
 }
+
+func DetectMin(projectID int) (int, error) {
+	var admins []Admin
+	result := configs.DB.Table("projects_members").Select([]string{"promotion_time", "user_id"}).Where("project_id = ?", projectID).Scan(&admins)
+	if result.Error != nil {
+		return 0, errors.New(strings.ToLower(messages.InternalError))
+	}
+	if len(admins) == 0 {
+		result = configs.DB.Table("projects").Where("id = ?", projectID).Update("members_number", 0)
+		if result.Error != nil {
+			return 0, errors.New(strings.ToLower(messages.InternalError))
+		}
+		result = configs.DB.Unscoped().Where("project_id = ?", projectID).Delete(&models.InvitedMembers{})
+		if result.Error != nil {
+			return 0, errors.New(strings.ToLower(messages.InternalError))
+		}
+		result = configs.DB.Unscoped().Where("project_id = ?", projectID).Delete(&models.JoinLink{})
+		if result.Error != nil {
+			return 0, errors.New(strings.ToLower(messages.InternalError))
+		}
+		result = configs.DB.Unscoped().Where("id = ?", projectID).Delete(&models.Project{})
+		if result.Error != nil {
+			return 0, errors.New(strings.ToLower(messages.InternalError))
+		}
+		return 0, nil
+	}
+	minTime := Admin{
+		UserID:        0,
+		PromotionTime: time.Now().Add(time.Hour),
+	}
+	counter := 0
+	for _, admin := range admins {
+		if !admin.PromotionTime.Equal(time.Time{}) {
+			counter++
+			if admin.PromotionTime.Before(minTime.PromotionTime) {
+				minTime = admin
+			}
+		}
+	}
+	if counter == 0 {
+		minTime = admins[0]
+		result = configs.DB.Table("projects_members").Where("project_id = ? and user_id = ?", projectID, minTime.UserID).Update("is_admin", true)
+		if result.Error != nil {
+			return 0, errors.New(strings.ToLower(messages.InternalError))
+		}
+		result = configs.DB.Table("projects_members").Where("project_id = ? and user_id = ?", projectID, minTime.UserID).Update("promotion_time", time.Now())
+		if result.Error != nil {
+			return 0, errors.New(strings.ToLower(messages.InternalError))
+		}
+		result = configs.DB.Table("projects").Where("id = ?", projectID).Update("members_number", len(admins))
+		if result.Error != nil {
+			return 0, errors.New(strings.ToLower(messages.InternalError))
+		}
+		return minTime.UserID, nil
+	} else {
+		result = configs.DB.Table("projects").Where("id = ?", projectID).Update("members_number", len(admins))
+		if result.Error != nil {
+			return 0, errors.New(strings.ToLower(messages.InternalError))
+		}
+		return minTime.UserID, nil
+	}
+}

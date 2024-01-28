@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"strconv"
 	"sync"
+	"time"
 )
 
 func ProjectListHandler(ctx echo.Context) error {
@@ -57,6 +58,10 @@ func CreateProjectHandler(ctx echo.Context) error {
 		return ctx.JSON(http.StatusInternalServerError, messages.FailedToCreateProject)
 	}
 	result = configs.DB.Table("projects_members").Where("project_id = ?", newProject.ID).Update("is_admin", true)
+	if result.Error != nil {
+		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
+	}
+	result = configs.DB.Table("projects_members").Where("project_id = ?", newProject.ID).Update("promotion_time", time.Now())
 	if result.Error != nil {
 		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
@@ -225,6 +230,10 @@ func ChangeRoleMemberHandler(ctx echo.Context) error {
 	if result.Error != nil {
 		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
+	result = configs.DB.Table("projects_members").Where("project_id = ? and user_id = ?", projectID, memberID).Update("promotion_time", time.Now())
+	if result.Error != nil {
+		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
+	}
 	return ctx.JSON(http.StatusOK, messages.MemberRoleChanged)
 }
 
@@ -261,6 +270,10 @@ func ChangeRoleAdminHandler(ctx echo.Context) error {
 	result = configs.DB.Table("projects_members").Where("project_id = ? and user_id = ?", projectID, adminID).Update("is_admin", false)
 	if result.Error != nil {
 		return ctx.JSON(http.StatusNotAcceptable, messages.AlreadyMemberRole)
+	}
+	result = configs.DB.Table("projects_members").Where("project_id = ? and user_id = ?", projectID, adminID).Update("promotion_time", nil)
+	if result.Error != nil {
+		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
 	return ctx.JSON(http.StatusOK, messages.AdminRoleChanged)
 }

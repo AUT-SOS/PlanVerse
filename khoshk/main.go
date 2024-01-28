@@ -44,6 +44,8 @@ func main() {
 	server.POST("/resend-email", controllers.ResendEmailHandler)
 	server.GET("/get-user/:user-id", controllers.GetUserHandler)
 	server.GET("/get-my-user", controllers.GetUserIDHandler)
+	server.POST("/edit-profile", controllers.EditUserHandler)
+	server.POST("/delete-account", controllers.DeleteUserHandler)
 
 	//project api
 	server.GET("/list", controllers.ProjectListHandler)
