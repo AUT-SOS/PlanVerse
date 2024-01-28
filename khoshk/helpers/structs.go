@@ -22,3 +22,11 @@ type Admin struct {
 	UserID        int
 	PromotionTime time.Time
 }
+
+type TaskID struct {
+	ID int
+}
+
+type UserID struct {
+	UserID int
+}

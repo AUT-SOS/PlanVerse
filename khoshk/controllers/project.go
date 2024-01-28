@@ -300,16 +300,16 @@ func ChangeRoleAdminHandler(ctx echo.Context) error {
 		return ctx.JSON(http.StatusNotAcceptable, messages.OwnerChange)
 	}
 	var showRole helpers.ShowRole
-	result = configs.DB.Table("projects_members").Where("project_id = ? and user_id = ?", projectID, adminID).Scan(&showRole)
+	result = configs.DB.Table("projects_members").Select("is_admin").Where("project_id = ? and user_id = ?", projectID, adminID).Scan(&showRole)
 	if result.Error != nil {
 		return ctx.JSON(http.StatusNotAcceptable, messages.NotMember)
 	}
 	if !showRole.IsAdmin {
-
+		return ctx.JSON(http.StatusNotAcceptable, messages.AlreadyMemberRole)
 	}
 	result = configs.DB.Table("projects_members").Where("project_id = ? and user_id = ?", projectID, adminID).Update("is_admin", false)
 	if result.Error != nil {
-		return ctx.JSON(http.StatusNotAcceptable, messages.AlreadyMemberRole)
+		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
 	result = configs.DB.Table("projects_members").Where("project_id = ? and user_id = ?", projectID, adminID).Update("promotion_time", nil)
 	if result.Error != nil {
@@ -382,7 +382,7 @@ func GetProjectMembersHandler(ctx echo.Context) error {
 	var wg sync.WaitGroup
 	for i := range project.Members {
 		wg.Add(1)
-		go func(index int) {
+		go func(index int, wg *sync.WaitGroup) {
 			defer wg.Done()
 			configs.DB.Table("projects_members").Select("is_admin").Where("project_id = ? and user_id = ?", projectID, project.Members[index].ID).Scan(&showRoles[index])
 			res[index] = models.GetMemberResponse{
@@ -392,7 +392,7 @@ func GetProjectMembersHandler(ctx echo.Context) error {
 				ProfilePic: project.Members[index].ProfilePic,
 				IsAdmin:    showRoles[index].IsAdmin,
 			}
-		}(i)
+		}(i, &wg)
 	}
 	wg.Wait()
 	return ctx.JSON(http.StatusOK, res)
@@ -442,6 +442,10 @@ func DeleteProjectHandler(ctx echo.Context) error {
 		return ctx.JSON(http.StatusNotAcceptable, messages.WrongProjectID)
 	}
 	result = configs.DB.Unscoped().Where("project_id = ?", projectID).Delete(&models.ProjectsMembers{})
+	if result.Error != nil {
+		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
+	}
+	result = configs.DB.Unscoped().Where("project_id = ?", projectID).Delete(&models.State{})
 	if result.Error != nil {
 		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}

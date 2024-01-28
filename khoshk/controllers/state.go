@@ -8,10 +8,11 @@ import (
 	"github.com/labstack/echo/v4"
 	"net/http"
 	"strconv"
+	"sync"
 )
 
 func StateListHandler(ctx echo.Context) error {
-	var res []models.StateObject
+	var res []models.StateListResponse
 	projectID, err := strconv.Atoi(ctx.Param("project-id"))
 	if err != nil {
 		return ctx.JSON(http.StatusBadRequest, messages.WrongProjectID)
@@ -33,10 +34,26 @@ func StateListHandler(ctx echo.Context) error {
 	if !exist {
 		return ctx.JSON(http.StatusNotAcceptable, messages.NotMember)
 	}
-	result = configs.DB.Table("states").Select([]string{"title", "back_ground_color", "admin_access"}).Where("project_id = ?", projectID).Scan(&res)
+	result = configs.DB.Table("states").Select([]string{"id", "title", "back_ground_color", "admin_access"}).Where("project_id = ?", projectID).Scan(&res)
 	if result.Error != nil {
 		return ctx.JSON(http.StatusNotAcceptable, messages.WrongProjectID)
 	}
+	var wg sync.WaitGroup
+	for i := range res {
+		wg.Add(1)
+		go func(index int, wg *sync.WaitGroup) {
+			defer wg.Done()
+			var taskShows []models.TaskShow
+			result = configs.DB.Table("tasks").Select([]string{"id", "title", "back_ground_color"}).Where("state_id = ?", res[index].ID).Scan(&taskShows)
+			for j, task := range taskShows {
+				var performers []int
+				result = configs.DB.Table("tasks_performers").Select("user_id").Where("task_id = ?", task.ID).Scan(&performers)
+				taskShows[j].Performers = performers
+			}
+			res[index].Tasks = taskShows
+		}(i, &wg)
+	}
+	wg.Wait()
 	return ctx.JSON(http.StatusOK, res)
 }
 
