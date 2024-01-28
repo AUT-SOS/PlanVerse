@@ -45,23 +45,18 @@ func CreateProjectHandler(ctx echo.Context) error {
 	joinLink := models.JoinLink{
 		Link: link,
 	}
-	defaultStates := make([]models.State, 4)
+	defaultStates := make([]models.State, 3)
 	defaultStates[0] = models.State{
-		Title:           "Backlog",
-		BackGroundColor: "24D0CD",
-		AdminAccess:     false,
-	}
-	defaultStates[1] = models.State{
 		Title:           "To-Do",
 		BackGroundColor: "D0D613",
 		AdminAccess:     false,
 	}
-	defaultStates[2] = models.State{
+	defaultStates[1] = models.State{
 		Title:           "Doing",
 		BackGroundColor: "DE731A",
 		AdminAccess:     false,
 	}
-	defaultStates[3] = models.State{
+	defaultStates[2] = models.State{
 		Title:           "Done",
 		BackGroundColor: "54D826",
 		AdminAccess:     true,
@@ -445,6 +440,25 @@ func DeleteProjectHandler(ctx echo.Context) error {
 	if result.Error != nil {
 		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
+	var stateIDs []int
+	result = configs.DB.Table("states").Select("id").Where("project_id = ?", projectID).Scan(&stateIDs)
+	if result.Error != nil {
+		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
+	}
+	var wg *sync.WaitGroup
+	for i := range stateIDs {
+		wg.Add(1)
+		go func(index int, wg *sync.WaitGroup) {
+			defer wg.Done()
+			var taskIDs []int
+			result = configs.DB.Table("tasks").Select("id").Where("state_id = ?", stateIDs[index]).Scan(&taskIDs)
+			for j := range taskIDs {
+				configs.DB.Unscoped().Where("task_id = ?", taskIDs[j]).Delete(&models.TasksPerformers{})
+			}
+			result = configs.DB.Unscoped().Where("state_id = ?", stateIDs[index]).Delete(&models.Task{})
+		}(i, wg)
+	}
+	wg.Wait()
 	result = configs.DB.Unscoped().Where("project_id = ?", projectID).Delete(&models.State{})
 	if result.Error != nil {
 		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
