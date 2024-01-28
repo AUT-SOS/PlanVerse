@@ -69,6 +69,7 @@ func main() {
 
 	//task api
 	server.POST("/create-task/:project-id", controllers.CreateTaskHandler, middlewares.AdminMiddleware)
+	server.POST("/change-state/:project-id", controllers.ChangeTaskStateHandler)
 
 	//start server
 	log.Fatal(server.Start("localhost:8080"))
