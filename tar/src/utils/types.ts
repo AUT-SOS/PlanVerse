@@ -37,13 +37,12 @@ export type User = {
 };
 
 export type Project = {
-  id: number;
-  name: string;
-  owner: User;
-  admins: User[];
-  members: User[];
-  background: string;
-  link: string;
+  project_id: string;
+  title: string;
+  picture: string;
+  description: string;
+  owner_id: string;
+  members_number: number;
 };
 
 export type SmallProject = {
@@ -52,6 +51,14 @@ export type SmallProject = {
   picture: string,
   members_number: string,
   is_admin: boolean
+}
+
+export type Member = {
+  id: string,
+  username: string,
+  email: string,
+  profile_pic: string,
+  is_admin: boolean,
 }
 
 export type CreateProject = {
