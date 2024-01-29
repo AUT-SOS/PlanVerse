@@ -68,8 +68,28 @@ func ChangeTaskStateHandler(ctx echo.Context) error {
 	if err != nil {
 		return ctx.JSON(http.StatusBadRequest, messages.WrongProjectID)
 	}
+	userIDCtx := ctx.Get("user_id")
+	userID := userIDCtx.(int)
+	var projectIDs []int
+	result := configs.DB.Table("projects_members").Select("project_id").Where("user_id = ?", userID).Scan(&projectIDs)
+	if result.Error != nil {
+		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
+	}
+	if len(projectIDs) == 0 {
+		return ctx.JSON(http.StatusNotAcceptable, messages.WrongUserID)
+	}
+	exist := false
+	for _, id := range projectIDs {
+		if id == projectID {
+			exist = true
+			break
+		}
+	}
+	if !exist {
+		return ctx.JSON(http.StatusNotAcceptable, messages.NotMember)
+	}
 	var sourceStateID int
-	result := configs.DB.Table("tasks").Select("state_id").Where("id = ?", req.TaskID).Scan(&sourceStateID)
+	result = configs.DB.Table("tasks").Select("state_id").Where("id = ?", req.TaskID).Scan(&sourceStateID)
 	if err != nil {
 		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
@@ -107,8 +127,6 @@ func ChangeTaskStateHandler(ctx echo.Context) error {
 		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
 	if srcAdminAccess || desAdminAccess {
-		userIDCtx := ctx.Get("user_id")
-		userID := userIDCtx.(int)
 		var isAdmin bool
 		result = configs.DB.Table("projects_members").Select("is_admin").Where("project_id = ? and user_id = ?", projectID, userID).Scan(&isAdmin)
 		if result.Error != nil {
@@ -121,6 +139,7 @@ func ChangeTaskStateHandler(ctx echo.Context) error {
 		if result.Error != nil {
 			return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 		}
+		return ctx.JSON(http.StatusOK, messages.TaskStateChanged)
 	}
 	result = configs.DB.Table("tasks").Where("id = ?", req.TaskID).Update("state_id", req.StateID)
 	if result.Error != nil {
