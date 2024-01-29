@@ -348,7 +348,7 @@ func RemovePerformerHandler(ctx echo.Context) error {
 		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
 	go func() {
-		services.SendMail("PlanVerse Notification", fmt.Sprintf("you've been from %s task in %s project by %s!", taskTitle, projectTitle, username), []string{email})
+		services.SendMail("PlanVerse Notification", fmt.Sprintf("you've been removed from %s task in %s project by %s!", taskTitle, projectTitle, username), []string{email})
 	}()
 	return ctx.JSON(http.StatusOK, messages.PerformerRemoved)
 }

@@ -103,7 +103,7 @@ func DetectMin(projectID int) (int, error) {
 		if result.Error != nil {
 			return 0, errors.New(strings.ToLower(messages.InternalError))
 		}
-		var wg *sync.WaitGroup
+		var wg sync.WaitGroup
 		for i := range stateIDs {
 			wg.Add(1)
 			go func(index int, wg *sync.WaitGroup) {
@@ -114,7 +114,7 @@ func DetectMin(projectID int) (int, error) {
 					configs.DB.Unscoped().Where("task_id = ?", taskIDs[j]).Delete(&models.TasksPerformers{})
 				}
 				result = configs.DB.Unscoped().Where("state_id = ?", stateIDs[index]).Delete(&models.Task{})
-			}(i, wg)
+			}(i, &wg)
 		}
 		wg.Wait()
 		result = configs.DB.Unscoped().Where("project_id = ?", projectID).Delete(&models.State{})

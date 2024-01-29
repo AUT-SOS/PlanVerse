@@ -31,6 +31,7 @@ func RegisterHandler(ctx echo.Context) error {
 		}
 	}
 	otp, err := helpers.GenerateRandomCode()
+	fmt.Println(otp)
 	if err != nil {
 		return ctx.JSON(http.StatusInternalServerError, messages.FailedToCreateCode)
 	}
@@ -243,10 +244,6 @@ func DeleteUserHandler(ctx echo.Context) error {
 	if result.Error != nil {
 		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
-	result = configs.DB.Unscoped().Where("id = ?", userID).Delete(&models.User{})
-	if result.Error != nil {
-		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
-	}
 	for _, project := range projects {
 		if project.OwnerID == userID {
 			newOwnerID, err := helpers.DetectMin(int(project.ID))
@@ -260,6 +257,10 @@ func DeleteUserHandler(ctx echo.Context) error {
 				}
 			}
 		}
+	}
+	result = configs.DB.Unscoped().Where("id = ?", userID).Delete(&models.User{})
+	if result.Error != nil {
+		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
 	return ctx.JSON(http.StatusOK, messages.UserAccountDeleted)
 }
