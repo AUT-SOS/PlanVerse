@@ -206,7 +206,30 @@ func GetStateHandler(ctx echo.Context) error {
 	if result.Error != nil {
 		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
+	var taskIDs []int
+	result = configs.DB.Table("tasks").Select("id").Where("state_id = ?", stateID).Scan(&taskIDs)
+	if result.Error != nil {
+		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
+	}
+	var wg sync.WaitGroup
+	var mu sync.Mutex
+	for i := range taskIDs {
+		wg.Add(1)
+		go func(index int, wg *sync.WaitGroup, mu *sync.Mutex) {
+			defer wg.Done()
+			var task models.GetTaskResponse
+			configs.DB.Table("tasks").Select([]string{"title", "back_ground_color", "description"}).Where("id = ?", taskIDs[index]).Scan(&task)
+			var performerIDs []int
+			configs.DB.Table("tasks_performers").Select("user_id").Where("task_id = ?", taskIDs[index]).Scan(&performerIDs)
+			task.ID = taskIDs[index]
+			task.Performers = performerIDs
+			mu.Lock()
+			res.Tasks = append(res.Tasks, task)
+			mu.Unlock()
+		}(i, &wg, &mu)
+	}
 	res.ID = stateID
 	res.ProjectID = projectID.ProjectID
+	wg.Wait()
 	return ctx.JSON(http.StatusOK, res)
 }

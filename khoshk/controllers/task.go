@@ -22,6 +22,9 @@ func CreateTaskHandler(ctx echo.Context) error {
 	var stateIDs []int
 	result := configs.DB.Table("states").Select("id").Where("project_id = ?", projectID).Scan(&stateIDs)
 	if result.Error != nil {
+		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
+	}
+	if len(stateIDs) == 0 {
 		return ctx.JSON(http.StatusNotAcceptable, messages.WrongProjectID)
 	}
 	exist := false
@@ -37,6 +40,9 @@ func CreateTaskHandler(ctx echo.Context) error {
 	var state models.State
 	result = configs.DB.Where("id = ?", req.StateID).Preload("Tasks").Find(&state)
 	if result.Error != nil {
+		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
+	}
+	if state.ID == 0 {
 		return ctx.JSON(http.StatusNotAcceptable, messages.WrongStateID)
 	}
 	newTask := models.Task{
@@ -64,12 +70,18 @@ func ChangeTaskStateHandler(ctx echo.Context) error {
 	}
 	var sourceStateID int
 	result := configs.DB.Table("tasks").Select("state_id").Where("id = ?", req.TaskID).Scan(&sourceStateID)
-	if result.Error != nil {
-		return ctx.JSON(http.StatusNotAcceptable, messages.WrongTaskID)
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
+	}
+	if sourceStateID == 0 {
+		return ctx.JSON(http.StatusBadRequest, messages.WrongTaskID)
 	}
 	var stateIDs []int
 	result = configs.DB.Table("states").Select("id").Where("project_id = ?", projectID).Scan(&stateIDs)
 	if result.Error != nil {
+		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
+	}
+	if len(stateIDs) == 0 {
 		return ctx.JSON(http.StatusNotAcceptable, messages.WrongProjectID)
 	}
 	srcExist := false
@@ -128,12 +140,18 @@ func AddPerformerHandler(ctx echo.Context) error {
 	}
 	var stateID int
 	result := configs.DB.Table("tasks").Select("state_id").Where("id = ?", req.TaskID).Scan(&stateID)
-	if result.Error != nil {
-		return ctx.JSON(http.StatusNotAcceptable, messages.WrongTaskID)
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
+	}
+	if stateID == 0 {
+		return ctx.JSON(http.StatusBadRequest, messages.WrongTaskID)
 	}
 	var stateIDs []int
 	result = configs.DB.Table("states").Select("id").Where("project_id = ?", projectID).Scan(&stateIDs)
 	if result.Error != nil {
+		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
+	}
+	if len(stateIDs) == 0 {
 		return ctx.JSON(http.StatusNotAcceptable, messages.WrongProjectID)
 	}
 	exist := false
@@ -149,7 +167,7 @@ func AddPerformerHandler(ctx echo.Context) error {
 	var members []int
 	result = configs.DB.Table("projects_members").Select("user_id").Where("project_id = ?", projectID).Scan(&members)
 	if result.Error != nil {
-		return ctx.JSON(http.StatusNotAcceptable, messages.WrongProjectID)
+		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
 	exist = false
 	for _, id := range members {
@@ -164,7 +182,7 @@ func AddPerformerHandler(ctx echo.Context) error {
 	var performerIDs []int
 	result = configs.DB.Table("tasks_performers").Select("user_id").Where("task_id = ?", req.TaskID).Scan(&performerIDs)
 	if result.Error != nil {
-		return ctx.JSON(http.StatusNotAcceptable, messages.WrongTaskID)
+		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
 	exist = false
 	for _, id := range performerIDs {
@@ -179,6 +197,9 @@ func AddPerformerHandler(ctx echo.Context) error {
 	var user models.User
 	result = configs.DB.Where("id = ?", req.PerformerID).Find(&user)
 	if result.Error != nil {
+		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
+	}
+	if user.ID == 0 {
 		return ctx.JSON(http.StatusNotAcceptable, messages.WrongUserID)
 	}
 	var task models.Task
@@ -205,12 +226,18 @@ func RemovePerformerHandler(ctx echo.Context) error {
 	}
 	var stateID int
 	result := configs.DB.Table("tasks").Select("state_id").Where("id = ?", req.TaskID).Scan(&stateID)
-	if result.Error != nil {
-		return ctx.JSON(http.StatusNotAcceptable, messages.WrongTaskID)
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
+	}
+	if stateID == 0 {
+		return ctx.JSON(http.StatusBadRequest, messages.WrongTaskID)
 	}
 	var stateIDs []int
 	result = configs.DB.Table("states").Select("id").Where("project_id = ?", projectID).Scan(&stateIDs)
 	if result.Error != nil {
+		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
+	}
+	if len(stateIDs) == 0 {
 		return ctx.JSON(http.StatusNotAcceptable, messages.WrongProjectID)
 	}
 	exist := false
@@ -226,7 +253,7 @@ func RemovePerformerHandler(ctx echo.Context) error {
 	var members []int
 	result = configs.DB.Table("projects_members").Select("user_id").Where("project_id = ?", projectID).Scan(&members)
 	if result.Error != nil {
-		return ctx.JSON(http.StatusNotAcceptable, messages.WrongProjectID)
+		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
 	exist = false
 	for _, id := range members {
@@ -241,7 +268,7 @@ func RemovePerformerHandler(ctx echo.Context) error {
 	var performerIDs []int
 	result = configs.DB.Table("tasks_performers").Select("user_id").Where("task_id = ?", req.TaskID).Scan(&performerIDs)
 	if result.Error != nil {
-		return ctx.JSON(http.StatusNotAcceptable, messages.WrongTaskID)
+		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
 	exist = false
 	for _, id := range performerIDs {
@@ -271,12 +298,18 @@ func EditTaskHandler(ctx echo.Context) error {
 	}
 	var stateID int
 	result := configs.DB.Table("tasks").Select("state_id").Where("id = ?", req.TaskID).Scan(&stateID)
-	if result.Error != nil {
-		return ctx.JSON(http.StatusNotAcceptable, messages.WrongTaskID)
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
+	}
+	if stateID == 0 {
+		return ctx.JSON(http.StatusBadRequest, messages.WrongTaskID)
 	}
 	var stateIDs []int
 	result = configs.DB.Table("states").Select("id").Where("project_id = ?", projectID).Scan(&stateIDs)
 	if result.Error != nil {
+		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
+	}
+	if len(stateIDs) == 0 {
 		return ctx.JSON(http.StatusNotAcceptable, messages.WrongProjectID)
 	}
 	exist := false
@@ -315,12 +348,18 @@ func DeleteTaskHandler(ctx echo.Context) error {
 	}
 	var stateID int
 	result := configs.DB.Table("tasks").Select("state_id").Where("id = ?", taskID).Scan(&stateID)
-	if result.Error != nil {
-		return ctx.JSON(http.StatusNotAcceptable, messages.WrongTaskID)
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
+	}
+	if stateID == 0 {
+		return ctx.JSON(http.StatusBadRequest, messages.WrongTaskID)
 	}
 	var stateIDs []int
 	result = configs.DB.Table("states").Select("id").Where("project_id = ?", projectID).Scan(&stateIDs)
 	if result.Error != nil {
+		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
+	}
+	if len(stateIDs) == 0 {
 		return ctx.JSON(http.StatusNotAcceptable, messages.WrongProjectID)
 	}
 	exist := false
@@ -342,4 +381,54 @@ func DeleteTaskHandler(ctx echo.Context) error {
 		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
 	return ctx.JSON(http.StatusOK, messages.TaskDeleted)
+}
+
+func GetTaskHandler(ctx echo.Context) error {
+	res := new(models.GetTaskResponse)
+	taskID, err := strconv.Atoi(ctx.Param("task-id"))
+	if err != nil {
+		return ctx.JSON(http.StatusBadRequest, messages.WrongTaskID)
+	}
+	var stateID int
+	result := configs.DB.Table("tasks").Select("state_id").Where("id = ?", taskID).Scan(&stateID)
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
+	}
+	if stateID == 0 {
+		return ctx.JSON(http.StatusBadRequest, messages.WrongTaskID)
+	}
+	var projectID int
+	result = configs.DB.Table("states").Select("project_id").Where("id = ?", stateID).Scan(&projectID)
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
+	}
+	userIDCtx := ctx.Get("user_id")
+	userID := userIDCtx.(int)
+	var projectIDs []int
+	result = configs.DB.Table("projects_members").Select("project_id").Where("user_id = ?", userID).Scan(&projectIDs)
+	if result.Error != nil {
+		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
+	}
+	exist := false
+	for _, id := range projectIDs {
+		if id == projectID {
+			exist = true
+			break
+		}
+	}
+	if !exist {
+		return ctx.JSON(http.StatusNotAcceptable, messages.NotMember)
+	}
+	result = configs.DB.Table("tasks").Select([]string{"title", "back_ground_color", "description"}).Where("id = ?", taskID).Scan(res)
+	if result.Error != nil {
+		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
+	}
+	var performerIDs []int
+	result = configs.DB.Table("tasks_performers").Select("user_id").Where("task_id = ?", taskID).Scan(&performerIDs)
+	if result.Error != nil {
+		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
+	}
+	res.ID = taskID
+	res.Performers = performerIDs
+	return ctx.JSON(http.StatusOK, res)
 }
