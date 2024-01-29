@@ -18,6 +18,11 @@ import (
 
 const fixedLink = "http://localhost:5173/project"
 
+type Admin struct {
+	UserID        int
+	PromotionTime time.Time
+}
+
 func GenerateRandomCode() (string, error) {
 	otp := ""
 	rand.Seed(time.Now().UnixNano())

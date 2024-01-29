@@ -545,11 +545,11 @@ func DeleteProjectHandler(ctx echo.Context) error {
 		go func(index int, wg *sync.WaitGroup) {
 			defer wg.Done()
 			var taskIDs []int
-			result = configs.DB.Table("tasks").Select("id").Where("state_id = ?", stateIDs[index]).Scan(&taskIDs)
+			configs.DB.Table("tasks").Select("id").Where("state_id = ?", stateIDs[index]).Scan(&taskIDs)
 			for j := range taskIDs {
 				configs.DB.Unscoped().Where("task_id = ?", taskIDs[j]).Delete(&models.TasksPerformers{})
 			}
-			result = configs.DB.Unscoped().Where("state_id = ?", stateIDs[index]).Delete(&models.Task{})
+			configs.DB.Unscoped().Where("state_id = ?", stateIDs[index]).Delete(&models.Task{})
 		}(i, wg)
 	}
 	wg.Wait()

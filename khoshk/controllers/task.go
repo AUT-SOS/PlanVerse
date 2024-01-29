@@ -4,6 +4,8 @@ import (
 	"PlanVerse/configs"
 	"PlanVerse/messages"
 	"PlanVerse/models"
+	"PlanVerse/services"
+	"fmt"
 	"github.com/labstack/echo/v4"
 	"net/http"
 	"strconv"
@@ -157,6 +159,8 @@ func AddPerformerHandler(ctx echo.Context) error {
 	if err != nil {
 		return ctx.JSON(http.StatusBadRequest, messages.WrongProjectID)
 	}
+	userIDCtx := ctx.Get("user_id")
+	userID := userIDCtx.(int)
 	var stateID int
 	result := configs.DB.Table("tasks").Select("state_id").Where("id = ?", req.TaskID).Scan(&stateID)
 	if err != nil {
@@ -231,6 +235,24 @@ func AddPerformerHandler(ctx echo.Context) error {
 	if result.Error != nil {
 		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
+	var email string
+	result = configs.DB.Table("users").Select("email").Where("id = ?", req.PerformerID).Scan(&email)
+	if result.Error != nil {
+		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
+	}
+	var projectTitle string
+	result = configs.DB.Table("projects").Select("title").Where("id = ?", projectID).Scan(&projectTitle)
+	if result.Error != nil {
+		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
+	}
+	var username string
+	result = configs.DB.Table("users").Select("username").Where("id = ?", userID).Scan(&username)
+	if result.Error != nil {
+		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
+	}
+	go func() {
+		services.SendMail("PlanVerse Notification", fmt.Sprintf("you've been assigned to new task in %s project by %s!", projectTitle, username), []string{email})
+	}()
 	return ctx.JSON(http.StatusOK, messages.TaskAssigned)
 }
 
@@ -243,6 +265,8 @@ func RemovePerformerHandler(ctx echo.Context) error {
 	if err != nil {
 		return ctx.JSON(http.StatusBadRequest, messages.WrongProjectID)
 	}
+	userIDCtx := ctx.Get("user_id")
+	userID := userIDCtx.(int)
 	var stateID int
 	result := configs.DB.Table("tasks").Select("state_id").Where("id = ?", req.TaskID).Scan(&stateID)
 	if err != nil {
@@ -303,6 +327,29 @@ func RemovePerformerHandler(ctx echo.Context) error {
 	if result.Error != nil {
 		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
+	var email string
+	result = configs.DB.Table("users").Select("email").Where("id = ?", req.PerformerID).Scan(&email)
+	if result.Error != nil {
+		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
+	}
+	var projectTitle string
+	result = configs.DB.Table("projects").Select("title").Where("id = ?", projectID).Scan(&projectTitle)
+	if result.Error != nil {
+		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
+	}
+	var username string
+	result = configs.DB.Table("users").Select("username").Where("id = ?", userID).Scan(&username)
+	if result.Error != nil {
+		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
+	}
+	var taskTitle string
+	result = configs.DB.Table("tasks").Select("title").Where("id = ?", req.TaskID).Scan(&taskTitle)
+	if result.Error != nil {
+		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
+	}
+	go func() {
+		services.SendMail("PlanVerse Notification", fmt.Sprintf("you've been from %s task in %s project by %s!", taskTitle, projectTitle, username), []string{email})
+	}()
 	return ctx.JSON(http.StatusOK, messages.PerformerRemoved)
 }
 

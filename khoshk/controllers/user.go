@@ -133,6 +133,9 @@ func LoginHandler(ctx echo.Context) error {
 	var user models.User
 	result := configs.DB.Select([]string{"id", "password", "is_verified"}).Where("email = ?", req.Email).Find(&user)
 	if result.Error != nil {
+		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
+	}
+	if user.ID == 0 {
 		return ctx.JSON(http.StatusBadRequest, messages.WrongEmail)
 	}
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password)); err != nil {
@@ -231,7 +234,7 @@ func DeleteUserHandler(ctx echo.Context) error {
 	userIDCtx := ctx.Get("user_id")
 	userID := userIDCtx.(int)
 	var user models.User
-	result := configs.DB.Where("id = ?", uint(userID)).Preload("Projects").Find(&user)
+	result := configs.DB.Where("id = ?", userID).Preload("Projects").Find(&user)
 	if result.Error != nil {
 		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}

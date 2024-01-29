@@ -46,10 +46,10 @@ func StateListHandler(ctx echo.Context) error {
 		go func(index int, wg *sync.WaitGroup) {
 			defer wg.Done()
 			var taskShows []models.TaskShow
-			result = configs.DB.Table("tasks").Select([]string{"id", "title", "back_ground_color"}).Where("state_id = ?", res[index].ID).Scan(&taskShows)
+			configs.DB.Table("tasks").Select([]string{"id", "title", "back_ground_color"}).Where("state_id = ?", res[index].ID).Scan(&taskShows)
 			for j, task := range taskShows {
 				var performers []int
-				result = configs.DB.Table("tasks_performers").Select("user_id").Where("task_id = ?", task.ID).Scan(&performers)
+				configs.DB.Table("tasks_performers").Select("user_id").Where("task_id = ?", task.ID).Scan(&performers)
 				taskShows[j].Performers = performers
 			}
 			res[index].Tasks = taskShows
