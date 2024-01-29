@@ -15,7 +15,8 @@ export enum RequestTypes {
   Signup,
   EmailValidate,
   ResendEmail,
-  CreateProject
+  CreateProject,
+  EditUser
 }
 
 export type LoginForm = {
@@ -86,6 +87,13 @@ export type TaskComment = {
   text: string;
 };
 
+export type UserEditType = {
+  username: string;
+  password: string;
+  email: string;
+  profile_pic: string;
+}
+
 export type IconProps = {
   color?: string;
   size: number;
@@ -101,3 +109,4 @@ export enum Breakpoints {
   Medium = 1000,
   Large = 1500,
 }
+

@@ -195,10 +195,37 @@
   height: 100%;
 }
 
+.EditUserProfilePic{
+  width: 100%;
+  object-fit: cover;
+  height: 100%;
+
+}
+
+.EditUserPicWrapper{
+  position: relative;
+  width: 25%;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  min-width: 50px;
+}
+
+.EditUserPicWrapper:hover .ImgCover{
+  opacity: 1;
+}
+
 .PicWrapper{
   position: relative;
   width: 100%;
   overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
   cursor: pointer;
   height: 30vh;
   border-radius: 10px;
@@ -206,7 +233,6 @@
 
 .PicWrapper:hover .ImgCover{
   opacity: 1;
-
 }
 
 

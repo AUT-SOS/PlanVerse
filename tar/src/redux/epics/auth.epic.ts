@@ -44,7 +44,7 @@ export const loginEpic: Epic = (action$, state$) =>
                     ...resObj,
                     profile_pic:
                       resObj.profile_pic.length > 0
-                        ? resObj.ProfilePic
+                        ? resObj.profile_pic
                         : "/public//DefaultPFP.jpg",
                     id: uid,
                   } as User)
@@ -53,7 +53,7 @@ export const loginEpic: Epic = (action$, state$) =>
             )
           );
         }),
-        handleError()
+        handleError("Invalid username or password")
       );
     })
   );
@@ -111,7 +111,7 @@ export const getMyIdEpic: Epic = (action$, state$) =>
                     ...resObj,
                     profile_pic:
                       resObj.profile_pic.length > 0
-                        ? resObj.ProfilePic
+                        ? resObj.profile_pic
                         : "/public//DefaultPFP.jpg",
                     id: myId,
                   } as User)
@@ -154,7 +154,7 @@ export const verificationEpic: Epic = (action$, state$) =>
                     ...resObj,
                     profile_pic:
                       resObj.profile_pic.length > 0
-                        ? resObj.ProfilePic
+                        ? resObj.profile_pic
                         : "/public//DefaultPFP.jpg",
                     id: myId,
                   } as User)

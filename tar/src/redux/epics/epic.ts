@@ -7,6 +7,7 @@ import { showFailToastMessage } from "../../main";
 import { RequestState } from "../../utils/types";
 import { ReqActions } from "../slices/req.slice";
 import { changeMemberRoleEpic, createProjectEpic, getFullProject, getMyProjectsEpic } from "./project.epic";
+import { editUserEpic } from "./user.epic";
 
 export interface Epic<
   Input extends Action = any,
@@ -34,5 +35,6 @@ export const rootEpic = combineEpics(
       createProjectEpic,
       getMyProjectsEpic,
       getFullProject,
-      changeMemberRoleEpic
+      changeMemberRoleEpic,
+      editUserEpic,
 )

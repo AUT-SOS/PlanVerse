@@ -90,23 +90,46 @@ export const API = {
       Authorization: getAccessToken(),
     });
   },
-  getProjectMembers(id: string){
+  getProjectMembers(id: string) {
     return ajax.get(`${END_POINT}/get-project-members/${id}`, {
       ...API_HEADERS,
       Authorization: getAccessToken(),
     });
   },
-  promote(projectId: string, userId: string){
-    return ajax.post(`${END_POINT}/promote/${projectId}/${userId}`,{} ,{
-      ...API_HEADERS,
-      Authorization: getAccessToken(),
-    });
+  promote(projectId: string, userId: string) {
+    return ajax.post(
+      `${END_POINT}/promote/${projectId}/${userId}`,
+      {},
+      {
+        ...API_HEADERS,
+        Authorization: getAccessToken(),
+      }
+    );
   },
-  demote(projectId: string, userId: string){
-    return ajax.post(`${END_POINT}/demote/${projectId}/${userId}`,{} ,{
-      ...API_HEADERS,
-      Authorization: getAccessToken(),
-    });
+  demote(projectId: string, userId: string) {
+    return ajax.post(
+      `${END_POINT}/demote/${projectId}/${userId}`,
+      {},
+      {
+        ...API_HEADERS,
+        Authorization: getAccessToken(),
+      }
+    );
+  },
+  editUser(username: string, password: string, email: string, profile_pic: string) {
+    return ajax.post(
+      `${END_POINT}/edit-profile`,
+      {
+        username,
+        password,
+        email,
+        profile_pic,
+      },
+      {
+        ...API_HEADERS,
+        Authorization: getAccessToken(),
+      }
+    );
   },
 };
 
