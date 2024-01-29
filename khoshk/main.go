@@ -24,8 +24,8 @@ func main() {
 	server := echo.New()
 
 	//middlewares
-	server.Use(middleware.Logger())
-	server.Use(middleware.Recover())
+	//server.Use(middleware.Logger())
+	//server.Use(middleware.Recover())
 	server.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowOrigins:     []string{"http://localhost:5173"},
 		AllowMethods:     []string{"*"},
@@ -74,6 +74,7 @@ func main() {
 	server.POST("/remove-performer/:project-id", controllers.RemovePerformerHandler, middlewares.AdminMiddleware)
 	server.POST("/edit-task/:project-id", controllers.EditTaskHandler, middlewares.AdminMiddleware)
 	server.POST("/delete-task/:project-id/:task-id", controllers.DeleteTaskHandler, middlewares.AdminMiddleware)
+	server.GET("/get-task/:task-id", controllers.GetTaskHandler)
 
 	//start server
 	log.Fatal(server.Start("localhost:8080"))
