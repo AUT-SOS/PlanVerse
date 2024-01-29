@@ -4,6 +4,8 @@ import (
 	"PlanVerse/configs"
 	"PlanVerse/messages"
 	"PlanVerse/models"
+	"PlanVerse/services"
+	"fmt"
 	"github.com/labstack/echo/v4"
 	"net/http"
 	"strconv"
@@ -68,8 +70,28 @@ func ChangeTaskStateHandler(ctx echo.Context) error {
 	if err != nil {
 		return ctx.JSON(http.StatusBadRequest, messages.WrongProjectID)
 	}
+	userIDCtx := ctx.Get("user_id")
+	userID := userIDCtx.(int)
+	var projectIDs []int
+	result := configs.DB.Table("projects_members").Select("project_id").Where("user_id = ?", userID).Scan(&projectIDs)
+	if result.Error != nil {
+		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
+	}
+	if len(projectIDs) == 0 {
+		return ctx.JSON(http.StatusNotAcceptable, messages.WrongUserID)
+	}
+	exist := false
+	for _, id := range projectIDs {
+		if id == projectID {
+			exist = true
+			break
+		}
+	}
+	if !exist {
+		return ctx.JSON(http.StatusNotAcceptable, messages.NotMember)
+	}
 	var sourceStateID int
-	result := configs.DB.Table("tasks").Select("state_id").Where("id = ?", req.TaskID).Scan(&sourceStateID)
+	result = configs.DB.Table("tasks").Select("state_id").Where("id = ?", req.TaskID).Scan(&sourceStateID)
 	if err != nil {
 		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
@@ -107,8 +129,6 @@ func ChangeTaskStateHandler(ctx echo.Context) error {
 		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
 	if srcAdminAccess || desAdminAccess {
-		userIDCtx := ctx.Get("user_id")
-		userID := userIDCtx.(int)
 		var isAdmin bool
 		result = configs.DB.Table("projects_members").Select("is_admin").Where("project_id = ? and user_id = ?", projectID, userID).Scan(&isAdmin)
 		if result.Error != nil {
@@ -121,6 +141,7 @@ func ChangeTaskStateHandler(ctx echo.Context) error {
 		if result.Error != nil {
 			return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 		}
+		return ctx.JSON(http.StatusOK, messages.TaskStateChanged)
 	}
 	result = configs.DB.Table("tasks").Where("id = ?", req.TaskID).Update("state_id", req.StateID)
 	if result.Error != nil {
@@ -138,6 +159,8 @@ func AddPerformerHandler(ctx echo.Context) error {
 	if err != nil {
 		return ctx.JSON(http.StatusBadRequest, messages.WrongProjectID)
 	}
+	userIDCtx := ctx.Get("user_id")
+	userID := userIDCtx.(int)
 	var stateID int
 	result := configs.DB.Table("tasks").Select("state_id").Where("id = ?", req.TaskID).Scan(&stateID)
 	if err != nil {
@@ -212,6 +235,24 @@ func AddPerformerHandler(ctx echo.Context) error {
 	if result.Error != nil {
 		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
+	var email string
+	result = configs.DB.Table("users").Select("email").Where("id = ?", req.PerformerID).Scan(&email)
+	if result.Error != nil {
+		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
+	}
+	var projectTitle string
+	result = configs.DB.Table("projects").Select("title").Where("id = ?", projectID).Scan(&projectTitle)
+	if result.Error != nil {
+		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
+	}
+	var username string
+	result = configs.DB.Table("users").Select("username").Where("id = ?", userID).Scan(&username)
+	if result.Error != nil {
+		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
+	}
+	go func() {
+		services.SendMail("PlanVerse Notification", fmt.Sprintf("you've been assigned to new task in %s project by %s!", projectTitle, username), []string{email})
+	}()
 	return ctx.JSON(http.StatusOK, messages.TaskAssigned)
 }
 
@@ -224,6 +265,8 @@ func RemovePerformerHandler(ctx echo.Context) error {
 	if err != nil {
 		return ctx.JSON(http.StatusBadRequest, messages.WrongProjectID)
 	}
+	userIDCtx := ctx.Get("user_id")
+	userID := userIDCtx.(int)
 	var stateID int
 	result := configs.DB.Table("tasks").Select("state_id").Where("id = ?", req.TaskID).Scan(&stateID)
 	if err != nil {
@@ -284,6 +327,29 @@ func RemovePerformerHandler(ctx echo.Context) error {
 	if result.Error != nil {
 		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
+	var email string
+	result = configs.DB.Table("users").Select("email").Where("id = ?", req.PerformerID).Scan(&email)
+	if result.Error != nil {
+		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
+	}
+	var projectTitle string
+	result = configs.DB.Table("projects").Select("title").Where("id = ?", projectID).Scan(&projectTitle)
+	if result.Error != nil {
+		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
+	}
+	var username string
+	result = configs.DB.Table("users").Select("username").Where("id = ?", userID).Scan(&username)
+	if result.Error != nil {
+		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
+	}
+	var taskTitle string
+	result = configs.DB.Table("tasks").Select("title").Where("id = ?", req.TaskID).Scan(&taskTitle)
+	if result.Error != nil {
+		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
+	}
+	go func() {
+		services.SendMail("PlanVerse Notification", fmt.Sprintf("you've been removed from %s task in %s project by %s!", taskTitle, projectTitle, username), []string{email})
+	}()
 	return ctx.JSON(http.StatusOK, messages.PerformerRemoved)
 }
 
