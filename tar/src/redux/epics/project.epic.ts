@@ -94,9 +94,7 @@ export const changeMemberRoleEpic: Epic = (action$, state$) =>
               })
             )
           ),
-          catchError(() => {
-            return EMPTY;
-          })
+          handleError("Permission denied")
         )
       );
     })

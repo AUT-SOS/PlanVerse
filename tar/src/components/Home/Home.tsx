@@ -10,6 +10,7 @@ import {
   RequestTypes,
   SmallProject,
   User,
+  UserEditType,
 } from "../../utils/types";
 import { useNavigate } from "react-router-dom";
 import { Background } from "../../ui/BackGround";
@@ -23,9 +24,16 @@ import { useBreakPoints, useRequestStates } from "../../utils/hooks";
 import { sProj1 } from "../../utils/testCase";
 import { Members } from "../../ui/Icons/Members";
 import { Logout } from "../../ui/Icons/Logout";
-import { TextAreaInputBar, UsernameInputBar } from "../../ui/InputBar";
+import {
+  EmailInputBar,
+  PasswordInputBar,
+  TextAreaInputBar,
+  UsernameInputBar,
+} from "../../ui/InputBar";
 import { ReqActions } from "../../redux/slices/req.slice";
 import { ProjectActions } from "../../redux/slices/project.slice";
+import { UserActions } from "../../redux/slices/user.slice";
+import { validateEmail, validatePassword, validateUsername } from "../../utils/regex";
 
 enum HomeTypes {
   Overview,
@@ -83,7 +91,7 @@ export const Home: React.FC = (props) => {
             {state === HomeTypes.Overview ? (
               <HomeOverview userInfo={userInf} setCurrState={setCurrState} />
             ) : state === HomeTypes.EditProfile ? (
-              <EditProfile userInf={userInf} />
+              <EditProfile userInf={userInf} setCurrState={setCurrState} />
             ) : (
               <CreateProject setCurrState={setCurrState} />
             )}
@@ -107,7 +115,8 @@ const HomeOverview: React.FC<OverViewProps> = (props) => {
   useEffect(() => {
     dispatch(ProjectActions.getMyProjects());
   }, []);
-  const projList = useSelector((state: RootState) => state.project.myProjects) ?? [];
+  const projList =
+    useSelector((state: RootState) => state.project.myProjects) ?? [];
 
   return (
     <div className={styles.HomeContentWrapper}>
@@ -154,13 +163,127 @@ const HomeOverview: React.FC<OverViewProps> = (props) => {
 
 type EditProfileProps = {
   userInf: User;
+  setCurrState: (val: HomeTypes) => void;
 };
 
 const EditProfile: React.FC<EditProfileProps> = (props) => {
+  const [info, setInfo] = useState<UserEditType>({
+    ...props.userInf,
+    password: "",
+  });
+  const { isPending } = useRequestStates(RequestTypes.EditUser);
+  const ref = useRef<HTMLInputElement>(null);  
+
+  const onFileClick = () => {
+    ref.current && ref.current.click();
+  };
+
+  const changeImg = (event: React.ChangeEvent) => {
+    const target = event.target as HTMLInputElement;
+    const selectedFile = target.files && target.files[0];
+    const reader = new FileReader();
+    reader.onload = function (event) {      
+      setInfo((prev) => ({
+        ...prev,
+        profile_pic: event.target?.result?.toString() ?? prev.profile_pic,
+      }));
+    };
+    selectedFile && reader.readAsDataURL(selectedFile);
+  };
+
+  const changeUsername = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      setInfo((prev) => ({ ...prev, username: event.target.value }));
+    },
+    []
+  );
+
+  const changeEmail = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      setInfo((prev) => ({ ...prev, email: event.target.value }));
+    },
+    []
+  );
+
+  const changePassword = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      setInfo((prev) => ({ ...prev, password: event.target.value }));
+    },
+    []
+  );
+
+  const dispatch = useDispatch();
+  const handleConfirm = useCallback(() => {
+    dispatch(
+      ReqActions.setState({
+        requestState: RequestState.Pending,
+        reqType: RequestTypes.EditUser,
+      })
+    );
+    dispatch(UserActions.editUserInfo(info));
+  }, [info]);
+
+  const submitDisable =
+    info.password.length < 8 || (info.email === props.userInf.email &&
+    info.profile_pic === props.userInf.profile_pic &&
+    info.username === props.userInf.username) || (!validateEmail(info.email) || !validateUsername(info.username) || !validatePassword(info.password));
+
   return (
-    <div className={styles.EditProfileContentWrapper}>
-      <img src={props.userInf.profile_pic} className={classNames(styles.img)} />
-      <ReqButton1 text="Save" />
+    <div className={styles.CreateProjectContentWrapper}>
+      <Text1 text="Edit Profile" />
+      <div className={styles.EditUserPicWrapper}>
+        <img
+          src={info.profile_pic}
+          className={classNames(styles.EditUserProfilePic)}
+        />
+        <div onClick={onFileClick} className={classNames(styles.ImgCover)}>
+          Add Picture
+        </div>
+        <input
+          accept=".jpg, .png, .jpeg"
+          onChange={changeImg}
+          ref={ref}
+          type="file"
+          name="fileInp"
+          id=""
+          hidden
+        />
+      </div>
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          gap: "20px",
+          width: "100%",
+        }}
+      >
+        <UsernameInputBar
+          placeholder="Username"
+          value={info.username}
+          onChange={changeUsername}
+
+        />
+        <EmailInputBar
+          onChange={changeEmail}
+          value={info.email}
+          placeholder="Email"
+        />
+        <PasswordInputBar value={info.password} placeholder="Enter your password" onChange={changePassword}/>
+      </div>
+      <div className={styles.ButtonsWrapper}>
+        <HollowButton
+          text="Back"
+          onClick={() => props.setCurrState(HomeTypes.Overview)}
+          style={{ width: 100 }}
+        />
+        <ReqButton1
+          text="Submit"
+          style={{ width: 150 }}
+          isPending={isPending}
+          onClick={handleConfirm}
+          disable={submitDisable}
+        />
+      </div>
     </div>
   );
 };
