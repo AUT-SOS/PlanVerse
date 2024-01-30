@@ -6,6 +6,7 @@ import (
 	"PlanVerse/messages"
 	"PlanVerse/models"
 	"PlanVerse/services"
+	"encoding/json"
 	"fmt"
 	"github.com/labstack/echo/v4"
 	"net/http"
@@ -163,7 +164,7 @@ func ShareProjectHandler(ctx echo.Context) error {
 func ShowProjectHandler(ctx echo.Context) error {
 	req := new(models.ShowProjectRequest)
 	res := new(models.ShowProjectResponse)
-	if err := ctx.Bind(req); err != nil {
+	if err := json.NewDecoder(ctx.Request().Body).Decode(req); err != nil {
 		return ctx.JSON(http.StatusBadRequest, messages.InvalidRequestBody)
 	}
 	var projectID int
@@ -444,7 +445,7 @@ func GetProjectMembersHandler(ctx echo.Context) error {
 	userIDCtx := ctx.Get("user_id")
 	userID := userIDCtx.(int)
 	var projectIDs []int
-	result := configs.DB.Table("projects_members").Select([]string{"project_id"}).Where("user_id = ?", userID).Scan(&projectIDs)
+	result := configs.DB.Table("projects_members").Select("project_id").Where("user_id = ?", userID).Scan(&projectIDs)
 	if result.Error != nil {
 		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
@@ -485,6 +486,111 @@ func GetProjectMembersHandler(ctx echo.Context) error {
 	}
 	wg.Wait()
 	return ctx.JSON(http.StatusOK, res)
+}
+
+func LeaveProjectHandler(ctx echo.Context) error {
+	projectID, err := strconv.Atoi(ctx.Param("project-id"))
+	if err != nil {
+		return ctx.JSON(http.StatusBadRequest, messages.WrongProjectID)
+	}
+	userIDCtx := ctx.Get("user_id")
+	userID := userIDCtx.(int)
+	var projectIDs []int
+	result := configs.DB.Table("projects_members").Select("project_id").Where("user_id = ?", userID).Scan(&projectIDs)
+	if result.Error != nil {
+		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
+	}
+	if len(projectIDs) == 0 {
+		return ctx.JSON(http.StatusNotAcceptable, messages.UserNoProject)
+	}
+	isMember := false
+	for _, id := range projectIDs {
+		if id == projectID {
+			isMember = true
+			break
+		}
+	}
+	if !isMember {
+		return ctx.JSON(http.StatusNotAcceptable, messages.NotMember)
+	}
+	var membersNumber int
+	result = configs.DB.Table("projects").Select("members_number").Where("id = ?", projectID).Scan(&membersNumber)
+	if result.Error != nil {
+		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
+	}
+	if membersNumber == 0 {
+		return ctx.JSON(http.StatusNotAcceptable, messages.WrongProjectID)
+	}
+	result = configs.DB.Unscoped().Where("user_id = ? and project_id = ?", userID, projectID).Delete(&models.ProjectsMembers{})
+	if result.Error != nil {
+		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
+	}
+	membersNumber -= 1
+	if membersNumber == 0 {
+		result = configs.DB.Unscoped().Where("project_id = ?", projectID).Delete(&models.InvitedMembers{})
+		if result.Error != nil {
+			return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
+		}
+		var stateIDs []int
+		result = configs.DB.Table("states").Select("id").Where("project_id = ?", projectID).Scan(&stateIDs)
+		if result.Error != nil {
+			return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
+		}
+		var wg sync.WaitGroup
+		for i := range stateIDs {
+			wg.Add(1)
+			go func(index int, wg *sync.WaitGroup) {
+				defer wg.Done()
+				var taskIDs []int
+				result = configs.DB.Table("tasks").Select("id").Where("state_id = ?", stateIDs[index]).Scan(&taskIDs)
+				for j := range taskIDs {
+					configs.DB.Unscoped().Where("task_id = ?", taskIDs[j]).Delete(&models.TasksPerformers{})
+				}
+				result = configs.DB.Unscoped().Where("state_id = ?", stateIDs[index]).Delete(&models.Task{})
+			}(i, &wg)
+		}
+		wg.Wait()
+		result = configs.DB.Unscoped().Where("project_id = ?", projectID).Delete(&models.State{})
+		if result.Error != nil {
+			return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
+		}
+		result = configs.DB.Unscoped().Where("project_id = ?", projectID).Delete(&models.JoinLink{})
+		if result.Error != nil {
+			return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
+		}
+		result = configs.DB.Unscoped().Where("id = ?", projectID).Delete(&models.Project{})
+		if result.Error != nil {
+			return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
+		}
+		return ctx.JSON(http.StatusOK, messages.UserLeavedProject)
+	}
+	var ownerID int
+	result = configs.DB.Table("projects").Select("owner_id").Where("id = ?", projectID).Scan(&ownerID)
+	if result.Error != nil {
+		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
+	}
+	if ownerID == userID {
+		newOwnerID, err := helpers.DetectMin(projectID)
+		if err != nil {
+			return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
+		}
+		if newOwnerID != 0 {
+			result = configs.DB.Table("projects").Where("id = ?", projectID).Update("owner_id", newOwnerID)
+			if result.Error != nil {
+				return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
+			}
+		}
+		result = configs.DB.Table("projects").Where("id = ?", projectID).Update("members_number", membersNumber)
+		if result.Error != nil {
+			return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
+		}
+		return ctx.JSON(http.StatusOK, messages.UserLeavedProject)
+	}
+	result = configs.DB.Table("projects").Where("id = ?", projectID).Update("members_number", membersNumber)
+	if result.Error != nil {
+		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
+	}
+	return ctx.JSON(http.StatusOK, messages.UserLeavedProject)
 }
 
 func EditProjectHandler(ctx echo.Context) error {
