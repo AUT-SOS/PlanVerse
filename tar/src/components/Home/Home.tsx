@@ -389,7 +389,7 @@ export const CreateProject: React.FC<CreajeProjectProps> = (props) => {
   const handleDeleteProject = useCallback(() => {
     if (props.projId){
       dispatch(ReqActions.setState({requestState: RequestState.Pending, reqType: RequestTypes.DeleteProject}))
-      dispatch(ProjectActions.deleteProject(props.projId));
+      dispatch(ProjectActions.deleteProject({project_id: props.projId, isDelete: true}));
     }
   }, [props.projId])
 

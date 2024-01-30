@@ -85,7 +85,7 @@ export const changeMemberRoleEpic: Epic = (action$, state$) =>
         JSON.stringify(
           state$.value.project.members?.find(
             (item) => item.id == action.payload.userId
-        )
+          )
         )
       );
       newMember.is_admin = !newMember.is_admin;
@@ -190,7 +190,11 @@ export const deleteProject: Epic = (action$, state$) =>
   action$.pipe(
     ofType(ProjectActions.deleteProject.type),
     mergeMap((action) => {
-      return API.deleteProject(action.payload).pipe(
+      return iif(
+        () => action.payload.isDelete,
+        API.deleteProject(action.payload.project_id),
+        API.leaveProject(action.payload.project_id)
+      ).pipe(
         mergeMap(() => {
           navigate("/home");
           return of(ReqActions.setState({ requestState: RequestState.None }));
@@ -202,4 +206,3 @@ export const deleteProject: Epic = (action$, state$) =>
       );
     })
   );
-

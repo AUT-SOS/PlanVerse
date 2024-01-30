@@ -94,7 +94,7 @@ export const ProjectActions = {
   joinProject: createAction<string>("Proj/JoinProject"),
   shareLink: createAction<ShareLink>("Proj/ShareLink"),
   editProject: createAction<CreateProject & { id: string }>("Proj/EditProject"),
-  deleteProject: createAction<string>("Proj/DeleteProject"),
+  deleteProject: createAction<{project_id: string, isDelete: boolean}>("Proj/DeleteProject"),
   getStates: createAction<string>("Proj/GetStates"),
   getState: createAction<{ projId: string; stateId: string }>("Proj/GetState"),
   deleteState: createAction<{ projId: string; stateId: string }>(
