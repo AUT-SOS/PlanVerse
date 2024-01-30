@@ -40,12 +40,12 @@ func main() {
 	server.POST("/register", controllers.RegisterHandler) //
 	server.POST("/verify", controllers.VerifyHandler)     //
 	server.POST("/refresh", controllers.RefreshHandler)
-	server.POST("/login", controllers.LoginHandler)              //
-	server.POST("/resend-email", controllers.ResendEmailHandler) //
-	server.GET("/get-user/:user-id", controllers.GetUserHandler) //
-	server.GET("/get-my-user", controllers.GetUserIDHandler)     //
-	server.POST("/edit-profile", controllers.EditUserHandler)
-	server.POST("/delete-account", controllers.DeleteUserHandler)
+	server.POST("/login", controllers.LoginHandler)               //
+	server.POST("/resend-email", controllers.ResendEmailHandler)  //
+	server.GET("/get-user/:user-id", controllers.GetUserHandler)  //
+	server.GET("/get-my-user", controllers.GetUserIDHandler)      //
+	server.POST("/edit-profile", controllers.EditUserHandler)     //
+	server.POST("/delete-account", controllers.DeleteUserHandler) //
 
 	//project api
 	server.GET("/list-project", controllers.ProjectListHandler)                                                    //
@@ -58,7 +58,7 @@ func main() {
 	server.GET("/get-project/:project-id", controllers.GetProjectHandler)                                          //
 	server.GET("/get-project-members/:project-id", controllers.GetProjectMembersHandler)                           //
 	server.POST("/edit-project/:project-id", controllers.EditProjectHandler, middlewares.AdminMiddleware)          //
-	server.POST("/delete-project/:project-id", controllers.DeleteProjectHandler)
+	server.POST("/delete-project/:project-id", controllers.DeleteProjectHandler)                                   //
 
 	//state api
 	server.GET("/list-state/:project-id", controllers.StateListHandler)

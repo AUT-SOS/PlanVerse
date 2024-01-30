@@ -6,6 +6,7 @@ import {
   Project,
   ShareLink,
   SmallProject,
+  State,
 } from "../../utils/types";
 
 type ProjectSliceType = {
@@ -13,6 +14,7 @@ type ProjectSliceType = {
   fullProject?: Project;
   members?: Member[];
   joinProject?: JoinProjectType;
+  states?: State[];
 };
 
 const initialState: ProjectSliceType = {
@@ -43,6 +45,9 @@ const ProjectsSlice = createSlice({
     setJoinProject(state, action: PayloadAction<JoinProjectType>) {
       state.joinProject = action.payload;
     },
+    setStates(state, action: PayloadAction<State[]>){
+      state.states = action.payload;
+    }
   },
 });
 
@@ -59,7 +64,9 @@ export const ProjectActions = {
   showProject: createAction<string>("Proj/ShowProject"),
   joinProject: createAction<string>("Proj/JoinProject"),
   shareLink: createAction<ShareLink>("Proj/ShareLink"),
-  editProject: createAction<CreateProject & {id: string}>("Proj/EditProject")
+  editProject: createAction<CreateProject & { id: string }>("Proj/EditProject"),
+  deleteProject: createAction<string>("Proj/DeleteProject"),
+  getStates: createAction<string>("Proj/GetStates"),
 };
 
 export const ProjectReducer = ProjectsSlice.reducer;

@@ -12,6 +12,7 @@ import {
   RequestState,
   SignupForm,
   SmallProject,
+  State,
 } from "../../utils/types";
 import { ReqActions } from "../slices/req.slice";
 import { ProjectActions } from "../slices/project.slice";
@@ -64,7 +65,8 @@ export const getFullProject: Epic = (action$, state$) =>
               mergeMap((res) => {
                 return of(ProjectActions.setMembers(res.response as Member[]));
               })
-            )
+            ),
+            of(ProjectActions.getStates(action.payload))
           );
         }),
         catchError(() => {
@@ -175,6 +177,39 @@ export const editProjectEpic: Epic = (action$, state$) =>
             of(ReqActions.setState({ requestState: RequestState.None })),
             of(ProjectActions.getFullProject(editProjectInfo.id))
           );
+        }),
+        catchError(() => {
+          showFailToastMessage("There was an error");
+          return EMPTY;
+        })
+      );
+    })
+  );
+
+export const deleteProject: Epic = (action$, state$) =>
+  action$.pipe(
+    ofType(ProjectActions.deleteProject.type),
+    mergeMap((action) => {
+      return API.deleteProject(action.payload).pipe(
+        mergeMap(() => {
+          navigate("/home");
+          return of(ReqActions.setState({ requestState: RequestState.None }));
+        }),
+        catchError(() => {
+          showFailToastMessage("There was an error");
+          return EMPTY;
+        })
+      );
+    })
+  );
+
+export const getStates: Epic = (action$, state$) =>
+  action$.pipe(
+    ofType(ProjectActions.getStates.type),
+    mergeMap((action) => {
+      return API.Board.getStates(action.payload).pipe(
+        mergeMap((res) => {
+          return of(ProjectActions.setStates(res.response as State[]));
         }),
         catchError(() => {
           showFailToastMessage("There was an error");

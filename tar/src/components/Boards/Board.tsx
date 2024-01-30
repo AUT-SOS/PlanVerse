@@ -184,7 +184,9 @@ export const Board: React.FC<Props> = (props) => {
                 projectInf={{ ...project }}
                 projId={projId}
                 className={styles.EditProjWrapper}
+                amIOwner={project.owner_id == myId}
               />
+
             ) : (
               <></>
             )}
@@ -230,7 +232,7 @@ const MoreInfoSlider: React.FC<SliderProps> = (props) => {
           <ReqButtonWithIcon
             onClick={() => props.openModal(ModalType.AddMember)}
             text="Add Member"
-            style={{ width: "auto" }}
+            style={{ width: "auto", minWidth: 0 }}
             title="Add Member"
           >
             <AddMember color="white" size={20} />

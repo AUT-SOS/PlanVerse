@@ -133,7 +133,7 @@ const OTPInput: React.FC<OTPInputProps> = (props) => {
 };
 
 const ResendEmail: React.FC = () => {
-  const [time, setTime] = useState(10);
+  const [time, setTime] = useState(120);
   const dispatch = useDispatch();
   useEffect(() => {
     if (time <= 0) {
@@ -147,7 +147,7 @@ const ResendEmail: React.FC = () => {
   const text = useMemo(() => time <= 0 ? "Resend" : secToString(time), [time]);
   const handleClick = () => {
     dispatch(AuthActions.resendEmail());
-    setTime(10);
+    setTime(120);
 
   }
   return <ResendEmailButton onClick={handleClick} text={text} disable={time > 0} />;

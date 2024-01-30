@@ -17,7 +17,7 @@ import { Background } from "../../ui/BackGround";
 import styles from "./Home.module.scss";
 import { a, useTransition } from "@react-spring/web";
 import { Text1, Text2, Text3 } from "../../ui/Text";
-import { HollowButton, ReqButton1 } from "../../ui/ReqButton";
+import { HollowButton, ReqButton, ReqButton1 } from "../../ui/ReqButton";
 import classNames from "classnames";
 import { Plus } from "../../ui/Icons/Plus";
 import { useBreakPoints, useRequestStates } from "../../utils/hooks";
@@ -284,11 +284,21 @@ const EditProfile: React.FC<EditProfileProps> = (props) => {
         />
       </div>
       <div className={styles.ButtonsWrapper}>
-        <HollowButton
-          text="Back"
-          onClick={() => props.setCurrState(HomeTypes.Overview)}
-          style={{ width: 100 }}
-        />
+        <div style={{ display: "flex", gap: 10 }}>
+          <HollowButton
+            text="Back"
+            onClick={() => props.setCurrState(HomeTypes.Overview)}
+            style={{ width: 100 }}
+          />
+          <ReqButton
+            onClick={() => dispatch(UserActions.deleteUser())}
+            disable={
+              !(validatePassword(info.password) && info.password.length > 0)
+            }
+            style={{ borderRadius: 10 }}
+            text="Delete Account"
+          />
+        </div>
         <ReqButton1
           text="Submit"
           style={{ width: 150 }}
@@ -312,6 +322,7 @@ type CreajeProjectProps = {
   projectInf?: CreateProjInfo;
   projId?: string;
   className?: string;
+  amIOwner?: boolean
 };
 
 export const CreateProject: React.FC<CreajeProjectProps> = (props) => {
@@ -321,6 +332,7 @@ export const CreateProject: React.FC<CreajeProjectProps> = (props) => {
     description: props.projectInf?.description ?? "",
   });
   const { isPending } = useRequestStates(RequestTypes.CreateProject);
+  const deleteProject = useRequestStates(RequestTypes.DeleteProject);
   const ref = useRef<HTMLInputElement>(null);
 
   const onFileClick = () => {
@@ -362,7 +374,7 @@ export const CreateProject: React.FC<CreajeProjectProps> = (props) => {
           reqType: RequestTypes.EditProject,
         })
       );
-      dispatch(ProjectActions.editProject({...info, id: props.projId}));
+      dispatch(ProjectActions.editProject({ ...info, id: props.projId }));
     } else {
       dispatch(
         ReqActions.setState({
@@ -374,9 +386,19 @@ export const CreateProject: React.FC<CreajeProjectProps> = (props) => {
     }
   }, [info, props.projId]);
 
+  const handleDeleteProject = useCallback(() => {
+    if (props.projId){
+      dispatch(ReqActions.setState({requestState: RequestState.Pending, reqType: RequestTypes.DeleteProject}))
+      dispatch(ProjectActions.deleteProject(props.projId));
+    }
+  }, [props.projId])
+
   return (
     <div
-      className={classNames(styles.CreateProjectContentWrapper, props.className)}
+      className={classNames(
+        styles.CreateProjectContentWrapper,
+        props.className
+      )}
       onClick={(e) => e.stopPropagation()}
     >
       <Text1 text={props.projectInf ? "Edit Project" : "Create new project"} />
@@ -421,11 +443,16 @@ export const CreateProject: React.FC<CreajeProjectProps> = (props) => {
         />
       </div>
       <div className={styles.ButtonsWrapper}>
-        <HollowButton
-          text="Back"
-          onClick={props.handleClose}
-          style={{ width: 100 }}
-        />
+        <div style={{ display: "flex", gap: 10 }}>
+          <HollowButton
+            text="Back"
+            onClick={props.handleClose}
+            style={{ width: 100 }}
+          />
+          {props.projId && props.amIOwner && (
+            <ReqButton onClick={handleDeleteProject} isPending={deleteProject.isPending} style={{ borderRadius: 10 }} text="Delete Project" />
+          )}
+        </div>
         <ReqButton1
           text={props.projectInf ? "Edit Project" : "Create Project"}
           style={{ width: 150 }}
