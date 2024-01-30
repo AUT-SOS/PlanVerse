@@ -1,5 +1,5 @@
-import { PayloadAction, createSlice } from "@reduxjs/toolkit";
-import { AuthState, LoginForm, SignupForm, User } from "../../utils/types";
+import { PayloadAction, createAction, createSlice } from "@reduxjs/toolkit";
+import { AuthState, LoginForm, SignupForm, User, UserEditType } from "../../utils/types";
 
 type UsersSliceType = {
   me?: User;
@@ -14,11 +14,13 @@ const UsersSlice = createSlice({
   initialState,
   reducers: {
     setMe(state, action: PayloadAction<User>) {
-      state.me = action.payload
+      state.me = action.payload;
     },
   },
 });
 
-export const UserActions = UsersSlice.actions;
+export const UserActions = {
+  ...UsersSlice.actions,
+  editUserInfo: createAction<UserEditType>("Users/EditUser"),
+};
 export const UserReducers = UsersSlice.reducer;
-

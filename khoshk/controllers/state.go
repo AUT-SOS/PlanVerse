@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"PlanVerse/configs"
-	"PlanVerse/helpers"
 	"PlanVerse/messages"
 	"PlanVerse/models"
 	"github.com/labstack/echo/v4"
@@ -19,14 +18,17 @@ func StateListHandler(ctx echo.Context) error {
 	}
 	userIDCtx := ctx.Get("user_id")
 	userID := userIDCtx.(int)
-	var projectIDs []helpers.ProjectID
+	var projectIDs []int
 	result := configs.DB.Table("projects_members").Select("project_id").Where("user_id = ?", userID).Scan(&projectIDs)
 	if result.Error != nil {
 		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
+	if len(projectIDs) == 0 {
+		return ctx.JSON(http.StatusNotAcceptable, messages.WrongUserID)
+	}
 	exist := false
 	for _, id := range projectIDs {
-		if id.ProjectID == projectID {
+		if id == projectID {
 			exist = true
 			break
 		}
@@ -36,7 +38,7 @@ func StateListHandler(ctx echo.Context) error {
 	}
 	result = configs.DB.Table("states").Select([]string{"id", "title", "back_ground_color", "admin_access"}).Where("project_id = ?", projectID).Scan(&res)
 	if result.Error != nil {
-		return ctx.JSON(http.StatusNotAcceptable, messages.WrongProjectID)
+		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
 	var wg sync.WaitGroup
 	for i := range res {
@@ -44,10 +46,10 @@ func StateListHandler(ctx echo.Context) error {
 		go func(index int, wg *sync.WaitGroup) {
 			defer wg.Done()
 			var taskShows []models.TaskShow
-			result = configs.DB.Table("tasks").Select([]string{"id", "title", "back_ground_color"}).Where("state_id = ?", res[index].ID).Scan(&taskShows)
+			configs.DB.Table("tasks").Select([]string{"id", "title", "back_ground_color"}).Where("state_id = ?", res[index].ID).Scan(&taskShows)
 			for j, task := range taskShows {
 				var performers []int
-				result = configs.DB.Table("tasks_performers").Select("user_id").Where("task_id = ?", task.ID).Scan(&performers)
+				configs.DB.Table("tasks_performers").Select("user_id").Where("task_id = ?", task.ID).Scan(&performers)
 				taskShows[j].Performers = performers
 			}
 			res[index].Tasks = taskShows
@@ -70,6 +72,9 @@ func CreateStateHandler(ctx echo.Context) error {
 	var project models.Project
 	result := configs.DB.Where("id = ?", projectID).Preload("States").Find(&project)
 	if result.Error != nil {
+		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
+	}
+	if project.ID == 0 {
 		return ctx.JSON(http.StatusNotAcceptable, messages.WrongProjectID)
 	}
 	newState := models.State{
@@ -98,6 +103,9 @@ func EditStateHandler(ctx echo.Context) error {
 	var stateIDs []int
 	result := configs.DB.Table("states").Select("id").Where("project_id = ?", projectID).Scan(&stateIDs)
 	if result.Error != nil {
+		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
+	}
+	if len(stateIDs) == 0 {
 		return ctx.JSON(http.StatusNotAcceptable, messages.WrongProjectID)
 	}
 	exist := false
@@ -113,7 +121,7 @@ func EditStateHandler(ctx echo.Context) error {
 	var state models.State
 	result = configs.DB.Where("id = ?", req.ID).Find(&state)
 	if result.Error != nil {
-		return ctx.JSON(http.StatusNotAcceptable, messages.WrongStateID)
+		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
 	state.Title = req.Title
 	state.BackGroundColor = req.BackGroundColor
@@ -137,6 +145,9 @@ func DeleteStateHandler(ctx echo.Context) error {
 	var stateIDs []int
 	result := configs.DB.Table("states").Select("id").Where("project_id = ?", projectID).Scan(&stateIDs)
 	if result.Error != nil {
+		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
+	}
+	if len(stateIDs) == 0 {
 		return ctx.JSON(http.StatusNotAcceptable, messages.WrongProjectID)
 	}
 	exist := false
@@ -154,13 +165,13 @@ func DeleteStateHandler(ctx echo.Context) error {
 	if result.Error != nil {
 		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
-	var wg *sync.WaitGroup
+	var wg sync.WaitGroup
 	for i := range taskIDs {
 		wg.Add(1)
 		go func(index int, wg *sync.WaitGroup) {
 			defer wg.Done()
 			configs.DB.Unscoped().Where("task_id = ?", taskIDs[index]).Delete(&models.TasksPerformers{})
-		}(i, wg)
+		}(i, &wg)
 	}
 	wg.Wait()
 	result = configs.DB.Unscoped().Where("state_id = ?", stateID).Delete(&models.Task{})
@@ -176,25 +187,45 @@ func DeleteStateHandler(ctx echo.Context) error {
 
 func GetStateHandler(ctx echo.Context) error {
 	res := new(models.GetStateResponse)
+	projectID, err := strconv.Atoi(ctx.Param("project-id"))
+	if err != nil {
+		return ctx.JSON(http.StatusBadRequest, messages.WrongProjectID)
+	}
 	stateID, err := strconv.Atoi(ctx.Param("state-id"))
 	if err != nil {
 		return ctx.JSON(http.StatusBadRequest, messages.WrongStateID)
 	}
-	var projectID helpers.ProjectID
-	result := configs.DB.Table("states").Select("project_id").Where("id = ?", stateID).Scan(&projectID)
-	if err != nil {
-		return ctx.JSON(http.StatusBadRequest, messages.WrongStateID)
+	var stateIDs []int
+	result := configs.DB.Table("states").Select("id").Where("project_id = ?", projectID).Scan(&stateIDs)
+	if result.Error != nil {
+		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
+	}
+	if len(stateIDs) == 0 {
+		return ctx.JSON(http.StatusNotAcceptable, messages.WrongProjectID)
+	}
+	exist := false
+	for _, id := range stateIDs {
+		if id == stateID {
+			exist = true
+			break
+		}
+	}
+	if !exist {
+		return ctx.JSON(http.StatusNotAcceptable, messages.StateNotInProject)
 	}
 	userIDCtx := ctx.Get("user_id")
 	userID := userIDCtx.(int)
-	var projectIDs []helpers.ProjectID
+	var projectIDs []int
 	result = configs.DB.Table("projects_members").Select("project_id").Where("user_id = ?", userID).Scan(&projectIDs)
 	if result.Error != nil {
 		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
-	exist := false
+	if len(projectIDs) == 0 {
+		return ctx.JSON(http.StatusNotAcceptable, messages.UserNoProject)
+	}
+	exist = false
 	for _, id := range projectIDs {
-		if id.ProjectID == projectID.ProjectID {
+		if id == projectID {
 			exist = true
 			break
 		}
@@ -229,7 +260,6 @@ func GetStateHandler(ctx echo.Context) error {
 		}(i, &wg, &mu)
 	}
 	res.ID = stateID
-	res.ProjectID = projectID.ProjectID
 	wg.Wait()
 	return ctx.JSON(http.StatusOK, res)
 }

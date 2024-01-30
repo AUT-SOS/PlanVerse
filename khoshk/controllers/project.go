@@ -98,14 +98,17 @@ func ShareProjectHandler(ctx echo.Context) error {
 	}
 	userIDCtx := ctx.Get("user_id")
 	userID := userIDCtx.(int)
-	var projectIDs []helpers.ProjectID
+	var projectIDs []int
 	result := configs.DB.Table("projects_members").Select("project_id").Where("user_id = ?", userID).Scan(&projectIDs)
 	if result.Error != nil {
 		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
+	if len(projectIDs) == 0 {
+		return ctx.JSON(http.StatusNotAcceptable, messages.UserNoProject)
+	}
 	exist := false
 	for _, id := range projectIDs {
-		if id.ProjectID == projectID {
+		if id == projectID {
 			exist = true
 			break
 		}
@@ -128,11 +131,11 @@ func ShareProjectHandler(ctx echo.Context) error {
 	if result.Error != nil {
 		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
-	var projectMembers []helpers.ProjectMember
-	result = configs.DB.Table("projects").Select([]string{"users.email"}).Joins("inner join projects_members on projects.id = projects_members.project_id").Joins("inner join users on users.id = projects_members.user_id").Where("projects.id = ?", projectID).Scan(&projectMembers)
+	var projectMembersEmail []string
+	result = configs.DB.Table("projects").Select([]string{"users.email"}).Joins("inner join projects_members on projects.id = projects_members.project_id").Joins("inner join users on users.id = projects_members.user_id").Where("projects.id = ?", projectID).Scan(&projectMembersEmail)
 	for i := range req.Emails {
-		for j := range projectMembers {
-			if projectMembers[j].Email == req.Emails[i] {
+		for j := range projectMembersEmail {
+			if projectMembersEmail[j] == req.Emails[i] {
 				return ctx.JSON(http.StatusNotAcceptable, messages.AlreadyMember)
 			}
 		}
@@ -163,17 +166,20 @@ func ShowProjectHandler(ctx echo.Context) error {
 	if err := ctx.Bind(req); err != nil {
 		return ctx.JSON(http.StatusBadRequest, messages.InvalidRequestBody)
 	}
-	var projectID helpers.ProjectID
+	var projectID int
 	result := configs.DB.Table("join_links").Select("project_id").Where("link = ?", req.Link).Scan(&projectID)
 	if result.Error != nil {
 		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
+	if projectID == 0 {
+		return ctx.JSON(http.StatusNotAcceptable, messages.WrongLink)
+	}
 	var project models.Project
-	result = configs.DB.Where("id = ?", projectID.ProjectID).Preload("Members").Find(&project)
+	result = configs.DB.Where("id = ?", projectID).Preload("Members").Find(&project)
 	if result.Error != nil {
 		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
-	res.ProjectID = projectID.ProjectID
+	res.ProjectID = projectID
 	res.Title = project.Title
 	res.BackGroundPic = project.BackGroundPic
 	res.MembersNumber = project.MembersNumber
@@ -202,6 +208,9 @@ func JoinProjectHandler(ctx echo.Context) error {
 	if result.Error != nil {
 		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
+	if project.ID == 0 {
+		return ctx.JSON(http.StatusNotAcceptable, messages.WrongProjectID)
+	}
 	for _, member := range project.Members {
 		if int(member.ID) == userID {
 			return ctx.JSON(http.StatusNotAcceptable, messages.AlreadyJoined)
@@ -212,14 +221,14 @@ func JoinProjectHandler(ctx echo.Context) error {
 	if result.Error != nil {
 		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
-	var projectIDStructs []helpers.ProjectID
-	result = configs.DB.Table("invited_members").Select("project_id").Where("user_id = ?", userID).Find(&projectIDStructs)
+	var projectIDs []int
+	result = configs.DB.Table("invited_members").Select("project_id").Where("user_id = ?", userID).Find(&projectIDs)
 	if result.Error != nil {
 		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
 	isInvited := false
-	for i := 0; i < len(projectIDStructs); i++ {
-		if projectIDStructs[i].ProjectID == projectID {
+	for i := 0; i < len(projectIDs); i++ {
+		if projectIDs[i] == projectID {
 			isInvited = true
 			break
 		}
@@ -237,10 +246,6 @@ func JoinProjectHandler(ctx echo.Context) error {
 	if result.Error != nil {
 		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
-	result = configs.DB.Table("projects_members").Where("project_id = ? and user_id = ?", projectID, userID).Update("is_admin", false)
-	if result.Error != nil {
-		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
-	}
 	return ctx.JSON(http.StatusOK, messages.UserAddedToProject)
 }
 
@@ -253,13 +258,48 @@ func ChangeRoleMemberHandler(ctx echo.Context) error {
 	if err != nil {
 		return ctx.JSON(http.StatusBadRequest, messages.WrongUserID)
 	}
-	var showRole helpers.ShowRole
-	result := configs.DB.Table("projects_members").Where("project_id = ? and user_id = ?", projectID, memberID).Scan(&showRole)
+	userIDCtx := ctx.Get("user_id")
+	userID := userIDCtx.(int)
+	var projectIDs []int
+	result := configs.DB.Table("projects_members").Select("project_id").Where("user_id = ?", memberID).Scan(&projectIDs)
 	if result.Error != nil {
+		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
+	}
+	if len(projectIDs) == 0 {
+		return ctx.JSON(http.StatusNotAcceptable, messages.UserNoProject)
+	}
+	exist := false
+	for _, id := range projectIDs {
+		if id == projectID {
+			exist = true
+			break
+		}
+	}
+	if !exist {
 		return ctx.JSON(http.StatusNotAcceptable, messages.NotMember)
 	}
-	if showRole.IsAdmin {
+	var isAdmin bool
+	result = configs.DB.Table("projects_members").Select("is_admin").Where("project_id = ? and user_id = ?", projectID, memberID).Scan(&isAdmin)
+	if result.Error != nil {
+		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
+	}
+	if isAdmin {
 		return ctx.JSON(http.StatusNotAcceptable, messages.AlreadyAdmin)
+	}
+	var email string
+	result = configs.DB.Table("users").Select("email").Where("id = ?", memberID).Scan(&email)
+	if result.Error != nil {
+		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
+	}
+	var projectTitle string
+	result = configs.DB.Table("projects").Select("title").Where("id = ?", projectID).Scan(&projectTitle)
+	if result.Error != nil {
+		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
+	}
+	var username string
+	result = configs.DB.Table("users").Select("username").Where("id = ?", userID).Scan(&username)
+	if result.Error != nil {
+		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
 	result = configs.DB.Table("projects_members").Where("project_id = ? and user_id = ?", projectID, memberID).Update("is_admin", true)
 	if result.Error != nil {
@@ -269,6 +309,9 @@ func ChangeRoleMemberHandler(ctx echo.Context) error {
 	if result.Error != nil {
 		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
+	go func() {
+		services.SendMail("PlanVerse Notification", fmt.Sprintf("you've been promoted to admin role in %s project by %s!", projectTitle, username), []string{email})
+	}()
 	return ctx.JSON(http.StatusOK, messages.MemberRoleChanged)
 }
 
@@ -283,33 +326,72 @@ func ChangeRoleAdminHandler(ctx echo.Context) error {
 	}
 	userIDCtx := ctx.Get("user_id")
 	userID := userIDCtx.(int)
-	var owner helpers.Owner
-	result := configs.DB.Table("projects").Select("owner_id").Where("id = ?", projectID).Scan(&owner)
+	var projectIDs []int
+	result := configs.DB.Table("projects_members").Select("project_id").Where("user_id = ?", adminID).Scan(&projectIDs)
 	if result.Error != nil {
-		return ctx.JSON(http.StatusNotAcceptable, messages.WrongProjectID)
+		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
-	if userID != owner.OwnerID {
-		return ctx.JSON(http.StatusNotAcceptable, messages.OwnerAccess)
+	if len(projectIDs) == 0 {
+		return ctx.JSON(http.StatusNotAcceptable, messages.UserNoProject)
 	}
-	if adminID == owner.OwnerID {
-		return ctx.JSON(http.StatusNotAcceptable, messages.OwnerChange)
+	exist := false
+	for _, id := range projectIDs {
+		if id == projectID {
+			exist = true
+			break
+		}
 	}
-	var showRole helpers.ShowRole
-	result = configs.DB.Table("projects_members").Select("is_admin").Where("project_id = ? and user_id = ?", projectID, adminID).Scan(&showRole)
-	if result.Error != nil {
+	if !exist {
 		return ctx.JSON(http.StatusNotAcceptable, messages.NotMember)
 	}
-	if !showRole.IsAdmin {
+	var ownerID int
+	result = configs.DB.Table("projects").Select("owner_id").Where("id = ?", projectID).Scan(&ownerID)
+	if result.Error != nil {
+		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
+	}
+	if ownerID == 0 {
+		return ctx.JSON(http.StatusNotAcceptable, messages.WrongProjectID)
+	}
+	if userID != ownerID {
+		return ctx.JSON(http.StatusNotAcceptable, messages.OwnerAccess)
+	}
+	if adminID == ownerID {
+		return ctx.JSON(http.StatusNotAcceptable, messages.OwnerChange)
+	}
+	var isAdmin bool
+	result = configs.DB.Table("projects_members").Select("is_admin").Where("project_id = ? and user_id = ?", projectID, adminID).Scan(&isAdmin)
+	if result.Error != nil {
+		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
+	}
+	if !isAdmin {
 		return ctx.JSON(http.StatusNotAcceptable, messages.AlreadyMemberRole)
+	}
+	var email string
+	result = configs.DB.Table("users").Select("email").Where("id = ?", adminID).Scan(&email)
+	if result.Error != nil {
+		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
+	}
+	var projectTitle string
+	result = configs.DB.Table("projects").Select("title").Where("id = ?", projectID).Scan(&projectTitle)
+	if result.Error != nil {
+		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
+	}
+	var username string
+	result = configs.DB.Table("users").Select("username").Where("id = ?", userID).Scan(&username)
+	if result.Error != nil {
+		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
 	result = configs.DB.Table("projects_members").Where("project_id = ? and user_id = ?", projectID, adminID).Update("is_admin", false)
 	if result.Error != nil {
 		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
-	result = configs.DB.Table("projects_members").Where("project_id = ? and user_id = ?", projectID, adminID).Update("promotion_time", nil)
+	result = configs.DB.Table("projects_members").Where("project_id = ? and user_id = ?", projectID, adminID).Update("promotion_time", time.Time{})
 	if result.Error != nil {
 		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
+	go func() {
+		services.SendMail("PlanVerse Notification", fmt.Sprintf("you've been demoted to member role in %s project by %s!", projectTitle, username), []string{email})
+	}()
 	return ctx.JSON(http.StatusOK, messages.AdminRoleChanged)
 }
 
@@ -321,14 +403,17 @@ func GetProjectHandler(ctx echo.Context) error {
 	}
 	userIDCtx := ctx.Get("user_id")
 	userID := userIDCtx.(int)
-	var projectIDs []helpers.ProjectID
+	var projectIDs []int
 	result := configs.DB.Table("projects_members").Select([]string{"project_id"}).Where("user_id = ?", userID).Scan(&projectIDs)
 	if result.Error != nil {
 		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
+	if len(projectIDs) == 0 {
+		return ctx.JSON(http.StatusNotAcceptable, messages.UserNoProject)
+	}
 	isMember := false
 	for _, project := range projectIDs {
-		if project.ProjectID == projectID {
+		if project == projectID {
 			isMember = true
 			break
 		}
@@ -358,14 +443,17 @@ func GetProjectMembersHandler(ctx echo.Context) error {
 	}
 	userIDCtx := ctx.Get("user_id")
 	userID := userIDCtx.(int)
-	var projectIDs []helpers.ProjectID
+	var projectIDs []int
 	result := configs.DB.Table("projects_members").Select([]string{"project_id"}).Where("user_id = ?", userID).Scan(&projectIDs)
 	if result.Error != nil {
 		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
+	if len(projectIDs) == 0 {
+		return ctx.JSON(http.StatusNotAcceptable, messages.UserNoProject)
+	}
 	isMember := false
-	for _, p := range projectIDs {
-		if p.ProjectID == projectID {
+	for _, id := range projectIDs {
+		if id == projectID {
 			isMember = true
 			break
 		}
@@ -379,7 +467,7 @@ func GetProjectMembersHandler(ctx echo.Context) error {
 		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
 	res = make([]models.GetMemberResponse, len(project.Members))
-	showRoles := make([]helpers.ShowRole, len(project.Members))
+	showRoles := make([]bool, len(project.Members))
 	var wg sync.WaitGroup
 	for i := range project.Members {
 		wg.Add(1)
@@ -391,7 +479,7 @@ func GetProjectMembersHandler(ctx echo.Context) error {
 				Username:   project.Members[index].Username,
 				Email:      project.Members[index].Email,
 				ProfilePic: project.Members[index].ProfilePic,
-				IsAdmin:    showRoles[index].IsAdmin,
+				IsAdmin:    showRoles[index],
 			}
 		}(i, &wg)
 	}
@@ -413,6 +501,9 @@ func EditProjectHandler(ctx echo.Context) error {
 	if result.Error != nil {
 		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
+	if result.Error != nil {
+		return ctx.JSON(http.StatusNotAcceptable, messages.WrongProjectID)
+	}
 	project.Title = req.Title
 	project.BackGroundPic = req.BackGroundPic
 	project.Description = req.Description
@@ -430,17 +521,20 @@ func DeleteProjectHandler(ctx echo.Context) error {
 	}
 	userIDCtx := ctx.Get("user_id")
 	userID := userIDCtx.(int)
-	var owner helpers.Owner
-	result := configs.DB.Table("projects").Select("owner_id").Where("id = ?", projectID).Scan(&owner)
+	var ownerID int
+	result := configs.DB.Table("projects").Select("owner_id").Where("id = ?", projectID).Scan(&ownerID)
 	if result.Error != nil {
+		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
+	}
+	if ownerID == 0 {
 		return ctx.JSON(http.StatusNotAcceptable, messages.WrongProjectID)
 	}
-	if userID != owner.OwnerID {
+	if userID != ownerID {
 		return ctx.JSON(http.StatusNotAcceptable, messages.OwnerAccess)
 	}
 	result = configs.DB.Unscoped().Where("project_id = ?", projectID).Delete(&models.InvitedMembers{})
 	if result.Error != nil {
-		return ctx.JSON(http.StatusNotAcceptable, messages.WrongProjectID)
+		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
 	result = configs.DB.Unscoped().Where("project_id = ?", projectID).Delete(&models.ProjectsMembers{})
 	if result.Error != nil {
@@ -451,18 +545,18 @@ func DeleteProjectHandler(ctx echo.Context) error {
 	if result.Error != nil {
 		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
-	var wg *sync.WaitGroup
+	var wg sync.WaitGroup
 	for i := range stateIDs {
 		wg.Add(1)
 		go func(index int, wg *sync.WaitGroup) {
 			defer wg.Done()
 			var taskIDs []int
-			result = configs.DB.Table("tasks").Select("id").Where("state_id = ?", stateIDs[index]).Scan(&taskIDs)
+			configs.DB.Table("tasks").Select("id").Where("state_id = ?", stateIDs[index]).Scan(&taskIDs)
 			for j := range taskIDs {
 				configs.DB.Unscoped().Where("task_id = ?", taskIDs[j]).Delete(&models.TasksPerformers{})
 			}
-			result = configs.DB.Unscoped().Where("state_id = ?", stateIDs[index]).Delete(&models.Task{})
-		}(i, wg)
+			configs.DB.Unscoped().Where("state_id = ?", stateIDs[index]).Delete(&models.Task{})
+		}(i, &wg)
 	}
 	wg.Wait()
 	result = configs.DB.Unscoped().Where("project_id = ?", projectID).Delete(&models.State{})
