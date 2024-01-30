@@ -6,6 +6,7 @@ import (
 	"PlanVerse/messages"
 	"PlanVerse/models"
 	"PlanVerse/services"
+	"encoding/json"
 	"fmt"
 	"github.com/labstack/echo/v4"
 	"net/http"
@@ -163,7 +164,7 @@ func ShareProjectHandler(ctx echo.Context) error {
 func ShowProjectHandler(ctx echo.Context) error {
 	req := new(models.ShowProjectRequest)
 	res := new(models.ShowProjectResponse)
-	if err := ctx.Bind(req); err != nil {
+	if err := json.NewDecoder(ctx.Request().Body).Decode(req); err != nil {
 		return ctx.JSON(http.StatusBadRequest, messages.InvalidRequestBody)
 	}
 	var projectID int
