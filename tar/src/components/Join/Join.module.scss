@@ -13,10 +13,11 @@
   max-width: 350px;
   max-height: 400px;
   padding: 12px;
-  padding-top: 60px;
+  padding-top: 50px;
   position: relative;
   overflow: hidden;
   z-index: 0;
+  min-width: 300px;
 }
 
 .JoinCard::after{
@@ -40,6 +41,8 @@
 .GroupIMG {
   border-radius: 50%;
   border: 5px solid var(--color-neutrals-n-10);
+  width: 40%;
+  aspect-ratio: 1;
 }
 
 .GroupName {

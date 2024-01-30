@@ -6,6 +6,7 @@ import { Epic, handleError } from "./epic";
 import {
   AuthState,
   CreateProject,
+  JoinProjectType,
   Member,
   Project,
   RequestState,
@@ -14,6 +15,7 @@ import {
 } from "../../utils/types";
 import { ReqActions } from "../slices/req.slice";
 import { ProjectActions } from "../slices/project.slice";
+import { navigate } from "../../utils/configs";
 
 export const createProjectEpic: Epic = (action$, state$) =>
   action$.pipe(
@@ -65,7 +67,7 @@ export const getFullProject: Epic = (action$, state$) =>
           );
         }),
         catchError(() => {
-          window.location.replace("/home");
+          navigate("/home");
           return EMPTY;
         })
       );
@@ -96,6 +98,38 @@ export const changeMemberRoleEpic: Epic = (action$, state$) =>
           ),
           handleError("Permission denied")
         )
+      );
+    })
+  );
+
+  export const showProjectEpic: Epic = (action$, state$) =>
+  action$.pipe(
+    ofType(ProjectActions.showProject.type),
+    mergeMap((action) => {
+      return API.showProject(action.payload).pipe(
+        mergeMap((res) => {
+          return of(ProjectActions.setJoinProject(res.response as JoinProjectType))
+        }),
+        catchError(() => {
+          return EMPTY;
+        })
+      );
+    })
+  );
+
+  export const joinProjectEpic: Epic = (action$, state$) =>
+  action$.pipe(
+    ofType(ProjectActions.joinProject.type),
+    mergeMap((action) => {
+      return API.joinProject(action.payload).pipe(
+        mergeMap(() => {
+          navigate(`/projects/${action.payload}`);
+          return of(ReqActions.setState({requestState: RequestState.None}))
+        }),
+        catchError(() => {
+          navigate(`/projects/${action.payload}`);
+          return of(ReqActions.setState({requestState: RequestState.Error}));
+        })
       );
     })
   );

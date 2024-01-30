@@ -116,7 +116,12 @@ export const API = {
       }
     );
   },
-  editUser(username: string, password: string, email: string, profile_pic: string) {
+  editUser(
+    username: string,
+    password: string,
+    email: string,
+    profile_pic: string
+  ) {
     return ajax.post(
       `${END_POINT}/edit-profile`,
       {
@@ -125,6 +130,28 @@ export const API = {
         email,
         profile_pic,
       },
+      {
+        ...API_HEADERS,
+        Authorization: getAccessToken(),
+      }
+    );
+  },
+  showProject(join_link: string) {
+    return ajax.post(
+      `${END_POINT}/show-project`,
+      {
+        join_link,
+      },
+      {
+        ...API_HEADERS,
+        Authorization: getAccessToken(),
+      }
+    );
+  },
+  joinProject(id: string) {
+    return ajax.post(
+      `${END_POINT}/join-project/${id}`,
+      {},
       {
         ...API_HEADERS,
         Authorization: getAccessToken(),

@@ -1,4 +1,4 @@
-export enum AuthState  {
+export enum AuthState {
   Authenticated,
   Unauthenticated,
   EmailValidate,
@@ -16,8 +16,17 @@ export enum RequestTypes {
   EmailValidate,
   ResendEmail,
   CreateProject,
-  EditUser
+  EditUser,
+  JoinProject,
 }
+
+export type JoinProjectType = {
+  project_id: string;
+  title: string;
+  picture: string;
+  members_number: number;
+  members: { Username: string; ProfilePic: string }[];
+};
 
 export type LoginForm = {
   email?: string;
@@ -47,26 +56,26 @@ export type Project = {
 };
 
 export type SmallProject = {
-  project_id: string,
-  title: string,
-  picture: string,
-  members_number: string,
-  is_admin: boolean
-}
+  project_id: string;
+  title: string;
+  picture: string;
+  members_number: string;
+  is_admin: boolean;
+};
 
 export type Member = {
-  id: string,
-  username: string,
-  email: string,
-  profile_pic: string,
-  is_admin: boolean,
-}
+  id: string;
+  username: string;
+  email: string;
+  profile_pic: string;
+  is_admin: boolean;
+};
 
 export type CreateProject = {
-  title: string,
-  picture: string,
-  description: string,
-}
+  title: string;
+  picture: string;
+  description: string;
+};
 
 export type Task = {
   id: number;
@@ -92,7 +101,7 @@ export type UserEditType = {
   password: string;
   email: string;
   profile_pic: string;
-}
+};
 
 export type IconProps = {
   color?: string;
@@ -109,4 +118,3 @@ export enum Breakpoints {
   Medium = 1000,
   Large = 1500,
 }
-

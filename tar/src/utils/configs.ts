@@ -17,3 +17,7 @@ export const secToString = (secs: number) => {
   return `${min < 10 ? 0 : ""}${min}:${sec < 10 ? 0 : ""}${sec}`
 
 }
+
+export const navigate = (dest: string) => {
+  window.location.replace(dest);
+}

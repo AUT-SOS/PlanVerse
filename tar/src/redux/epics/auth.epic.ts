@@ -15,7 +15,7 @@ import {
   SignupForm,
   User,
 } from "../../utils/types";
-import { showSuccessToastMessage } from "../../main";
+import { showFailToastMessage, showSuccessToastMessage } from "../../main";
 import { ReqActions } from "../slices/req.slice";
 import { UserActions } from "../slices/user.slice";
 
@@ -83,7 +83,7 @@ export const signupEpic: Epic = (action$, state$) =>
             of(ReqActions.setState({ requestState: RequestState.None }))
           );
         }),
-        handleError()
+        handleError("Email already exists")
       );
     })
   );
