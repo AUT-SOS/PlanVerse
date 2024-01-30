@@ -425,7 +425,13 @@ func GetProjectHandler(ctx echo.Context) error {
 	if result.Error != nil {
 		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
+	var joinLink models.JoinLink
+	result = configs.DB.Table("join_links").Select("link").Where("project_id = ?", projectID).Scan(&joinLink)
+	if result.Error != nil {
+		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
+	}
 	res.ID = projectID
+	res.Link = joinLink.Link
 	return ctx.JSON(http.StatusOK, res)
 }
 
