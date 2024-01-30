@@ -33,7 +33,11 @@ import {
 import { ReqActions } from "../../redux/slices/req.slice";
 import { ProjectActions } from "../../redux/slices/project.slice";
 import { UserActions } from "../../redux/slices/user.slice";
-import { validateEmail, validatePassword, validateUsername } from "../../utils/regex";
+import {
+  validateEmail,
+  validatePassword,
+  validateUsername,
+} from "../../utils/regex";
 
 enum HomeTypes {
   Overview,
@@ -93,7 +97,9 @@ export const Home: React.FC = (props) => {
             ) : state === HomeTypes.EditProfile ? (
               <EditProfile userInf={userInf} setCurrState={setCurrState} />
             ) : (
-              <CreateProject setCurrState={setCurrState} />
+              <CreateProject
+                handleClose={() => setCurrState(HomeTypes.Overview)}
+              />
             )}
           </a.div>
         ) : (
@@ -172,7 +178,7 @@ const EditProfile: React.FC<EditProfileProps> = (props) => {
     password: "",
   });
   const { isPending } = useRequestStates(RequestTypes.EditUser);
-  const ref = useRef<HTMLInputElement>(null);  
+  const ref = useRef<HTMLInputElement>(null);
 
   const onFileClick = () => {
     ref.current && ref.current.click();
@@ -182,7 +188,7 @@ const EditProfile: React.FC<EditProfileProps> = (props) => {
     const target = event.target as HTMLInputElement;
     const selectedFile = target.files && target.files[0];
     const reader = new FileReader();
-    reader.onload = function (event) {      
+    reader.onload = function (event) {
       setInfo((prev) => ({
         ...prev,
         profile_pic: event.target?.result?.toString() ?? prev.profile_pic,
@@ -224,9 +230,13 @@ const EditProfile: React.FC<EditProfileProps> = (props) => {
   }, [info]);
 
   const submitDisable =
-    info.password.length < 8 || (info.email === props.userInf.email &&
-    info.profile_pic === props.userInf.profile_pic &&
-    info.username === props.userInf.username) || (!validateEmail(info.email) || !validateUsername(info.username) || !validatePassword(info.password));
+    info.password.length < 8 ||
+    (info.email === props.userInf.email &&
+      info.profile_pic === props.userInf.profile_pic &&
+      info.username === props.userInf.username) ||
+    !validateEmail(info.email) ||
+    !validateUsername(info.username) ||
+    !validatePassword(info.password);
 
   return (
     <div className={styles.CreateProjectContentWrapper}>
@@ -261,14 +271,17 @@ const EditProfile: React.FC<EditProfileProps> = (props) => {
           placeholder="Username"
           value={info.username}
           onChange={changeUsername}
-
         />
         <EmailInputBar
           onChange={changeEmail}
           value={info.email}
           placeholder="Email"
         />
-        <PasswordInputBar value={info.password} placeholder="Enter your password" onChange={changePassword}/>
+        <PasswordInputBar
+          value={info.password}
+          placeholder="Enter your password"
+          onChange={changePassword}
+        />
       </div>
       <div className={styles.ButtonsWrapper}>
         <HollowButton
@@ -288,21 +301,24 @@ const EditProfile: React.FC<EditProfileProps> = (props) => {
   );
 };
 
-type CreateProjInfo = {
+export type CreateProjInfo = {
   title: string;
   picture: string;
   description: string;
 };
 
 type CreajeProjectProps = {
-  setCurrState: (val: HomeTypes) => void;
+  handleClose: () => void;
+  projectInf?: CreateProjInfo;
+  projId?: string;
+  className?: string;
 };
 
-const CreateProject: React.FC<CreajeProjectProps> = (props) => {
+export const CreateProject: React.FC<CreajeProjectProps> = (props) => {
   const [info, setInfo] = useState<CreateProjInfo>({
-    title: "",
-    picture: "/public//defaultProjPFP.png",
-    description: "",
+    title: props.projectInf?.title ?? "",
+    picture: props.projectInf?.picture ?? "/public//defaultProjPFP.png",
+    description: props.projectInf?.description ?? "",
   });
   const { isPending } = useRequestStates(RequestTypes.CreateProject);
   const ref = useRef<HTMLInputElement>(null);
@@ -339,18 +355,31 @@ const CreateProject: React.FC<CreajeProjectProps> = (props) => {
   );
   const dispatch = useDispatch();
   const handleConfirm = useCallback(() => {
-    dispatch(
-      ReqActions.setState({
-        requestState: RequestState.Pending,
-        reqType: RequestTypes.CreateProject,
-      })
-    );
-    dispatch(ProjectActions.createProject(info));
-  }, [info]);
+    if (props.projId) {
+      dispatch(
+        ReqActions.setState({
+          requestState: RequestState.Pending,
+          reqType: RequestTypes.EditProject,
+        })
+      );
+      dispatch(ProjectActions.editProject({...info, id: props.projId}));
+    } else {
+      dispatch(
+        ReqActions.setState({
+          requestState: RequestState.Pending,
+          reqType: RequestTypes.CreateProject,
+        })
+      );
+      dispatch(ProjectActions.createProject(info));
+    }
+  }, [info, props.projId]);
 
   return (
-    <div className={styles.CreateProjectContentWrapper}>
-      <Text1 text="Create new project" />
+    <div
+      className={classNames(styles.CreateProjectContentWrapper, props.className)}
+      onClick={(e) => e.stopPropagation()}
+    >
+      <Text1 text={props.projectInf ? "Edit Project" : "Create new project"} />
       <div className={styles.PicWrapper}>
         <img src={info.picture} className={classNames(styles.CreateProjImg)} />
         <div onClick={onFileClick} className={classNames(styles.ImgCover)}>
@@ -394,11 +423,11 @@ const CreateProject: React.FC<CreajeProjectProps> = (props) => {
       <div className={styles.ButtonsWrapper}>
         <HollowButton
           text="Back"
-          onClick={() => props.setCurrState(HomeTypes.Overview)}
+          onClick={props.handleClose}
           style={{ width: 100 }}
         />
         <ReqButton1
-          text="Create Project"
+          text={props.projectInf ? "Edit Project" : "Create Project"}
           style={{ width: 150 }}
           isPending={isPending}
           onClick={handleConfirm}
@@ -417,7 +446,7 @@ type ProjCardProps = {
 
 const ProjCard: React.FC<ProjCardProps> = (props) => {
   const navigate = useNavigate();
-  return (  
+  return (
     <div
       key={props.key}
       className={classNames(styles.ProjCard, { [styles.AddMax]: props.addMax })}

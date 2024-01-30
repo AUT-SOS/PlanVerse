@@ -48,16 +48,16 @@ func main() {
 	server.POST("/delete-account", controllers.DeleteUserHandler)
 
 	//project api
-	server.GET("/list-project", controllers.ProjectListHandler)      //
-	server.POST("/create-project", controllers.CreateProjectHandler) //
-	server.POST("/share-link/:project-id", controllers.ShareProjectHandler)
-	server.POST("/show-project", controllers.ShowProjectHandler)
-	server.POST("/join-project/:project-id", controllers.JoinProjectHandler)
+	server.GET("/list-project", controllers.ProjectListHandler)                                                    //
+	server.POST("/create-project", controllers.CreateProjectHandler)                                               //
+	server.POST("/share-link/:project-id", controllers.ShareProjectHandler)                                        //
+	server.POST("/show-project", controllers.ShowProjectHandler)                                                   //
+	server.POST("/join-project/:project-id", controllers.JoinProjectHandler)                                       //
 	server.POST("/promote/:project-id/:user-id", controllers.ChangeRoleMemberHandler, middlewares.AdminMiddleware) //
 	server.POST("/demote/:project-id/:user-id", controllers.ChangeRoleAdminHandler)                                //
 	server.GET("/get-project/:project-id", controllers.GetProjectHandler)                                          //
 	server.GET("/get-project-members/:project-id", controllers.GetProjectMembersHandler)                           //
-	server.POST("/edit-project/:project-id", controllers.EditProjectHandler, middlewares.AdminMiddleware)
+	server.POST("/edit-project/:project-id", controllers.EditProjectHandler, middlewares.AdminMiddleware)          //
 	server.POST("/delete-project/:project-id", controllers.DeleteProjectHandler)
 
 	//state api

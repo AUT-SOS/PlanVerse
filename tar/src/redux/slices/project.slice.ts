@@ -4,6 +4,7 @@ import {
   JoinProjectType,
   Member,
   Project,
+  ShareLink,
   SmallProject,
 } from "../../utils/types";
 
@@ -57,6 +58,8 @@ export const ProjectActions = {
   }>("Proj/ChangeMemberRole"),
   showProject: createAction<string>("Proj/ShowProject"),
   joinProject: createAction<string>("Proj/JoinProject"),
+  shareLink: createAction<ShareLink>("Proj/ShareLink"),
+  editProject: createAction<CreateProject & {id: string}>("Proj/EditProject")
 };
 
 export const ProjectReducer = ProjectsSlice.reducer;
