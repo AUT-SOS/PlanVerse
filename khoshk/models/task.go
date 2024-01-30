@@ -7,6 +7,7 @@ type Task struct {
 	Title           string    `gorm:"not null"`
 	Description     string    `gorm:"not null"`
 	BackGroundColor string    `gorm:"not null"`
+	Index           int       `gorm:"not null"`
 	StateID         int       `gorm:"not null"`
 	State           State     `gorm:"foreignKey:StateID"`
 	Performers      []User    `gorm:"many2many:tasks_performers"`
@@ -23,6 +24,7 @@ type TaskShow struct {
 
 type CreateTaskRequest struct {
 	StateID         int    `json:"state_id"`
+	Index           int    `json:"index"`
 	Title           string `json:"title"`
 	BackGroundColor string `json:"back_ground_color"`
 	Description     string `json:"description"`
@@ -40,6 +42,7 @@ type PerformerRequest struct {
 
 type EditTaskRequest struct {
 	TaskID          int    `json:"task_id"`
+	Index           int    `json:"index"`
 	Title           string `json:"title"`
 	BackGroundColor string `json:"back_ground_color"`
 	Description     string `json:"description"`

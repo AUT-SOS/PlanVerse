@@ -51,6 +51,7 @@ func CreateTaskHandler(ctx echo.Context) error {
 		Title:           req.Title,
 		BackGroundColor: req.BackGroundColor,
 		Description:     req.Description,
+		Index:           req.Index,
 	}
 	state.Tasks = append(state.Tasks, newTask)
 	result = configs.DB.Save(&state)
@@ -393,6 +394,7 @@ func EditTaskHandler(ctx echo.Context) error {
 	if result.Error != nil {
 		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
+	task.Index = req.Index
 	task.Title = req.Title
 	task.BackGroundColor = req.BackGroundColor
 	task.Description = req.Description
