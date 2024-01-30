@@ -417,11 +417,11 @@ type ProjCardProps = {
 
 const ProjCard: React.FC<ProjCardProps> = (props) => {
   const navigate = useNavigate();
-  return (
+  return (  
     <div
       key={props.key}
       className={classNames(styles.ProjCard, { [styles.AddMax]: props.addMax })}
-      onClick={() => navigate("/project/" + props.project.project_id)}
+      onClick={() => navigate("/projects/" + props.project.project_id)}
     >
       <img
         className={styles.ProjCardImg}
