@@ -1,6 +1,7 @@
 import { PayloadAction, createAction, createSlice } from "@reduxjs/toolkit";
 import {
   CreateProject,
+  CreateStateType,
   CreateTaskType,
   JoinProjectType,
   Member,
@@ -66,6 +67,16 @@ const ProjectsSlice = createSlice({
       if (state.states && index) {
         const tIndex = state.states[index].tasks.findIndex((item) => item.task_id == action.payload.task_id);
         state.states[index].tasks[tIndex] = {...action.payload, performers: state.states[index].tasks[tIndex].performers}
+      }
+    },
+    createState(state, action: PayloadAction<CreateStateType>) {
+    },
+    editState(state, action: PayloadAction<State & {project_id: string}>){
+      const index = state.states?.findIndex(
+        (item) => item.state_id === action.payload.state_id
+      );
+      if (state.states && index) {
+        state.states[index] = action.payload;
       }
     }
   },

@@ -1,6 +1,33 @@
-.TaskBoard{
-      display: flex;
-      width: 100%;
-      gap: 40px;
-      flex-wrap: wrap;
+.TaskBoard {
+  display: flex;
+  width: 100%;
+  gap: 40px;
+  max-height: 100%;
+  overflow: auto;
+  max-width: 100%;
+
+}
+
+.AddState {
+  width: 20%;
+  min-width: 20%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 10px;
+  border-radius: 10px;
+  gap: 10px;
+  height: auto;
+  align-self: flex-start;
+  color: var(--color-neutrals-n-00);
+  background-color: rgba(#444444, $alpha: 0.8);
+  transition: background-color 150ms ease-in-out;
+  cursor: pointer;
+
+}
+
+.AddState:hover{
+      background-color: rgba(rgb(204, 203, 203), $alpha: 0.8);
+
 }

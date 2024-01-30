@@ -23,17 +23,9 @@ export const TaskFC: React.FC<Props> = (props) => {
     setTaskInfo((prev) => ({ ...prev, title: event.target.value }));
   };
   const handleBlur = () => {
-    console.log(">>TT", {
-      id: projId,  
-      state_id: props.state_id,
-      title: taskInfo.title,
-      back_ground_color: taskInfo.back_ground_color,
-      description: taskInfo.description,
-      task_id: taskInfo.task_id,
-    });
     dispatch(
       ProjectActions.editTask({
-        id: projId,  
+        project_id: projId,  
         state_id: props.state_id,
         title: taskInfo.title,
         back_ground_color: taskInfo.back_ground_color,
@@ -57,12 +49,12 @@ export const TaskFC: React.FC<Props> = (props) => {
 
 type TitleProps = React.HTMLProps<HTMLInputElement>;
 
-const TextTitle: React.FC<TitleProps> = (props) => {
+export const TextTitle: React.FC<TitleProps> = (props) => {
   return (
     <input
       type="text"
-      className={classNames(styles.TaskTitle, props.className)}
       {...props}
+      className={classNames(styles.TaskTitle, props.className)}
       value={props.value}
     />
   );

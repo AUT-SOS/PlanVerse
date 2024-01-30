@@ -213,7 +213,7 @@ export const API = {
       id: string,
       title: string,
       back_ground_color: string,
-      admin_access: string
+      admin_access: boolean
     ) {
       return ajax.post(
         `${END_POINT}/create-state/${id}`,
@@ -228,7 +228,7 @@ export const API = {
         }
       );
     },
-    getState(projId: string, stateId: string){
+    getState(projId: string, stateId: string) {
       return ajax.get(`${END_POINT}/get-state/${projId}/${stateId}`, {
         ...API_HEADERS,
         Authorization: getAccessToken(),
@@ -248,6 +248,27 @@ export const API = {
           title,
           back_ground_color,
           description,
+        },
+        {
+          ...API_HEADERS,
+          Authorization: getAccessToken(),
+        }
+      );
+    },
+    editState(
+      id: string,
+      state_id: string,
+      title: string,
+      back_ground_color: string,
+      admin_access: boolean
+    ) {
+      return ajax.post(
+        `${END_POINT}/edit-state/${id}`,
+        {
+          state_id,
+          title,
+          back_ground_color,
+          admin_access,
         },
         {
           ...API_HEADERS,

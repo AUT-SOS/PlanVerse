@@ -3,10 +3,11 @@ import { Text2 } from "../../../ui/Text";
 import { State, Task } from "../../../utils/types";
 import styles from "./Column.module.scss";
 import { a, useTransition } from "@react-spring/web";
-import { TaskFC } from "../Task/Task";
+import { TaskFC, TextTitle } from "../Task/Task";
 import { shallowEqual, useDispatch } from "react-redux";
 import { ProjectActions } from "../../../redux/slices/project.slice";
 import { useParams } from "react-router-dom";
+import { SketchPicker } from "react-color";
 
 type Props = {
   column: State;
@@ -24,12 +25,33 @@ function hexToRgb(hex: string) {
 }
 
 export const Column: React.FC<Props> = (props) => {
-  const color = hexToRgb(props.column.back_ground_color);
+  const [columnInfo, setColumnInfo] = useState<State>(props.column);
+  const color = hexToRgb(columnInfo.back_ground_color);
+
+  const handleEditName = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setColumnInfo((prev) => ({ ...prev, title: event.target.value }));
+  };
+
+  const [display, setDisplay] = useState(false);
+  const [sketchDisplay, setSketchDisplay] = useState(false);
+
+  const handleBlur = () => {
+    dispatch(
+      ProjectActions.editState({
+        project_id: projId,
+        state_id: props.column.state_id,
+        title: columnInfo.title,
+        back_ground_color: columnInfo.back_ground_color,
+        admin_access: columnInfo.admin_access,
+        tasks: columnInfo.tasks,
+      })
+    );
+  };
 
   const projId = useParams().id!;
   const newTask = {
     title: "New Task",
-    id: projId,
+    project_id: projId,
     back_ground_color: "",
     description: "",
     performers: [],
@@ -64,7 +86,28 @@ export const Column: React.FC<Props> = (props) => {
         backgroundColor: `rgba(${color?.r},${color?.g},${color?.b}, 0.5) `,
       }}
     >
-      <Text2 className={styles.ColumnTitle} text={props.column.title} />
+      {sketchDisplay && (
+        <SketchPicker
+          color={columnInfo.back_ground_color}
+          onChange={(e) =>
+            setColumnInfo((prev) => ({ ...prev, back_ground_color: e.hex }))
+          }
+        />
+      )}
+      <div
+        onMouseOver={() => setDisplay(true)}
+        onMouseLeave={() => setDisplay(false)}
+      >
+        <TextTitle
+          className={styles.ColumnTitle}
+          value={columnInfo.title}
+          onChange={handleEditName}
+          onBlur={handleBlur}
+        />
+        {display && <div>
+          
+          </div>}
+      </div>
       {props.column &&
         props.column.tasks &&
         props.column.tasks.map((item, index) => (
@@ -76,4 +119,3 @@ export const Column: React.FC<Props> = (props) => {
     </div>
   );
 };
-
