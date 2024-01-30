@@ -33,13 +33,16 @@
   width: 100%;
   align-items: center;
   padding: 20px;
+  flex-wrap: wrap;
+  gap: 40px;
 }
 
 .Navbar{
   display: flex;
   width: 15%;
   justify-content: space-evenly;
-  
+  min-width: 100px;
+  gap: 10px;  
 }
 
 .Icon{
@@ -55,12 +58,15 @@
   position: fixed;
   top: 0;
   right: 0;
-  width: 40vw;
+  width: 100vw;
   height: 100vh;
   background-color: var(--color-neutrals-n-00);
   transform: translateX(100%);
   transition: transform 250ms ease-in-out;
   z-index: 2;
+  @include palette.sm{
+    width: 40vw;
+  }
   &.visible{
     transform: translateX(0);
     box-shadow: var(--shadow);
@@ -121,6 +127,7 @@
   justify-content: space-between;
   width: 100%;
   margin-top: auto;
+  flex-wrap: wrap;
 }
 
 .EmailsWrapper{
