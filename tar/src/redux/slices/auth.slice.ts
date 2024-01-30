@@ -23,7 +23,7 @@ const AuthSlice = createSlice({
     signup(state, _action: PayloadAction<SignupForm>) {
       state.exInfo = { email: _action.payload.email };
     },
-    setMyUserId(state, action: PayloadAction<string>) {
+    setMyUserId(state, action: PayloadAction<string | undefined>) {
       state.myId = action.payload;
     },
   },

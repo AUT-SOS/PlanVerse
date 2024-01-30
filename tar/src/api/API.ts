@@ -175,13 +175,60 @@ export const API = {
   shareLink(id: string, emails: string[]) {
     return ajax.post(
       `${END_POINT}/share-link/${id}`,
-      {emails},
+      { emails },
       {
         ...API_HEADERS,
         Authorization: getAccessToken(),
       }
     );
-  }
+  },
+  deleteUser(id: string) {
+    return ajax.post(
+      `${END_POINT}/delete-account`,
+      { user_id: id },
+      {
+        ...API_HEADERS,
+        Authorization: getAccessToken(),
+      }
+    );
+  },
+  deleteProject(id: string) {
+    return ajax.post(
+      `${END_POINT}/delete-project/${id}`,
+      {},
+      {
+        ...API_HEADERS,
+        Authorization: getAccessToken(),
+      }
+    );
+  },
+  Board: {
+    getStates(id: string) {
+      return ajax.get(`${END_POINT}/list-state/${id}`, {
+        ...API_HEADERS,
+        Authorization: getAccessToken(),
+      });
+    },
+    createState(
+      id: string,
+      title: string,
+      back_ground_color: string,
+      admin_access: string
+    ) {
+      return ajax.post(
+        `${END_POINT}/create-state/${id}`,
+        {
+          title,
+          back_ground_color,
+          admin_access,
+        },
+        {
+          ...API_HEADERS,
+          Authorization: getAccessToken(),
+        }
+      );
+    },
+  },
 };
 
 const getAccessToken = () => getCookie("access_token");

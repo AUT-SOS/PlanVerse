@@ -138,7 +138,7 @@ export const verificationEpic: Epic = (action$, state$) =>
       const otpPayload = action.payload as string;
       return API.otpVerify(otpPayload).pipe(
         mergeMap((res) => {
-          const myId = JSON.stringify(res.response);
+          const myId = JSON.stringify((res.response as any).user_id);
           return merge(
             of(
               AuthActions.changeAuthState({
