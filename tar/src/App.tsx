@@ -24,7 +24,9 @@ function App() {
     dispatch(ConfigActions.setBreakpoint(window.innerWidth));
   });
 
-  return <RoutesFC />;
+  return <>
+  <RoutesFC />
+  </>;
 }
 
 export default App;

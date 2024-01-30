@@ -3,6 +3,7 @@ import { EMPTY, catchError, merge, mergeMap, of } from "rxjs";
 import { API } from "../../api/API";
 import { Epic, handleError } from "./epic";
 import {
+  AuthState,
   Member,
   Project,
   RequestState,
@@ -12,6 +13,8 @@ import {
 import { ProjectActions } from "../slices/project.slice";
 import { UserActions } from "../slices/user.slice";
 import { ReqActions } from "../slices/req.slice";
+import { AuthActions } from "../slices/auth.slice";
+import { showFailToastMessage } from "../../main";
 
 export const editUserEpic: Epic = (action$, state$) =>
   action$.pipe(
@@ -31,22 +34,31 @@ export const editUserEpic: Epic = (action$, state$) =>
               const resObj = res.response as any;
               location.reload();
               return merge(
-                of(
-                  UserActions.setMe({
-                    ...resObj,
-                    profile_pic:
-                      resObj.profile_pic.length > 0
-                        ? resObj.profile_pic
-                        : "/public//DefaultPFP.jpg",
-                    id: myId,
-                  } as User)
-                ),
                 of(ReqActions.setState({ requestState: RequestState.None }))
               );
             })
           );
         }),
         handleError("Password is incorrect")
+      );
+    })
+  );
+
+export const deleteUserEpic: Epic = (action$, state$) =>
+  action$.pipe(
+    ofType(UserActions.deleteUser.type),
+    mergeMap((action) => {
+      const myId = state$.value.auth.myId!;
+      return API.deleteUser(myId).pipe(
+        mergeMap(() => {
+          document.cookie = `access_token=logout`;
+          location.reload();
+          return EMPTY;
+        }),
+        catchError(() => {
+          showFailToastMessage("There was an error");
+          return EMPTY;
+        })
       );
     })
   );

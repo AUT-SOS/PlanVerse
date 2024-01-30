@@ -78,6 +78,20 @@ export const API = {
       }
     );
   },
+  editProject(id: string, title: string, description: string, picture: string) {
+    return ajax.post(
+      `${END_POINT}/edit-project/${id}`,
+      {
+        title,
+        picture,
+        description,
+      },
+      {
+        ...API_HEADERS,
+        Authorization: getAccessToken(),
+      }
+    );
+  },
   getMyProjects() {
     return ajax.get(`${END_POINT}/list-project`, {
       ...API_HEADERS,
@@ -157,6 +171,111 @@ export const API = {
         Authorization: getAccessToken(),
       }
     );
+  },
+  shareLink(id: string, emails: string[]) {
+    return ajax.post(
+      `${END_POINT}/share-link/${id}`,
+      { emails },
+      {
+        ...API_HEADERS,
+        Authorization: getAccessToken(),
+      }
+    );
+  },
+  deleteUser(id: string) {
+    return ajax.post(
+      `${END_POINT}/delete-account`,
+      { user_id: id },
+      {
+        ...API_HEADERS,
+        Authorization: getAccessToken(),
+      }
+    );
+  },
+  deleteProject(id: string) {
+    return ajax.post(
+      `${END_POINT}/delete-project/${id}`,
+      {},
+      {
+        ...API_HEADERS,
+        Authorization: getAccessToken(),
+      }
+    );
+  },
+  Board: {
+    getStates(id: string) {
+      return ajax.get(`${END_POINT}/list-state/${id}`, {
+        ...API_HEADERS,
+        Authorization: getAccessToken(),
+      });
+    },
+    createState(
+      id: string,
+      title: string,
+      back_ground_color: string,
+      admin_access: string
+    ) {
+      return ajax.post(
+        `${END_POINT}/create-state/${id}`,
+        {
+          title,
+          back_ground_color,
+          admin_access,
+        },
+        {
+          ...API_HEADERS,
+          Authorization: getAccessToken(),
+        }
+      );
+    },
+    getState(projId: string, stateId: string){
+      return ajax.get(`${END_POINT}/get-state/${projId}/${stateId}`, {
+        ...API_HEADERS,
+        Authorization: getAccessToken(),
+      });
+    },
+    createTask(
+      id: string,
+      state_id: string,
+      title: string,
+      back_ground_color: string,
+      description: string
+    ) {
+      return ajax.post(
+        `${END_POINT}/create-task/${id}`,
+        {
+          state_id,
+          title,
+          back_ground_color,
+          description,
+        },
+        {
+          ...API_HEADERS,
+          Authorization: getAccessToken(),
+        }
+      );
+    },
+    editTask(
+      id: string,
+      task_id: string,
+      title: string,
+      back_ground_color: string,
+      description: string
+    ) {
+      return ajax.post(
+        `${END_POINT}/edit-task/${id}`,
+        {
+          task_id,
+          title,
+          back_ground_color,
+          description,
+        },
+        {
+          ...API_HEADERS,
+          Authorization: getAccessToken(),
+        }
+      );
+    },
   },
 };
 

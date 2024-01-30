@@ -14,6 +14,7 @@ type Props = React.HTMLProps<HTMLDivElement> & {
   amIAdmin?: boolean;
   amIOwner?: boolean;
   projectId: string;
+  myId?: string;
 };
 
 export const MemberItemFC: React.FC<Props> = (props) => {
@@ -55,15 +56,19 @@ export const MemberItemFC: React.FC<Props> = (props) => {
         <Text3 text={props.member.email} />
       </div>
 
-      <div style={{ marginLeft: "auto", display: "flex", gap: "5" }}>
-        {props.amIOwner ? (
-          props.member.is_admin ? (
-            <Demote size={20} onClick={handleDemote}/>
+      <div style={{ marginLeft: "auto", display: "flex", gap: 10 }}>
+        {props.member.id != props.myId ? (
+          props.amIOwner ? (
+            props.member.is_admin ? (
+              <Demote style={{cursor: "pointer"}} color="red" size={20} onClick={handleDemote} />
+            ) : (
+              <Promote style={{cursor: "pointer"}} color="green" size={20} onClick={handlePromote} />
+            )
+          ) : props.amIAdmin && !props.member.is_admin ? (
+            <Promote style={{cursor: "pointer"}} color="green" size={20} onClick={handlePromote} />
           ) : (
-            <Promote size={20} onClick={handlePromote}/>
+            <></>
           )
-        ) : props.amIAdmin && !props.member.is_admin ? (
-          <Promote size={20} onClick={handlePromote}/>
         ) : (
           <></>
         )}

@@ -18,6 +18,9 @@ export enum RequestTypes {
   CreateProject,
   EditUser,
   JoinProject,
+  ShareLink,
+  EditProject,
+  DeleteProject,
 }
 
 export type JoinProjectType = {
@@ -77,17 +80,41 @@ export type CreateProject = {
   description: string;
 };
 
+export type ShareLink = {
+  id: string;
+  emails: string[]
+}
+
 export type Task = {
-  id: number;
-  desc: number;
-  memebers: User[];
-  comments: TaskComment[];
+  task_id: string;
+  title: string;
+  performers: number[];
+  description: string;
+  back_ground_color: string;
 };
 
-export type TaskColumn = {
-  id: number;
-  name: string;
-  tasks: Task[];
+export type CreateTaskType = {
+  id: string,
+  state_id: string,
+	title: string,
+	back_ground_color: string,
+	description: string,
+}
+
+export type EditTaskType = {
+  task_id: string,
+  state_id: string,
+	title: string,
+	back_ground_color: string,
+	description: string,
+}
+
+export type State = {
+  state_id: string;
+  title: string;
+  back_ground_color: string;
+  admin_access: string;
+  tasks: Task[]
 };
 
 export type TaskComment = {

@@ -6,6 +6,7 @@ import (
 	"PlanVerse/messages"
 	"PlanVerse/models"
 	"PlanVerse/services"
+	"encoding/json"
 	"fmt"
 	"github.com/golang-jwt/jwt"
 	"github.com/labstack/echo/v4"
@@ -31,7 +32,6 @@ func RegisterHandler(ctx echo.Context) error {
 		}
 	}
 	otp, err := helpers.GenerateRandomCode()
-	fmt.Println(otp)
 	if err != nil {
 		return ctx.JSON(http.StatusInternalServerError, messages.FailedToCreateCode)
 	}
@@ -108,10 +108,10 @@ func RefreshHandler(ctx echo.Context) error {
 	})
 	if err != nil || !refreshToken.Valid {
 		deleteCookie := &http.Cookie{
-			Name:    "refresh_token",
-			Value:   "",
-			Path:    "/refresh",
-			Expires: time.Unix(0, 0),
+			Name:   "refresh_token",
+			Value:  "",
+			Path:   "/refresh",
+			MaxAge: -1,
 		}
 		ctx.SetCookie(deleteCookie)
 		return ctx.JSON(http.StatusUnauthorized, messages.InvalidRefreshToken)
@@ -206,7 +206,7 @@ func GetUserIDHandler(ctx echo.Context) error {
 
 func EditUserHandler(ctx echo.Context) error {
 	req := new(models.EditUserRequest)
-	if err := ctx.Bind(req); err != nil {
+	if err := json.NewDecoder(ctx.Request().Body).Decode(req); err != nil {
 		return ctx.JSON(http.StatusBadRequest, messages.InvalidRequestBody)
 	}
 	userIDCtx := ctx.Get("user_id")

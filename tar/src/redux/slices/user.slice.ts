@@ -22,5 +22,6 @@ const UsersSlice = createSlice({
 export const UserActions = {
   ...UsersSlice.actions,
   editUserInfo: createAction<UserEditType>("Users/EditUser"),
+  deleteUser: createAction("Users/Delete")
 };
 export const UserReducers = UsersSlice.reducer;
