@@ -2,7 +2,6 @@ package messages
 
 const InternalError = "Internal server error"
 const InvalidRequestBody = "Invalid request body"
-const TooManyRequests = "Too many requests"
 const DuplicateEmail = "There is an other account existing with this email"
 const FailedPasswordHashGeneration = "Failed to generate password hash"
 const FailedToCreateUser = "Failed to create user"
