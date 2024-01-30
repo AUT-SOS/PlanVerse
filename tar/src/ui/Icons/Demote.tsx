@@ -9,6 +9,7 @@ export const Demote: IconComponent = (props) => {
       height={props.size}
       viewBox="0 0 20 20"
       fill="none"
+      {...props}
     >
       <path
         fill-rule="evenodd"

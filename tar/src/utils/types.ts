@@ -18,6 +18,8 @@ export enum RequestTypes {
   CreateProject,
   EditUser,
   JoinProject,
+  ShareLink,
+  EditProject,
 }
 
 export type JoinProjectType = {
@@ -76,6 +78,11 @@ export type CreateProject = {
   picture: string;
   description: string;
 };
+
+export type ShareLink = {
+  id: string;
+  emails: string[]
+}
 
 export type Task = {
   id: number;

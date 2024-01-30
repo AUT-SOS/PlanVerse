@@ -1,4 +1,4 @@
-import React, { CSSProperties, useEffect } from "react";
+import React, { CSSProperties, PropsWithChildren, useEffect } from "react";
 import styles from "./ReqButton.module.scss";
 import classNames from "classnames";
 import { SpinningLoading } from "./SpinningLoading";
@@ -27,6 +27,25 @@ export const ReqButton: React.FC<Props> = (props) => {
       }}
     >
       {props.isPending ? <SpinningLoading size={20} /> : props.text}
+    </a.div>
+  );
+};
+
+export const ReqButtonWithIcon: React.FC<Props & PropsWithChildren> = (props) => {
+  return (
+    <a.div
+      {...props}
+      onClick={props.onClick}
+      className={classNames(
+        styles.ButtonWrapper1,
+        { [styles.isPending]: props.isPending, [styles.disable]: props.disable },
+        props.className
+      )}
+      style={{
+        ...props.style,
+      }}
+    >
+      {props.isPending ? <SpinningLoading size={20} /> : props.children}
     </a.div>
   );
 };

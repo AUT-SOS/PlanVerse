@@ -27,8 +27,6 @@ import { a, useTransition } from "@react-spring/web";
 
 export const Join: React.FC = (props) => {
   const dispatch = useDispatch();
-  console.log(location.toString());
-
   const {isPending} = useRequestStates(RequestTypes.JoinProject)
 
   useEffect(() => {

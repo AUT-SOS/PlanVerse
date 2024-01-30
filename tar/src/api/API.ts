@@ -78,6 +78,20 @@ export const API = {
       }
     );
   },
+  editProject(id: string, title: string, description: string, picture: string) {
+    return ajax.post(
+      `${END_POINT}/edit-project/${id}`,
+      {
+        title,
+        picture,
+        description,
+      },
+      {
+        ...API_HEADERS,
+        Authorization: getAccessToken(),
+      }
+    );
+  },
   getMyProjects() {
     return ajax.get(`${END_POINT}/list-project`, {
       ...API_HEADERS,
@@ -158,6 +172,16 @@ export const API = {
       }
     );
   },
+  shareLink(id: string, emails: string[]) {
+    return ajax.post(
+      `${END_POINT}/share-link/${id}`,
+      {emails},
+      {
+        ...API_HEADERS,
+        Authorization: getAccessToken(),
+      }
+    );
+  }
 };
 
 const getAccessToken = () => getCookie("access_token");
