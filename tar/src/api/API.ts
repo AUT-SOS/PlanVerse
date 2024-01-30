@@ -98,6 +98,16 @@ export const API = {
       Authorization: getAccessToken(),
     });
   },
+  leaveProject(id: string) {
+    return ajax.post(
+      `${END_POINT}/leave-project/${id}`,
+      {},
+      {
+        ...API_HEADERS,
+        Authorization: getAccessToken(),
+      }
+    );
+  },
   getFullProject(id: string) {
     return ajax.get(`${END_POINT}/get-project/${id}`, {
       ...API_HEADERS,
@@ -324,16 +334,13 @@ export const API = {
         }
       );
     },
-    getTask(id: string){
-      return ajax.get(
-        `${END_POINT}/get-task/${id}`,
-        {
-          ...API_HEADERS,
-          Authorization: getAccessToken(),
-        }
-      );
+    getTask(id: string) {
+      return ajax.get(`${END_POINT}/get-task/${id}`, {
+        ...API_HEADERS,
+        Authorization: getAccessToken(),
+      });
     },
-    deleteTask(id: string, task_id: string){
+    deleteTask(id: string, task_id: string) {
       return ajax.post(
         `${END_POINT}/delete-task/${id}/${task_id}`,
         {},
@@ -343,12 +350,12 @@ export const API = {
         }
       );
     },
-    addAssign(id: string, task_id: string, performer_id: string){
+    addAssign(id: string, task_id: string, performer_id: string) {
       return ajax.post(
         `${END_POINT}/add-performer/${id}`,
         {
           task_id,
-          performer_id
+          performer_id,
         },
         {
           ...API_HEADERS,
@@ -356,19 +363,19 @@ export const API = {
         }
       );
     },
-    removeAssign(id: string, task_id: string, performer_id: string){
+    removeAssign(id: string, task_id: string, performer_id: string) {
       return ajax.post(
         `${END_POINT}/remove-performer/${id}`,
         {
           task_id,
-          performer_id
+          performer_id,
         },
         {
           ...API_HEADERS,
           Authorization: getAccessToken(),
         }
       );
-    }
+    },
   },
 };
 

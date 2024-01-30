@@ -42,6 +42,7 @@ import { validateEmail } from "../../utils/regex";
 import { showFailToastMessage } from "../../main";
 import { CreateProject } from "../Home/Home";
 import { TaskBoard } from "./TaskBoard";
+import { Logout } from "../../ui/Icons/Logout";
 
 type Props = {};
 
@@ -132,6 +133,8 @@ export const Board: React.FC<Props> = (props) => {
   const sliderTitle =
     sliderContent === SliderTypes.Members ? "Members" : "Task Details";
 
+  const amIOwner = myId == project?.owner_id;
+
   return project && members ? (
     <div className={styles.BoardWrapper}>
       <MoreInfoSlider
@@ -168,6 +171,21 @@ export const Board: React.FC<Props> = (props) => {
                 size={30}
                 color={"white"}
                 className={styles.Icon}
+              />
+            )}
+            {!amIOwner && (
+              <Logout
+                size={30}
+                color={"white"}
+                className={styles.Icon}
+                onClick={() => {
+                  dispatch(
+                    ProjectActions.deleteProject({
+                      project_id: projId,
+                      isDelete: false,
+                    })
+                  );
+                }}
               />
             )}
             <Home
