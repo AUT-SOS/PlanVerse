@@ -111,7 +111,6 @@ export const changeMemberRoleEpic: Epic = (action$, state$) =>
           return of(ProjectActions.setJoinProject(res.response as JoinProjectType))
         }),
         catchError(() => {
-          navigate("/home");
           return EMPTY;
         })
       );
@@ -128,6 +127,7 @@ export const changeMemberRoleEpic: Epic = (action$, state$) =>
           return of(ReqActions.setState({requestState: RequestState.None}))
         }),
         catchError(() => {
+          navigate(`/projects/${action.payload}`);
           return of(ReqActions.setState({requestState: RequestState.Error}));
         })
       );

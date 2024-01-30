@@ -19,5 +19,5 @@ export const secToString = (secs: number) => {
 }
 
 export const navigate = (dest: string) => {
-  navigate(dest);
+  window.location.replace(dest);
 }

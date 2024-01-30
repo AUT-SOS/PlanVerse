@@ -121,7 +121,6 @@ export const getMyIdEpic: Epic = (action$, state$) =>
           );
         }),
         catchError(() => {
-          showFailToastMessage("Unauthenticated, please login again")
           return of(
             AuthActions.changeAuthState({
               authState: AuthState.Unauthenticated,
