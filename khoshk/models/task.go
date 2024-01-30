@@ -17,6 +17,7 @@ type Task struct {
 
 type TaskShow struct {
 	ID              int    `json:"task_id"`
+	Index           int    `json:"index"`
 	Title           string `json:"title"`
 	BackGroundColor string `json:"back_ground_color"`
 	Performers      []int  `json:"performers"`
@@ -54,6 +55,7 @@ type CreateTaskResponse struct {
 
 type GetTaskResponse struct {
 	ID              int    `json:"id"`
+	Index           int    `json:"index"`
 	Title           string `json:"title"`
 	BackGroundColor string `json:"back_ground_color"`
 	Description     string `json:"description"`
