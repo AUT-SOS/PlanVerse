@@ -6,8 +6,9 @@ import { RootState } from "../store";
 import { showFailToastMessage } from "../../main";
 import { RequestState } from "../../utils/types";
 import { ReqActions } from "../slices/req.slice";
-import { changeMemberRoleEpic, createProjectEpic, deleteProject, editProjectEpic, getFullProject, getMyProjectsEpic, getStates, joinProjectEpic, shareLinkEpic, showProjectEpic } from "./project.epic";
+import { changeMemberRoleEpic, createProjectEpic, deleteProject, editProjectEpic, getFullProject, getMyProjectsEpic, joinProjectEpic, shareLinkEpic, showProjectEpic } from "./project.epic";
 import { deleteUserEpic, editUserEpic } from "./user.epic";
+import { createTaskEpic, editTaskEpic, getStateEpic, getStatesEpic } from "./board.epic";
 
 export interface Epic<
   Input extends Action = any,
@@ -43,5 +44,8 @@ export const rootEpic = combineEpics(
       editProjectEpic,
       deleteUserEpic,
       deleteProject,
-      getStates,
+      getStatesEpic,
+      getStateEpic,
+      createTaskEpic,
+      editTaskEpic,
 )

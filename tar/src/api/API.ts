@@ -228,6 +228,54 @@ export const API = {
         }
       );
     },
+    getState(projId: string, stateId: string){
+      return ajax.get(`${END_POINT}/get-state/${projId}/${stateId}`, {
+        ...API_HEADERS,
+        Authorization: getAccessToken(),
+      });
+    },
+    createTask(
+      id: string,
+      state_id: string,
+      title: string,
+      back_ground_color: string,
+      description: string
+    ) {
+      return ajax.post(
+        `${END_POINT}/create-task/${id}`,
+        {
+          state_id,
+          title,
+          back_ground_color,
+          description,
+        },
+        {
+          ...API_HEADERS,
+          Authorization: getAccessToken(),
+        }
+      );
+    },
+    editTask(
+      id: string,
+      task_id: string,
+      title: string,
+      back_ground_color: string,
+      description: string
+    ) {
+      return ajax.post(
+        `${END_POINT}/edit-task/${id}`,
+        {
+          task_id,
+          title,
+          back_ground_color,
+          description,
+        },
+        {
+          ...API_HEADERS,
+          Authorization: getAccessToken(),
+        }
+      );
+    },
   },
 };
 

@@ -15,10 +15,10 @@ type Task struct {
 }
 
 type TaskShow struct {
-	ID              int
-	Title           string
-	BackGroundColor string
-	Performers      []int
+	ID              int    `json:"task_id"`
+	Title           string `json:"title"`
+	BackGroundColor string `json:"back_ground_color"`
+	Performers      []int  `json:"performers"`
 }
 
 type CreateTaskRequest struct {

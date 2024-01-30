@@ -1,6 +1,7 @@
 import { PayloadAction, createAction, createSlice } from "@reduxjs/toolkit";
 import {
   CreateProject,
+  CreateTaskType,
   JoinProjectType,
   Member,
   Project,
@@ -45,8 +46,27 @@ const ProjectsSlice = createSlice({
     setJoinProject(state, action: PayloadAction<JoinProjectType>) {
       state.joinProject = action.payload;
     },
-    setStates(state, action: PayloadAction<State[]>){
+    setStates(state, action: PayloadAction<State[]>) {
       state.states = action.payload;
+    },
+    setState(state, action: PayloadAction<State>) {
+      const index = state.states?.findIndex(
+        (item) => item.state_id === action.payload.state_id
+      );
+      if (state.states && index) {
+        state.states[index] = action.payload;
+      }
+    },
+    createTask(state, action: PayloadAction<CreateTaskType>) {
+    },
+    editTask(state, action: PayloadAction<CreateTaskType & {task_id: string}>){
+      const index = state.states?.findIndex(
+        (item) => item.state_id === action.payload.state_id
+      );
+      if (state.states && index) {
+        const tIndex = state.states[index].tasks.findIndex((item) => item.task_id == action.payload.task_id);
+        state.states[index].tasks[tIndex] = {...action.payload, performers: state.states[index].tasks[tIndex].performers}
+      }
     }
   },
 });
@@ -67,6 +87,7 @@ export const ProjectActions = {
   editProject: createAction<CreateProject & { id: string }>("Proj/EditProject"),
   deleteProject: createAction<string>("Proj/DeleteProject"),
   getStates: createAction<string>("Proj/GetStates"),
+  getState: createAction<{ projId: string; stateId: string }>("Proj/GetState"),
 };
 
 export const ProjectReducer = ProjectsSlice.reducer;

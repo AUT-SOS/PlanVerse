@@ -203,18 +203,3 @@ export const deleteProject: Epic = (action$, state$) =>
     })
   );
 
-export const getStates: Epic = (action$, state$) =>
-  action$.pipe(
-    ofType(ProjectActions.getStates.type),
-    mergeMap((action) => {
-      return API.Board.getStates(action.payload).pipe(
-        mergeMap((res) => {
-          return of(ProjectActions.setStates(res.response as State[]));
-        }),
-        catchError(() => {
-          showFailToastMessage("There was an error");
-          return EMPTY;
-        })
-      );
-    })
-  );
