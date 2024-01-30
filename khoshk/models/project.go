@@ -65,6 +65,7 @@ type GetProjectResponse struct {
 	Description   string `json:"description"`
 	OwnerID       int    `json:"owner_id"`
 	MembersNumber int    `json:"members_number"`
+	Link          string `json:"join_link"`
 }
 
 type GetMemberResponse struct {
