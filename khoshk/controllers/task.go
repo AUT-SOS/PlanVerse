@@ -487,7 +487,7 @@ func GetTaskHandler(ctx echo.Context) error {
 	if !exist {
 		return ctx.JSON(http.StatusNotAcceptable, messages.NotMember)
 	}
-	result = configs.DB.Table("tasks").Select([]string{"title", "back_ground_color", "description"}).Where("id = ?", taskID).Scan(res)
+	result = configs.DB.Table("tasks").Select([]string{"index", "title", "back_ground_color", "description"}).Where("id = ?", taskID).Scan(res)
 	if result.Error != nil {
 		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
