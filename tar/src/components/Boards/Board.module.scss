@@ -180,3 +180,14 @@
     width: 30vw;
   }
 }
+
+.AssignList {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: auto;
+  max-height: 300px;
+  gap: 5px;
+  padding: 5px 0;
+  overflow: auto;
+}
