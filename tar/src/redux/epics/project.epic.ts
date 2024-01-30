@@ -29,7 +29,7 @@ export const createProjectEpic: Epic = (action$, state$) =>
         createProjectInfo.description,
         createProjectInfo.picture
       ).pipe(
-        mergeMap((res) => {
+        mergeMap(() => {
           location.reload();
           return of(ReqActions.setState({ requestState: RequestState.None }));
         }),
@@ -85,7 +85,7 @@ export const changeMemberRoleEpic: Epic = (action$, state$) =>
         JSON.stringify(
           state$.value.project.members?.find(
             (item) => item.id == action.payload.userId
-          )!
+        )
         )
       );
       newMember.is_admin = !newMember.is_admin;

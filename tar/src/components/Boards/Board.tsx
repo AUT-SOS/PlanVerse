@@ -20,10 +20,11 @@ import { Settings } from "../../ui/Icons/Settings";
 import { a, useTransition } from "@react-spring/web";
 import classNames from "classnames";
 import { BackIcon } from "../../ui/Icons/Back";
-import { Member, RequestState, RequestTypes } from "../../utils/types";
-import { MemberItem } from "../../ui/MemberItem";
+import { Member, RequestState, RequestTypes, Task } from "../../utils/types";
+import { AssignMemberItem, MemberItem } from "../../ui/MemberItem";
 import {
   HollowButton,
+  ReqButton,
   ReqButton1,
   ReqButtonWithIcon,
 } from "../../ui/ReqButton";
@@ -34,6 +35,7 @@ import {
   UsernameInputBar,
   TextAreaInputBar,
   EmailInputBar,
+  InputBar,
 } from "../../ui/InputBar";
 import { useRequestStates } from "../../utils/hooks";
 import { validateEmail } from "../../utils/regex";
@@ -44,13 +46,13 @@ import { TaskBoard } from "./TaskBoard";
 type Props = {};
 
 enum SliderTypes {
-  Settings,
   Members,
 }
 
 enum ModalType {
   AddMember,
   ProjectSetting,
+  TaskInfo,
 }
 
 export const Board: React.FC<Props> = (props) => {
@@ -102,6 +104,10 @@ export const Board: React.FC<Props> = (props) => {
 
   const amIAdmin = members?.find((item) => item.id == myId)?.is_admin;
 
+  const [taskInf, setTaskInf] = useState<
+    { task: Task; state_id: string } | undefined
+  >(undefined);
+
   useEffect(() => {
     dispatch(ProjectActions.getFullProject(projId));
   }, []);
@@ -118,8 +124,13 @@ export const Board: React.FC<Props> = (props) => {
     setVisible(true);
   }, []);
 
+  const handleOpenTask = (task: Task, state_id: string) => {
+    setShowModal(ModalType.TaskInfo);
+    setTaskInf({ task, state_id });
+  };
+
   const sliderTitle =
-    sliderContent === SliderTypes.Members ? "Members" : "Project Setting";
+    sliderContent === SliderTypes.Members ? "Members" : "Task Details";
 
   return project && members ? (
     <div className={styles.BoardWrapper}>
@@ -137,7 +148,7 @@ export const Board: React.FC<Props> = (props) => {
             projectId={project.project_id}
           />
         ) : (
-          <div></div>
+          <></>
         )}
       </MoreInfoSlider>
       <img className={styles.ProjImg} src={project.picture} alt="" />
@@ -170,7 +181,13 @@ export const Board: React.FC<Props> = (props) => {
       ))}
 
       <div className={styles.BoardContent}>
-        {states && <TaskBoard projectId={projId} states={states} />}
+        {states && (
+          <TaskBoard
+            openTask={handleOpenTask}
+            projectId={projId}
+            states={states}
+          />
+        )}
       </div>
 
       {transitionModal((style, state) =>
@@ -193,6 +210,16 @@ export const Board: React.FC<Props> = (props) => {
                 projId={projId}
                 className={styles.EditProjWrapper}
                 amIOwner={project.owner_id == myId}
+              />
+            ) : state === ModalType.TaskInfo ? (
+              <TaskInfo
+                closeModal={() => setShowModal(undefined)}
+                projId={projId}
+                className={styles.EditProjWrapper}
+                task={taskInf!.task}
+                state_id={taskInf!.state_id}
+                members={members}
+                amIAdmin={Boolean(amIAdmin)}
               />
             ) : (
               <></>
@@ -401,5 +428,183 @@ const AddMemberFC: React.FC<AddMemberProps> = (props) => {
         />
       </div>
     </div>
+  );
+};
+
+type TaskInfoProps = React.HTMLProps<HTMLDivElement> & {
+  task: Task;
+  projId: string;
+  closeModal: (val?: ModalType) => void;
+  state_id: string;
+  members: Member[];
+  amIAdmin: boolean;
+};
+
+const TaskInfo: React.FC<TaskInfoProps> = (props) => {
+  const [task, setTask] = useState<Task>(props.task);
+
+  const { isPending } = useRequestStates(RequestTypes.CreateProject);
+
+  const handleTitleChange = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      setTask((prev) => ({ ...prev, title: event.target.value }));
+    },
+    []
+  );
+
+  const [assigned, setAssign] = useState<number[]>(props.task.performers ?? []);
+
+  const handleClose = () => {
+    dispatch(ProjectActions.setTask(undefined));
+    props.closeModal(undefined);
+  };
+
+  const handleDescriptionChange = useCallback(
+    (event: React.ChangeEvent<HTMLTextAreaElement>) => {
+      setTask((prev) => ({ ...prev, description: event.target.value }));
+    },
+    []
+  );
+
+  const handleMemberClick = (member: Member, isAssign: boolean) => {
+    if (!props.amIAdmin) return;
+    if (isAssign) {
+      setAssign((prev) => [...prev, Number(member.id)]);
+      dispatch(
+        ProjectActions.assign({
+          project_id: props.projId,
+          task_id: props.task.task_id,
+          performer_id: member.id,
+          isAdd: true,
+        })
+      );
+    } else {
+      setAssign((prev) => prev.filter((item) => item != Number(member.id)));
+      dispatch(
+        ProjectActions.assign({
+          project_id: props.projId,
+          task_id: props.task.task_id,
+          performer_id: member.id,
+          isAdd: false,
+        })
+      );
+    }
+  };
+
+  const dispatch = useDispatch();
+  const handleConfirm = () => {
+    dispatch(
+      ReqActions.setState({
+        requestState: RequestState.Pending,
+        reqType: RequestTypes.EditTask,
+      })
+    );
+    dispatch(
+      ProjectActions.editTask({
+        ...task,
+        project_id: props.projId,
+        state_id: props.state_id,
+      })
+    );
+  };
+
+  const handleDeleteTask = () => {
+    dispatch(
+      ProjectActions.deleteTask({
+        project_id: props.projId,
+        task_id: props.task.task_id,
+      })
+    );
+    handleClose();
+  };
+  const filteredMembers = [...props.members];
+
+  return task ? (
+    <div
+      className={styles.AddMemberContentWrapper}
+      onClick={(e) => e.stopPropagation()}
+    >
+      <Text1 text="Task Info" />
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          gap: "20px",
+          width: "100%",
+        }}
+      >
+        <InputBar
+          placeholder="Task Title"
+          value={task.title}
+          onChange={handleTitleChange}
+        />
+        <TextAreaInputBar
+          onChange={handleDescriptionChange}
+          value={task.description}
+          style={{
+            maxHeight: "300px",
+            maxWidth: "100%",
+            minWidth: "100%",
+            minHeight: "80px",
+          }}
+          placeholder="Description"
+        />
+        <div className={styles.AssignList}>
+          {filteredMembers.map((item) => {
+            const isAssigned =
+              assigned.find((a) => a == Number(item.id)) !== undefined;
+
+            return props.amIAdmin ? (
+              <AssignMemberItem
+                key={item.id}
+                isAssigned={
+                  assigned.find((a) => a == Number(item.id)) !== undefined
+                }
+                member={item}
+                setAssign={handleMemberClick}
+              />
+            ) : (
+              isAssigned && (
+                <AssignMemberItem
+                  key={item.id}
+                  isAssigned={
+                    assigned.find((a) => a == Number(item.id)) !== undefined
+                  }
+                  member={item}
+                  setAssign={handleMemberClick}
+                />
+              )
+            );
+          })}
+        </div>
+      </div>
+      <div className={styles.ButtonsWrapper}>
+        <div style={{ display: "flex", gap: 10 }}>
+          <HollowButton
+            text="Back"
+            onClick={handleClose}
+            style={{ width: 100 }}
+          />
+          {props.amIAdmin && (
+            <ReqButton
+              style={{ borderRadius: 10 }}
+              text="Delete Task"
+              onClick={handleDeleteTask}
+            />
+          )}
+        </div>
+        {props.amIAdmin && (
+          <ReqButton1
+            text="Submit Changes"
+            style={{ width: 150 }}
+            isPending={isPending}
+            onClick={handleConfirm}
+            disable={!props.amIAdmin}
+          />
+        )}
+      </div>
+    </div>
+  ) : (
+    <SpinningLoading size={50} />
   );
 };

@@ -4,10 +4,11 @@ import (
 	"PlanVerse/configs"
 	"PlanVerse/messages"
 	"PlanVerse/models"
-	"github.com/labstack/echo/v4"
 	"net/http"
 	"strconv"
 	"sync"
+
+	"github.com/labstack/echo/v4"
 )
 
 func StateListHandler(ctx echo.Context) error {
@@ -46,7 +47,7 @@ func StateListHandler(ctx echo.Context) error {
 		go func(index int, wg *sync.WaitGroup) {
 			defer wg.Done()
 			var taskShows []models.TaskShow
-			configs.DB.Table("tasks").Select([]string{"id", "index", "title", "back_ground_color"}).Where("state_id = ?", res[index].ID).Scan(&taskShows)
+			configs.DB.Table("tasks").Select([]string{"id", "index", "title", "back_ground_color", "description"}).Where("state_id = ?", res[index].ID).Scan(&taskShows)
 			for j, task := range taskShows {
 				var performers []int
 				configs.DB.Table("tasks_performers").Select("user_id").Where("task_id = ?", task.ID).Scan(&performers)

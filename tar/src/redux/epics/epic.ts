@@ -25,12 +25,17 @@ import {
 } from "./project.epic";
 import { deleteUserEpic, editUserEpic } from "./user.epic";
 import {
+  assignEpic,
+  changeStateEpic,
   createStateEpic,
   createTaskEpic,
+  deleteStateEpic,
+  deleteTaskEpic,
   editStateEpic,
   editTaskEpic,
   getStateEpic,
   getStatesEpic,
+  getTaskEpic,
 } from "./board.epic";
 
 export interface Epic<Input extends Action = any, Output extends Action = any> {
@@ -68,5 +73,10 @@ export const rootEpic = combineEpics(
   createTaskEpic,
   editTaskEpic,
   createStateEpic,
-  editStateEpic
+  editStateEpic,
+  deleteStateEpic,
+  changeStateEpic,
+  getTaskEpic,
+  deleteTaskEpic,
+  assignEpic
 );

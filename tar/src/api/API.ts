@@ -239,7 +239,8 @@ export const API = {
       state_id: string,
       title: string,
       back_ground_color: string,
-      description: string
+      description: string,
+      index: number
     ) {
       return ajax.post(
         `${END_POINT}/create-task/${id}`,
@@ -248,6 +249,7 @@ export const API = {
           title,
           back_ground_color,
           description,
+          index,
         },
         {
           ...API_HEADERS,
@@ -281,7 +283,8 @@ export const API = {
       task_id: string,
       title: string,
       back_ground_color: string,
-      description: string
+      description: string,
+      index: number
     ) {
       return ajax.post(
         `${END_POINT}/edit-task/${id}`,
@@ -290,6 +293,7 @@ export const API = {
           title,
           back_ground_color,
           description,
+          index,
         },
         {
           ...API_HEADERS,
@@ -297,6 +301,74 @@ export const API = {
         }
       );
     },
+    deleteState(id: string, state_id: string) {
+      return ajax.post(
+        `${END_POINT}/delete-state/${id}/${state_id}`,
+        {},
+        {
+          ...API_HEADERS,
+          Authorization: getAccessToken(),
+        }
+      );
+    },
+    changeState(id: string, task_id: string, state_id: string) {
+      return ajax.post(
+        `${END_POINT}/change-state/${id}`,
+        {
+          task_id,
+          state_id,
+        },
+        {
+          ...API_HEADERS,
+          Authorization: getAccessToken(),
+        }
+      );
+    },
+    getTask(id: string){
+      return ajax.get(
+        `${END_POINT}/get-task/${id}`,
+        {
+          ...API_HEADERS,
+          Authorization: getAccessToken(),
+        }
+      );
+    },
+    deleteTask(id: string, task_id: string){
+      return ajax.post(
+        `${END_POINT}/delete-task/${id}/${task_id}`,
+        {},
+        {
+          ...API_HEADERS,
+          Authorization: getAccessToken(),
+        }
+      );
+    },
+    addAssign(id: string, task_id: string, performer_id: string){
+      return ajax.post(
+        `${END_POINT}/add-performer/${id}`,
+        {
+          task_id,
+          performer_id
+        },
+        {
+          ...API_HEADERS,
+          Authorization: getAccessToken(),
+        }
+      );
+    },
+    removeAssign(id: string, task_id: string, performer_id: string){
+      return ajax.post(
+        `${END_POINT}/remove-performer/${id}`,
+        {
+          task_id,
+          performer_id
+        },
+        {
+          ...API_HEADERS,
+          Authorization: getAccessToken(),
+        }
+      );
+    }
   },
 };
 

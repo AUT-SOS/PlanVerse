@@ -21,6 +21,7 @@ export enum RequestTypes {
   ShareLink,
   EditProject,
   DeleteProject,
+  EditTask,
 }
 
 export type JoinProjectType = {
@@ -91,6 +92,7 @@ export type Task = {
   performers: number[];
   description: string;
   back_ground_color: string;
+  index: number
 };
 
 export type CreateTaskType = {
@@ -99,6 +101,7 @@ export type CreateTaskType = {
   title: string;
   back_ground_color: string;
   description: string;
+  index: number
 };
 
 export type CreateStateType = {

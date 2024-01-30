@@ -1,6 +1,6 @@
 import { useDispatch } from "react-redux";
 import { SpinningLoading } from "../../ui/SpinningLoading";
-import { State } from "../../utils/types";
+import { State, Task } from "../../utils/types";
 import { Column } from "./Column/Column";
 import styles from "./TaskBoard.module.scss";
 import { ProjectActions } from "../../redux/slices/project.slice";
@@ -8,10 +8,10 @@ import { ProjectActions } from "../../redux/slices/project.slice";
 type Props = {
   states: State[];
   projectId: string;
+  openTask: (task: Task, state_id: string) => void
 };
 
 export const TaskBoard: React.FC<Props> = (props) => {
-  console.log(">>S", props.states);
 
   const dispatch = useDispatch();
 
@@ -27,8 +27,8 @@ export const TaskBoard: React.FC<Props> = (props) => {
 
   return props.states ? (
     <div className={styles.TaskBoard}>
-      {props.states.map((item, index) => (
-        <Column column={item} key={index} />
+      {props.states.map((item) => (
+        <Column openTask={props.openTask} column={item} key={item.state_id} />
       ))}
       <div className={styles.AddState} onClick={addState}>
         + Add State

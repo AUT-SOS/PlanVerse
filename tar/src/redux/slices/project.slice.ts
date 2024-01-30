@@ -9,6 +9,7 @@ import {
   ShareLink,
   SmallProject,
   State,
+  Task,
 } from "../../utils/types";
 
 type ProjectSliceType = {
@@ -17,6 +18,7 @@ type ProjectSliceType = {
   members?: Member[];
   joinProject?: JoinProjectType;
   states?: State[];
+  task?: Task;
 };
 
 const initialState: ProjectSliceType = {
@@ -54,30 +56,26 @@ const ProjectsSlice = createSlice({
       const index = state.states?.findIndex(
         (item) => item.state_id === action.payload.state_id
       );
-      if (state.states && index) {
+      if (state.states && index != undefined) {
         state.states[index] = action.payload;
       }
     },
-    createTask(state, action: PayloadAction<CreateTaskType>) {
-    },
-    editTask(state, action: PayloadAction<CreateTaskType & {task_id: string}>){
+    createTask(state, action: PayloadAction<CreateTaskType>) {},
+    editTask(
+      state,
+      action: PayloadAction<CreateTaskType & { task_id: string }>
+    ) {},
+    createState(state, action: PayloadAction<CreateStateType>) {},
+    editState(state, action: PayloadAction<State & { project_id: string }>) {
       const index = state.states?.findIndex(
         (item) => item.state_id === action.payload.state_id
       );
-      if (state.states && index) {
-        const tIndex = state.states[index].tasks.findIndex((item) => item.task_id == action.payload.task_id);
-        state.states[index].tasks[tIndex] = {...action.payload, performers: state.states[index].tasks[tIndex].performers}
-      }
-    },
-    createState(state, action: PayloadAction<CreateStateType>) {
-    },
-    editState(state, action: PayloadAction<State & {project_id: string}>){
-      const index = state.states?.findIndex(
-        (item) => item.state_id === action.payload.state_id
-      );
-      if (state.states && index) {
+      if (state.states && index != undefined) {
         state.states[index] = action.payload;
       }
+    },
+    setTask(state, action: PayloadAction<Task | undefined>){
+      state.task = action.payload
     }
   },
 });
@@ -99,6 +97,19 @@ export const ProjectActions = {
   deleteProject: createAction<string>("Proj/DeleteProject"),
   getStates: createAction<string>("Proj/GetStates"),
   getState: createAction<{ projId: string; stateId: string }>("Proj/GetState"),
+  deleteState: createAction<{ projId: string; stateId: string }>(
+    "Proj/DeleteState"
+  ),
+  deleteTask: createAction<{ project_id: string; task_id: string }>(
+    "Proj/DeleteTask"
+  ),
+  changeState: createAction<{
+    project_id: string;
+    task_id: string;
+    state_id: string;
+  }>("Proj/ChangeState"),
+  getTask: createAction<string>("Proj/GetTask"),
+  assign: createAction<{project_id: string, task_id: string, performer_id: string, isAdd: boolean}>("Proj/Assign")
 };
 
 export const ProjectReducer = ProjectsSlice.reducer;
