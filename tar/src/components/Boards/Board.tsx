@@ -39,6 +39,7 @@ import { useRequestStates } from "../../utils/hooks";
 import { validateEmail } from "../../utils/regex";
 import { showFailToastMessage } from "../../main";
 import { CreateProject } from "../Home/Home";
+import { TaskBoard } from "./TaskBoard";
 
 type Props = {};
 
@@ -90,11 +91,14 @@ export const Board: React.FC<Props> = (props) => {
   });
 
   const dispatch = useDispatch();
-  const { project, members, myId } = useSelector((state: RootState) => ({
-    project: state.project.fullProject,
-    members: state.project.members,
-    myId: state.auth.myId
-  }));
+  const { project, members, myId, states } = useSelector(
+    (state: RootState) => ({
+      project: state.project.fullProject,
+      members: state.project.members,
+      myId: state.auth.myId,
+      states: state.project.states,
+    })
+  );
 
   const amIAdmin = members?.find((item) => item.id == myId)?.is_admin;
 
@@ -147,12 +151,14 @@ export const Board: React.FC<Props> = (props) => {
               color={"white"}
               className={styles.Icon}
             />
-            {amIAdmin && <Settings
-              onClick={handleSettings}
-              size={30}
-              color={"white"}
-              className={styles.Icon}
-            />}
+            {amIAdmin && (
+              <Settings
+                onClick={handleSettings}
+                size={30}
+                color={"white"}
+                className={styles.Icon}
+              />
+            )}
             <Home
               size={30}
               color={"white"}
@@ -163,7 +169,9 @@ export const Board: React.FC<Props> = (props) => {
         </a.div>
       ))}
 
-      <div className={styles.BoardContent}></div>
+      <div className={styles.BoardContent}>
+        {states && <TaskBoard projectId={projId} states={states} />}
+      </div>
 
       {transitionModal((style, state) =>
         state != undefined ? (
@@ -186,7 +194,6 @@ export const Board: React.FC<Props> = (props) => {
                 className={styles.EditProjWrapper}
                 amIOwner={project.owner_id == myId}
               />
-
             ) : (
               <></>
             )}
@@ -259,7 +266,6 @@ const ProjectMembers: React.FC<{
     myId: state.auth.myId,
   }));
   const amIAdmin = props.members.find((item) => item.id == myId)?.is_admin;
-  console.log(amIAdmin, myId, props.ownerId);
 
   const sortedMembers = [...props.members];
   sortedMembers.sort((item) => {

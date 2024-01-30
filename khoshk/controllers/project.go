@@ -7,11 +7,12 @@ import (
 	"PlanVerse/models"
 	"PlanVerse/services"
 	"fmt"
-	"github.com/labstack/echo/v4"
 	"net/http"
 	"strconv"
 	"sync"
 	"time"
+
+	"github.com/labstack/echo/v4"
 )
 
 func ProjectListHandler(ctx echo.Context) error {
@@ -48,17 +49,17 @@ func CreateProjectHandler(ctx echo.Context) error {
 	defaultStates := make([]models.State, 3)
 	defaultStates[0] = models.State{
 		Title:           "To-Do",
-		BackGroundColor: "D0D613",
+		BackGroundColor: "#f7fc56",
 		AdminAccess:     false,
 	}
 	defaultStates[1] = models.State{
 		Title:           "Doing",
-		BackGroundColor: "DE731A",
+		BackGroundColor: "#c97e28",
 		AdminAccess:     false,
 	}
 	defaultStates[2] = models.State{
 		Title:           "Done",
-		BackGroundColor: "54D826",
+		BackGroundColor: "#32801c",
 		AdminAccess:     true,
 	}
 	newProject := models.Project{

@@ -86,12 +86,28 @@ export type ShareLink = {
 }
 
 export type Task = {
-  id: string;
+  task_id: string;
   title: string;
   performers: number[];
   description: string;
   back_ground_color: string;
 };
+
+export type CreateTaskType = {
+  id: string,
+  state_id: string,
+	title: string,
+	back_ground_color: string,
+	description: string,
+}
+
+export type EditTaskType = {
+  task_id: string,
+  state_id: string,
+	title: string,
+	back_ground_color: string,
+	description: string,
+}
 
 export type State = {
   state_id: string;

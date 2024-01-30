@@ -1,0 +1,24 @@
+.Wrapper {
+      padding: 20px;
+      width: 100%;
+      height: auto;
+      background-color: rgba(rgb(204, 203, 203), 0.5);
+      border-radius: 10px;
+      display: flex;
+      flex-direction: column;  
+      cursor: grab;  
+}
+
+.TaskTitle {
+      color: var(--color-neutrals-n-00);
+      font-weight: bold;
+      cursor: text;
+      background-color: transparent;
+      font-size: large;
+      outline: none;
+      border: none;
+}
+
+.TaskTitle:active{
+      outline: none;
+}
