@@ -13,7 +13,7 @@ import (
 )
 
 func TestShowProject(t *testing.T) {
-	t.Run("should return 200 status ok and the project with id 37", func(t *testing.T) {
+	t.Run("should return 200 status ok and the project with id = 37 as response", func(t *testing.T) {
 		reqBody := models.ShowProjectRequest{
 			Link: "http://localhost:5173/project?test-project1=wtgaQmAPSH",
 		}

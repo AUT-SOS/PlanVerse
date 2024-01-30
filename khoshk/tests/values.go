@@ -1,3 +1,3 @@
 package tests
 
-const auth = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjo5NywiZXhwIjoxNzA2NjI2OTEyfQ.yjw8e6JPtk9yxW84zesp5la77CkaqdPcQmWvtNUmTyg"
+const auth = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjo5NywiZXhwIjoxNzA2NjMwNzM5fQ.vQL53ub0-noP8kcz1rq5P2jiwJvfoHNMBsJ7zZjPjXA"
