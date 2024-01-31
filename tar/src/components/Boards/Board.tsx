@@ -66,6 +66,14 @@ export const Board: React.FC<Props> = (props) => {
     return;
   }
 
+  useEffect(() => {
+    const timer = setInterval(() => {
+      dispatch(ProjectActions.getStates(projId));
+      dispatch((ProjectActions.getFullProject(projId)));
+    }, 3000)
+    return () => clearInterval(timer)
+  }, [])
+
   const transition = useTransition(projId, {
     from: {
       y: 100,

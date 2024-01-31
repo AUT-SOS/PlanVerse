@@ -1,3 +1,5 @@
+@use "/src/palette.scss";
+
 .Column {
   width: 20%;
   min-width: 200px;
@@ -8,6 +10,9 @@
   gap: 10px;
   height: auto;
   align-self: flex-start;
+  @include palette.md{
+    min-width: 20%;
+  }
 }
 
 .ColumnTitle {
