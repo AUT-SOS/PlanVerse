@@ -25,7 +25,7 @@ func ConnectToDatabase() {
 				os.Getenv("DATABASE_PORT"),
 				os.Getenv("DATABASE_USERNAME"),
 				os.Getenv("DATABASE_PASSWORD"),
-				"postgres",
+				os.Getenv("DATABASE_DB"),
 			),
 		}), &gorm.Config{})
 		if err != nil {
