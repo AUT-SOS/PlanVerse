@@ -95,10 +95,10 @@ export const Login: React.FC = () => {
           onClick={handleLogin}
         />
       </a.div>
-      <Text3
+      {false && <Text3
         text={strings.auth.forgotPass}
         style={{ color: "var(--color-button)", cursor: "pointer" }}
-      />
+      />}
     </div>
   );
 };

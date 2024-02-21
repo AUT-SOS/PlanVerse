@@ -57,25 +57,25 @@ func main() {
 	server.POST("/demote/:project-id/:user-id", controllers.ChangeRoleAdminHandler)                                //
 	server.GET("/get-project/:project-id", controllers.GetProjectHandler)                                          //
 	server.GET("/get-project-members/:project-id", controllers.GetProjectMembersHandler)                           //
-	server.POST("/leave-project/:project-id", controllers.LeaveProjectHandler)
+	server.POST("/leave-project/:project-id", controllers.LeaveProjectHandler)                                     //
 	server.POST("/edit-project/:project-id", controllers.EditProjectHandler, middlewares.AdminMiddleware)          //
 	server.POST("/delete-project/:project-id", controllers.DeleteProjectHandler)                                   //
 
 	//state api
-	server.GET("/list-state/:project-id", controllers.StateListHandler)
-	server.POST("/create-state/:project-id", controllers.CreateStateHandler, middlewares.AdminMiddleware)
-	server.POST("/edit-state/:project-id", controllers.EditStateHandler, middlewares.AdminMiddleware)
-	server.POST("/delete-state/:project-id/:state-id", controllers.DeleteStateHandler, middlewares.AdminMiddleware)
-	server.GET("/get-state/:project-id/:state-id", controllers.GetStateHandler)
+	server.GET("/list-state/:project-id", controllers.StateListHandler)                                             //
+	server.POST("/create-state/:project-id", controllers.CreateStateHandler, middlewares.AdminMiddleware)           //
+	server.POST("/edit-state/:project-id", controllers.EditStateHandler, middlewares.AdminMiddleware)               //
+	server.POST("/delete-state/:project-id/:state-id", controllers.DeleteStateHandler, middlewares.AdminMiddleware) //
+	server.GET("/get-state/:project-id/:state-id", controllers.GetStateHandler)                                     //
 
 	//task api
-	server.POST("/create-task/:project-id", controllers.CreateTaskHandler, middlewares.AdminMiddleware)
-	server.POST("/change-state/:project-id", controllers.ChangeTaskStateHandler)
-	server.POST("/add-performer/:project-id", controllers.AddPerformerHandler, middlewares.AdminMiddleware)
-	server.POST("/remove-performer/:project-id", controllers.RemovePerformerHandler, middlewares.AdminMiddleware)
-	server.POST("/edit-task/:project-id", controllers.EditTaskHandler, middlewares.AdminMiddleware)
-	server.POST("/delete-task/:project-id/:task-id", controllers.DeleteTaskHandler, middlewares.AdminMiddleware)
-	server.GET("/get-task/:task-id", controllers.GetTaskHandler)
+	server.POST("/create-task/:project-id", controllers.CreateTaskHandler, middlewares.AdminMiddleware)           //
+	server.POST("/change-state/:project-id", controllers.ChangeTaskStateHandler)                                  //
+	server.POST("/add-performer/:project-id", controllers.AddPerformerHandler, middlewares.AdminMiddleware)       //
+	server.POST("/remove-performer/:project-id", controllers.RemovePerformerHandler, middlewares.AdminMiddleware) //
+	server.POST("/edit-task/:project-id", controllers.EditTaskHandler, middlewares.AdminMiddleware)               //
+	server.POST("/delete-task/:project-id/:task-id", controllers.DeleteTaskHandler, middlewares.AdminMiddleware)  //
+	server.GET("/get-task/:task-id", controllers.GetTaskHandler)                                                  //
 
 	//start server
 	log.Fatal(server.Start("localhost:8080"))

@@ -1,6 +1,8 @@
+@use "/src/palette.scss";
+
 .Column {
   width: 20%;
-  min-width: 100px;
+  min-width: 200px;
   display: flex;
   flex-direction: column;
   padding: 10px;
@@ -8,30 +10,47 @@
   gap: 10px;
   height: auto;
   align-self: flex-start;
+  @include palette.md{
+    min-width: 20%;
+  }
 }
 
-
-.ColumnTitle{
-      color: var(--color-neutrals-n-00);
-      font-weight: bold;
-      padding: 5px;
+.ColumnTitle {
+  color: var(--color-neutrals-n-00);
+  font-weight: bold;
+  padding: 5px;
 }
 
-.AddTask{
-      padding: 10px;
-      width: 100%;
-      background-color: rgba(rgb(204, 203, 203), $alpha: 0.5);
-      cursor: pointer;
-      border-radius: 10px;
+.AddTask {
+  padding: 10px;
+  width: 100%;
+  background-color: rgba(rgb(204, 203, 203), $alpha: 0.5);
+  cursor: pointer;
+  border-radius: 10px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border: 2px solid transparent;
+  transition: background-color 150ms ease-in-out;
+  color: black;
+}
+
+.AddTask:hover {
+  background-color: rgba(rgb(204, 203, 203), $alpha: 0.8);
+}
+
+.ColorPicker {
+  position: fixed;
+}
+
+.ColumnInf {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  align-items: center;
+}
+
+.EditWrapper{
       display: flex;
-      justify-content: center;
-      align-items: center;
-      border: 2px solid transparent;
-      transition: border 150ms ease-in-out;
-      color: var(--color-neutrals-n-00);
-     
-}
-
-.AddTask:hover{
-      border: 2px solid var(--color-neutrals-n-00);
+      gap: 10px
 }
