@@ -12,8 +12,8 @@ import (
 )
 
 func TestGetTask(t *testing.T) {
-	req, errReq := http.NewRequest(http.MethodGet, "http://localhost:8080/get-task/7", nil)
-	t.Run("should return 200 status ok and the task with id = 7 as response", func(t *testing.T) {
+	req, errReq := http.NewRequest(http.MethodGet, "http://localhost:8080/get-task/8", nil)
+	t.Run("should return 200 status ok and the task with id = 8 as response", func(t *testing.T) {
 		req.Header.Set("Authorization", auth)
 		res, errRes := http.DefaultClient.Do(req)
 		defer res.Body.Close()
@@ -24,7 +24,7 @@ func TestGetTask(t *testing.T) {
 		assert.NoError(t, errRes)
 		assert.Equal(t, fmt.Sprint("200 OK"), res.Status)
 		assert.Equal(t, models.GetTaskResponse{
-			ID:              7,
+			ID:              8,
 			Title:           "test-task",
 			BackGroundColor: "762ADD",
 			Description:     "",

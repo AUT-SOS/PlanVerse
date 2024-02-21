@@ -31,7 +31,6 @@ func ConnectToDatabase() {
 		if err != nil {
 			log.Fatalf("Failed to connect to database: %v", err)
 		}
-		//db = db.Exec(fmt.Sprintf("CREATE DATABASE %s;", os.Getenv("DATABASE_DB")))
 		err = db.SetupJoinTable(&models.User{}, "Projects", &models.ProjectsMembers{})
 		if err != nil {
 			log.Fatalf("Failed to set up join table: %v", err)
@@ -76,10 +75,6 @@ func ConnectToDatabase() {
 		if err != nil {
 			log.Fatalf("Failed to migrate join_link tabel: %v", err)
 		}
-		//err = db.SetupJoinTable(&models.Project{}, "Members", &models.ProjectsMembers{})
-		//if err != nil {
-		//	log.Fatalf("Failed to set up join table: %v", err)
-		//}
 		DB = db
 	})
 }

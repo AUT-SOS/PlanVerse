@@ -13,9 +13,9 @@ import (
 )
 
 func TestShowProject(t *testing.T) {
-	t.Run("should return 200 status ok and the project with id = 37 as response", func(t *testing.T) {
+	t.Run("should return 200 status ok and the project with id = 40 as response", func(t *testing.T) {
 		reqBody := models.ShowProjectRequest{
-			Link: "http://localhost:5173/project?test-project1=wtgaQmAPSH",
+			Link: "http://localhost:5173/project?test-project1=bATiZewQLT",
 		}
 		buf, _ := json.Marshal(reqBody)
 		req, errReq := http.NewRequest(http.MethodPost, "http://localhost:8080/show-project", bytes.NewBuffer(buf))
@@ -29,7 +29,7 @@ func TestShowProject(t *testing.T) {
 		assert.NoError(t, errRes)
 		assert.Equal(t, fmt.Sprint("200 OK"), res.Status)
 		assert.Equal(t, models.ShowProjectResponse{
-			ProjectID:     37,
+			ProjectID:     40,
 			Title:         "test-project1",
 			BackGroundPic: "pic1",
 			MembersNumber: 1,
