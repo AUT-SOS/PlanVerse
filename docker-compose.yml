@@ -1,0 +1,62 @@
+version: '3.8'
+
+networks:
+  pv_net:
+    driver: bridge
+    name: pv_net
+
+services:
+  back-end:
+    build: /khoshk
+    container_name: back-end
+    depends_on:
+     db:
+       condition: service_healthy
+     redis:
+       condition: service_healthy
+    env_file:
+      - .env
+    networks:
+      - pv_net
+
+  front-end:
+    build: /Tar
+    container_name: front-end
+
+  db:
+    image: postgres:13-alpine
+    container_name: postgres
+    restart: always
+    environment:
+      -POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
+      -POSTGRES_USER: ${DATABASE_USERNAME}
+      -POSTGRES_DB: ${DATABASE_DB}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - pv_net
+    volumes:
+      - khoshk/pg_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:6-alpine
+    container_name: redis
+    restart: always
+    environment:
+      -REDIS_DATABASES: ${REDIS_DB}
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - pv_net
+    volumes:
+      - khoshk/redis_data:/data
+
+volumes:
+  khoshk/pg_data:
+  khoshk/redis_data:
