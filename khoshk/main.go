@@ -77,6 +77,9 @@ func main() {
 	server.POST("/delete-task/:project-id/:task-id", controllers.DeleteTaskHandler, middlewares.AdminMiddleware)           //
 	server.GET("/get-task/:task-id", controllers.GetTaskHandler)                                                           //
 
+	//create websocket connection
+	server.GET("/create-ws", controllers.CreateWSConnection)
+
 	//start server
 	log.Fatal(server.Start("localhost:8080"))
 }

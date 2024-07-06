@@ -71,3 +71,8 @@ type GetTaskResponse struct {
 	Description     string `json:"description"`
 	Performers      []int  `json:"performers"`
 }
+
+type WSMessage struct {
+	Type    string `json:"type"`
+	Payload Task   `json:"payload"`
+}

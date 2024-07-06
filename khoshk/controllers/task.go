@@ -6,6 +6,7 @@ import (
 	"PlanVerse/models"
 	"PlanVerse/services"
 	"fmt"
+	"github.com/gorilla/websocket"
 	"github.com/labstack/echo/v4"
 	"net/http"
 	"strconv"
@@ -60,7 +61,7 @@ func CreateTaskHandler(ctx echo.Context) error {
 		deadline := endTime.String()
 		req.Deadline = deadline[:10]
 	}
-	if req.Priority == 0 {
+	if req.Priority < 1 || req.Priority > 5 {
 		req.Priority = 5
 	}
 	year, _ := strconv.Atoi(req.Deadline[:4])
@@ -94,6 +95,30 @@ func CreateTaskHandler(ctx echo.Context) error {
 		task.ActualTime = task.ActualTime + 24*time.Hour
 		_ = configs.DB.Save(&task)
 	}()
+	var members []int
+	result = configs.DB.Table("projects_members").Select("user_id").Where("project_id = ?", projectID).Scan(&members)
+	if result.Error != nil {
+		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
+	}
+	var task models.Task
+	result = configs.DB.Where("id = ?", res.TaskID).Preload("Performers").Find(&task)
+	if result.Error != nil {
+		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
+	}
+	wsMessage := models.WSMessage{
+		Type:    "update-task",
+		Payload: task,
+	}
+	for conn, client := range models.Clients {
+		for i := range members {
+			if client == members[i] {
+				wsErr := conn.WriteJSON(wsMessage)
+				if wsErr != nil {
+					delete(models.Clients, conn)
+				}
+			}
+		}
+	}
 	return ctx.JSON(http.StatusOK, res)
 }
 
@@ -186,6 +211,30 @@ func ChangeTaskStateHandler(ctx echo.Context) error {
 	result = configs.DB.Table("tasks").Where("id = ?", taskID).Update("state_id", req.StateID)
 	if result.Error != nil {
 		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
+	}
+	var members []int
+	result = configs.DB.Table("projects_members").Select("user_id").Where("project_id = ?", projectID).Scan(&members)
+	if result.Error != nil {
+		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
+	}
+	var task models.Task
+	result = configs.DB.Where("id = ?", taskID).Preload("Performers").Find(&task)
+	if result.Error != nil {
+		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
+	}
+	wsMessage := models.WSMessage{
+		Type:    "update-task",
+		Payload: task,
+	}
+	for conn, client := range models.Clients {
+		for i := range members {
+			if client == members[i] {
+				wsErr := conn.WriteJSON(wsMessage)
+				if wsErr != nil {
+					delete(models.Clients, conn)
+				}
+			}
+		}
 	}
 	return ctx.JSON(http.StatusOK, messages.TaskStateChanged)
 }
@@ -297,6 +346,20 @@ func AddPerformerHandler(ctx echo.Context) error {
 	go func() {
 		services.SendMail("PlanVerse Notification", fmt.Sprintf("you've been assigned to new task in %s project by %s!", projectTitle, username), []string{email})
 	}()
+	wsMessage := models.WSMessage{
+		Type:    "update-task",
+		Payload: task,
+	}
+	for conn, client := range models.Clients {
+		for i := range members {
+			if client == members[i] {
+				wsErr := conn.WriteJSON(wsMessage)
+				if wsErr != nil {
+					delete(models.Clients, conn)
+				}
+			}
+		}
+	}
 	return ctx.JSON(http.StatusOK, messages.TaskAssigned)
 }
 
@@ -398,6 +461,25 @@ func RemovePerformerHandler(ctx echo.Context) error {
 	go func() {
 		services.SendMail("PlanVerse Notification", fmt.Sprintf("you've been removed from %s task in %s project by %s!", taskTitle, projectTitle, username), []string{email})
 	}()
+	var task models.Task
+	result = configs.DB.Where("id = ?", taskID).Preload("Performers").Find(&task)
+	if result.Error != nil {
+		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
+	}
+	wsMessage := models.WSMessage{
+		Type:    "update-task",
+		Payload: task,
+	}
+	for conn, client := range models.Clients {
+		for i := range members {
+			if client == members[i] {
+				wsErr := conn.WriteJSON(wsMessage)
+				if wsErr != nil {
+					delete(models.Clients, conn)
+				}
+			}
+		}
+	}
 	return ctx.JSON(http.StatusOK, messages.PerformerRemoved)
 }
 
@@ -456,7 +538,7 @@ func EditTaskHandler(ctx echo.Context) error {
 	if req.Deadline == "" {
 		deadline = task.Deadline
 	}
-	if req.Priority == 0 {
+	if req.Priority < 1 || req.Priority > 5 {
 		req.Priority = task.Priority
 	}
 	task.Index = req.Index
@@ -469,6 +551,29 @@ func EditTaskHandler(ctx echo.Context) error {
 	result = configs.DB.Save(&task)
 	if result.Error != nil {
 		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
+	}
+	var members []int
+	result = configs.DB.Table("projects_members").Select("user_id").Where("project_id = ?", projectID).Scan(&members)
+	if result.Error != nil {
+		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
+	}
+	result = configs.DB.Where("id = ?", taskID).Preload("Performers").Find(&task)
+	if result.Error != nil {
+		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
+	}
+	wsMessage := models.WSMessage{
+		Type:    "update-task",
+		Payload: task,
+	}
+	for conn, client := range models.Clients {
+		for i := range members {
+			if client == members[i] {
+				wsErr := conn.WriteJSON(wsMessage)
+				if wsErr != nil {
+					delete(models.Clients, conn)
+				}
+			}
+		}
 	}
 	return ctx.JSON(http.StatusOK, messages.TaskEdited)
 }
@@ -515,6 +620,30 @@ func DeleteTaskHandler(ctx echo.Context) error {
 	result = configs.DB.Unscoped().Where("id = ?", taskID).Delete(&models.Task{})
 	if result.Error != nil {
 		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
+	}
+	var members []int
+	result = configs.DB.Table("projects_members").Select("user_id").Where("project_id = ?", projectID).Scan(&members)
+	if result.Error != nil {
+		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
+	}
+	var task models.Task
+	result = configs.DB.Where("id = ?", taskID).Preload("Performers").Find(&task)
+	if result.Error != nil {
+		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
+	}
+	wsMessage := models.WSMessage{
+		Type:    "update-task",
+		Payload: task,
+	}
+	for conn, client := range models.Clients {
+		for i := range members {
+			if client == members[i] {
+				wsErr := conn.WriteJSON(wsMessage)
+				if wsErr != nil {
+					delete(models.Clients, conn)
+				}
+			}
+		}
 	}
 	return ctx.JSON(http.StatusOK, messages.TaskDeleted)
 }
@@ -567,4 +696,28 @@ func GetTaskHandler(ctx echo.Context) error {
 	res.ID = taskID
 	res.Performers = performerIDs
 	return ctx.JSON(http.StatusOK, res)
+}
+
+func CreateWSConnection(ctx echo.Context) error {
+	userIDCtx := ctx.Get("user_id")
+	userID := userIDCtx.(int)
+	var upgrade = websocket.Upgrader{
+		CheckOrigin: func(r *http.Request) bool {
+			return true
+		},
+	}
+	conn, err := upgrade.Upgrade(ctx.Response().Writer, ctx.Request(), nil)
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
+	}
+	models.Clients[conn] = userID
+	for {
+		for wsConn := range models.Clients {
+			wsErr := conn.WriteMessage(websocket.PingMessage, []byte("check-aliveness"))
+			if wsErr != nil {
+				delete(models.Clients, wsConn)
+			}
+		}
+		time.Sleep(30 * time.Second)
+	}
 }
