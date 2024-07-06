@@ -9,6 +9,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"net/http"
 	"strconv"
+	"time"
 )
 
 func CreateTaskHandler(ctx echo.Context) error {
@@ -21,6 +22,10 @@ func CreateTaskHandler(ctx echo.Context) error {
 	if err != nil {
 		return ctx.JSON(http.StatusBadRequest, messages.WrongProjectID)
 	}
+	stateID, err := strconv.Atoi(ctx.Param("state-id"))
+	if err != nil {
+		return ctx.JSON(http.StatusBadRequest, messages.WrongStateID)
+	}
 	var stateIDs []int
 	result := configs.DB.Table("states").Select("id").Where("project_id = ?", projectID).Scan(&stateIDs)
 	if result.Error != nil {
@@ -31,26 +36,44 @@ func CreateTaskHandler(ctx echo.Context) error {
 	}
 	exist := false
 	for _, id := range stateIDs {
-		if id == req.StateID {
+		if id == stateID {
 			exist = true
 			break
 		}
 	}
 	if !exist {
-		return ctx.JSON(http.StatusNotAcceptable, messages.TaskNotInProject)
+		return ctx.JSON(http.StatusNotAcceptable, messages.StateNotInProject)
 	}
 	var state models.State
-	result = configs.DB.Where("id = ?", req.StateID).Preload("Tasks").Find(&state)
+	result = configs.DB.Where("id = ?", stateID).Preload("Tasks").Find(&state)
 	if result.Error != nil {
 		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
 	if state.ID == 0 {
 		return ctx.JSON(http.StatusNotAcceptable, messages.WrongStateID)
 	}
+	if req.EstimatedTime == 0 {
+		req.EstimatedTime = 10
+	}
+	if req.Deadline == "" {
+		endTime := time.Now().Add(10 * 24 * time.Hour)
+		deadline := endTime.String()
+		req.Deadline = deadline[:10]
+	}
+	if req.Priority == 0 {
+		req.Priority = 5
+	}
+	year, _ := strconv.Atoi(req.Deadline[:4])
+	month, _ := strconv.Atoi(req.Deadline[5:7])
+	day, _ := strconv.Atoi(req.Deadline[8:])
 	newTask := models.Task{
 		Title:           req.Title,
 		BackGroundColor: req.BackGroundColor,
 		Description:     req.Description,
+		EstimatedTime:   time.Duration(req.EstimatedTime) * 24 * time.Hour,
+		ActualTime:      0,
+		Deadline:        time.Date(year, time.Month(month), day, 0, 0, 0, 0, time.UTC),
+		Priority:        req.Priority,
 		Index:           req.Index,
 	}
 	state.Tasks = append(state.Tasks, newTask)
@@ -59,6 +82,18 @@ func CreateTaskHandler(ctx echo.Context) error {
 		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
 	res.TaskID = int(state.Tasks[len(state.Tasks)-1].ID)
+	go func() {
+		time.Sleep(24 * time.Hour)
+		var task models.Task
+		_ = configs.DB.Where("id = ?", res.TaskID).Find(&task)
+		var taskState models.State
+		_ = configs.DB.Where("id = ?", task.StateID).Find(&taskState)
+		if taskState.Title == "Done" {
+			return
+		}
+		task.ActualTime = task.ActualTime + 24*time.Hour
+		_ = configs.DB.Save(&task)
+	}()
 	return ctx.JSON(http.StatusOK, res)
 }
 
@@ -70,6 +105,10 @@ func ChangeTaskStateHandler(ctx echo.Context) error {
 	projectID, err := strconv.Atoi(ctx.Param("project-id"))
 	if err != nil {
 		return ctx.JSON(http.StatusBadRequest, messages.WrongProjectID)
+	}
+	taskID, err := strconv.Atoi(ctx.Param("task-id"))
+	if err != nil {
+		return ctx.JSON(http.StatusBadRequest, messages.WrongTaskID)
 	}
 	userIDCtx := ctx.Get("user_id")
 	userID := userIDCtx.(int)
@@ -92,7 +131,7 @@ func ChangeTaskStateHandler(ctx echo.Context) error {
 		return ctx.JSON(http.StatusNotAcceptable, messages.NotMember)
 	}
 	var sourceStateID int
-	result = configs.DB.Table("tasks").Select("state_id").Where("id = ?", req.TaskID).Scan(&sourceStateID)
+	result = configs.DB.Table("tasks").Select("state_id").Where("id = ?", taskID).Scan(&sourceStateID)
 	if err != nil {
 		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
@@ -138,13 +177,13 @@ func ChangeTaskStateHandler(ctx echo.Context) error {
 		if !isAdmin {
 			return ctx.JSON(http.StatusUnauthorized, messages.AdminChange)
 		}
-		result = configs.DB.Table("tasks").Where("id = ?", req.TaskID).Update("state_id", req.StateID)
+		result = configs.DB.Table("tasks").Where("id = ?", taskID).Update("state_id", req.StateID)
 		if result.Error != nil {
 			return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 		}
 		return ctx.JSON(http.StatusOK, messages.TaskStateChanged)
 	}
-	result = configs.DB.Table("tasks").Where("id = ?", req.TaskID).Update("state_id", req.StateID)
+	result = configs.DB.Table("tasks").Where("id = ?", taskID).Update("state_id", req.StateID)
 	if result.Error != nil {
 		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
@@ -160,10 +199,14 @@ func AddPerformerHandler(ctx echo.Context) error {
 	if err != nil {
 		return ctx.JSON(http.StatusBadRequest, messages.WrongProjectID)
 	}
+	taskID, err := strconv.Atoi(ctx.Param("task-id"))
+	if err != nil {
+		return ctx.JSON(http.StatusBadRequest, messages.WrongTaskID)
+	}
 	userIDCtx := ctx.Get("user_id")
 	userID := userIDCtx.(int)
 	var stateID int
-	result := configs.DB.Table("tasks").Select("state_id").Where("id = ?", req.TaskID).Scan(&stateID)
+	result := configs.DB.Table("tasks").Select("state_id").Where("id = ?", taskID).Scan(&stateID)
 	if err != nil {
 		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
@@ -204,7 +247,7 @@ func AddPerformerHandler(ctx echo.Context) error {
 		return ctx.JSON(http.StatusNotAcceptable, messages.NotMember)
 	}
 	var performerIDs []int
-	result = configs.DB.Table("tasks_performers").Select("user_id").Where("task_id = ?", req.TaskID).Scan(&performerIDs)
+	result = configs.DB.Table("tasks_performers").Select("user_id").Where("task_id = ?", taskID).Scan(&performerIDs)
 	if result.Error != nil {
 		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
@@ -227,7 +270,7 @@ func AddPerformerHandler(ctx echo.Context) error {
 		return ctx.JSON(http.StatusNotAcceptable, messages.WrongUserID)
 	}
 	var task models.Task
-	result = configs.DB.Where("id = ?", req.TaskID).Preload("Performers").Find(&task)
+	result = configs.DB.Where("id = ?", taskID).Preload("Performers").Find(&task)
 	if result.Error != nil {
 		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
@@ -266,10 +309,14 @@ func RemovePerformerHandler(ctx echo.Context) error {
 	if err != nil {
 		return ctx.JSON(http.StatusBadRequest, messages.WrongProjectID)
 	}
+	taskID, err := strconv.Atoi(ctx.Param("task-id"))
+	if err != nil {
+		return ctx.JSON(http.StatusBadRequest, messages.WrongTaskID)
+	}
 	userIDCtx := ctx.Get("user_id")
 	userID := userIDCtx.(int)
 	var stateID int
-	result := configs.DB.Table("tasks").Select("state_id").Where("id = ?", req.TaskID).Scan(&stateID)
+	result := configs.DB.Table("tasks").Select("state_id").Where("id = ?", taskID).Scan(&stateID)
 	if err != nil {
 		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
@@ -310,7 +357,7 @@ func RemovePerformerHandler(ctx echo.Context) error {
 		return ctx.JSON(http.StatusNotAcceptable, messages.NotMember)
 	}
 	var performerIDs []int
-	result = configs.DB.Table("tasks_performers").Select("user_id").Where("task_id = ?", req.TaskID).Scan(&performerIDs)
+	result = configs.DB.Table("tasks_performers").Select("user_id").Where("task_id = ?", taskID).Scan(&performerIDs)
 	if result.Error != nil {
 		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
@@ -324,7 +371,7 @@ func RemovePerformerHandler(ctx echo.Context) error {
 	if !exist {
 		return ctx.JSON(http.StatusNotAcceptable, messages.NotInTask)
 	}
-	result = configs.DB.Unscoped().Where("task_id = ? and user_id = ?", req.TaskID, req.PerformerID).Delete(&models.TasksPerformers{})
+	result = configs.DB.Unscoped().Where("task_id = ? and user_id = ?", taskID, req.PerformerID).Delete(&models.TasksPerformers{})
 	if result.Error != nil {
 		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
@@ -344,7 +391,7 @@ func RemovePerformerHandler(ctx echo.Context) error {
 		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
 	var taskTitle string
-	result = configs.DB.Table("tasks").Select("title").Where("id = ?", req.TaskID).Scan(&taskTitle)
+	result = configs.DB.Table("tasks").Select("title").Where("id = ?", taskID).Scan(&taskTitle)
 	if result.Error != nil {
 		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
@@ -363,8 +410,12 @@ func EditTaskHandler(ctx echo.Context) error {
 	if err != nil {
 		return ctx.JSON(http.StatusBadRequest, messages.WrongProjectID)
 	}
+	taskID, err := strconv.Atoi(ctx.Param("task-id"))
+	if err != nil {
+		return ctx.JSON(http.StatusBadRequest, messages.WrongTaskID)
+	}
 	var stateID int
-	result := configs.DB.Table("tasks").Select("state_id").Where("id = ?", req.TaskID).Scan(&stateID)
+	result := configs.DB.Table("tasks").Select("state_id").Where("id = ?", taskID).Scan(&stateID)
 	if err != nil {
 		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
@@ -390,14 +441,31 @@ func EditTaskHandler(ctx echo.Context) error {
 		return ctx.JSON(http.StatusNotAcceptable, messages.TaskNotInProject)
 	}
 	var task models.Task
-	result = configs.DB.Where("id = ?", req.TaskID).Find(&task)
+	result = configs.DB.Where("id = ?", taskID).Find(&task)
 	if result.Error != nil {
 		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
+	}
+	year, _ := strconv.Atoi(req.Deadline[:4])
+	month, _ := strconv.Atoi(req.Deadline[5:7])
+	day, _ := strconv.Atoi(req.Deadline[8:])
+	estimatedTime := time.Duration(req.EstimatedTime) * 24 * time.Hour
+	deadline := time.Date(year, time.Month(month), day, 0, 0, 0, 0, time.UTC)
+	if req.EstimatedTime == 0 {
+		estimatedTime = task.EstimatedTime
+	}
+	if req.Deadline == "" {
+		deadline = task.Deadline
+	}
+	if req.Priority == 0 {
+		req.Priority = task.Priority
 	}
 	task.Index = req.Index
 	task.Title = req.Title
 	task.BackGroundColor = req.BackGroundColor
 	task.Description = req.Description
+	task.EstimatedTime = estimatedTime
+	task.Deadline = deadline
+	task.Priority = req.Priority
 	result = configs.DB.Save(&task)
 	if result.Error != nil {
 		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)

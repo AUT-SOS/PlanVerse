@@ -101,6 +101,10 @@ func EditStateHandler(ctx echo.Context) error {
 	if err != nil {
 		return ctx.JSON(http.StatusBadRequest, messages.WrongProjectID)
 	}
+	stateID, err := strconv.Atoi(ctx.Param("state-id"))
+	if err != nil {
+		return ctx.JSON(http.StatusBadRequest, messages.WrongStateID)
+	}
 	var stateIDs []int
 	result := configs.DB.Table("states").Select("id").Where("project_id = ?", projectID).Scan(&stateIDs)
 	if result.Error != nil {
@@ -111,7 +115,7 @@ func EditStateHandler(ctx echo.Context) error {
 	}
 	exist := false
 	for _, id := range stateIDs {
-		if id == req.ID {
+		if id == stateID {
 			exist = true
 			break
 		}
@@ -120,7 +124,7 @@ func EditStateHandler(ctx echo.Context) error {
 		return ctx.JSON(http.StatusNotAcceptable, messages.StateNotInProject)
 	}
 	var state models.State
-	result = configs.DB.Where("id = ?", req.ID).Find(&state)
+	result = configs.DB.Where("id = ?", stateID).Find(&state)
 	if result.Error != nil {
 		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}

@@ -19,7 +19,6 @@ type CreateStateRequest struct {
 }
 
 type StateObject struct {
-	ID              int    `json:"state_id"`
 	Title           string `json:"title"`
 	BackGroundColor string `json:"back_ground_color"`
 	AdminAccess     bool   `json:"admin_access"`
