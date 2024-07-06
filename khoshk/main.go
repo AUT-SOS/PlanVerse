@@ -3,6 +3,7 @@ package main
 import (
 	"PlanVerse/configs"
 	"PlanVerse/controllers"
+	"PlanVerse/helpers"
 	"PlanVerse/middlewares"
 	"log"
 	"os"
@@ -79,6 +80,8 @@ func main() {
 
 	//create websocket connection
 	server.GET("/create-ws", controllers.CreateWSConnection)
+
+	go helpers.CheckAliveness()
 
 	//start server
 	log.Fatal(server.Start("localhost:8080"))

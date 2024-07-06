@@ -6,6 +6,7 @@ import (
 	"PlanVerse/models"
 	"errors"
 	"github.com/golang-jwt/jwt"
+	"github.com/gorilla/websocket"
 	"log"
 	"math/rand"
 	"net/url"
@@ -165,5 +166,17 @@ func DetectMin(projectID int) (int, error) {
 			return 0, errors.New(strings.ToLower(messages.InternalError))
 		}
 		return minTime.UserID, nil
+	}
+}
+
+func CheckAliveness() {
+	for {
+		for wsConn := range models.Clients {
+			wsErr := wsConn.WriteMessage(websocket.PingMessage, []byte("check-aliveness"))
+			if wsErr != nil {
+				delete(models.Clients, wsConn)
+			}
+		}
+		time.Sleep(30 * time.Second)
 	}
 }

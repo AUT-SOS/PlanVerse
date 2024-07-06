@@ -711,13 +711,5 @@ func CreateWSConnection(ctx echo.Context) error {
 		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
 	models.Clients[conn] = userID
-	for {
-		for wsConn := range models.Clients {
-			wsErr := conn.WriteMessage(websocket.PingMessage, []byte("check-aliveness"))
-			if wsErr != nil {
-				delete(models.Clients, wsConn)
-			}
-		}
-		time.Sleep(30 * time.Second)
-	}
+	return nil
 }
