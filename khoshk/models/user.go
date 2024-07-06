@@ -2,6 +2,7 @@ package models
 
 import (
 	"github.com/golang-jwt/jwt"
+	"github.com/gorilla/websocket"
 	"gorm.io/gorm"
 )
 
@@ -53,3 +54,5 @@ type GetUserResponse struct {
 	Email      string `json:"email"`
 	ProfilePic string `json:"profile_pic"`
 }
+
+var Clients map[*websocket.Conn]int
