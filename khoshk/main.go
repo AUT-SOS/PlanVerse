@@ -84,5 +84,5 @@ func main() {
 	go helpers.CheckAliveness()
 
 	//start server
-	log.Fatal(server.Start("localhost:8080"))
+	log.Fatal(server.Start("0.0.0.0:8080"))
 }

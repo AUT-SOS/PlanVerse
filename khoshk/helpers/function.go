@@ -6,7 +6,6 @@ import (
 	"PlanVerse/models"
 	"errors"
 	"github.com/golang-jwt/jwt"
-	"github.com/gorilla/websocket"
 	"log"
 	"math/rand"
 	"net/url"
@@ -170,9 +169,12 @@ func DetectMin(projectID int) (int, error) {
 }
 
 func CheckAliveness() {
+	wsMessage := models.WSMessage{
+		Type: "check-aliveness",
+	}
 	for {
 		for wsConn := range models.Clients {
-			wsErr := wsConn.WriteMessage(websocket.PingMessage, []byte("check-aliveness"))
+			wsErr := wsConn.WriteJSON(wsMessage)
 			if wsErr != nil {
 				delete(models.Clients, wsConn)
 			}
