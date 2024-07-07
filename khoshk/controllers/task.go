@@ -527,16 +527,23 @@ func EditTaskHandler(ctx echo.Context) error {
 	if result.Error != nil {
 		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
-	year, _ := strconv.Atoi(req.Deadline[:4])
-	month, _ := strconv.Atoi(req.Deadline[5:7])
-	day, _ := strconv.Atoi(req.Deadline[8:])
-	estimatedTime := time.Duration(req.EstimatedTime) * 24 * time.Hour
-	deadline := time.Date(year, time.Month(month), day, 0, 0, 0, 0, time.UTC)
+	estimatedTime := time.Second
+	deadline := time.Time{}
+	year := 0
+	month := 0
+	day := 0
 	if req.EstimatedTime == 0 {
 		estimatedTime = task.EstimatedTime
+	} else {
+		estimatedTime = time.Duration(req.EstimatedTime) * 24 * time.Hour
 	}
 	if req.Deadline == "" {
 		deadline = task.Deadline
+	} else {
+		year, _ = strconv.Atoi(req.Deadline[:4])
+		month, _ = strconv.Atoi(req.Deadline[5:7])
+		day, _ = strconv.Atoi(req.Deadline[8:])
+		deadline = time.Date(year, time.Month(month), day, 0, 0, 0, 0, time.UTC)
 	}
 	if req.Priority < 1 || req.Priority > 5 {
 		req.Priority = task.Priority
@@ -684,7 +691,7 @@ func GetTaskHandler(ctx echo.Context) error {
 	if !exist {
 		return ctx.JSON(http.StatusNotAcceptable, messages.NotMember)
 	}
-	result = configs.DB.Table("tasks").Select([]string{"index", "title", "back_ground_color", "description"}).Where("id = ?", taskID).Scan(res)
+	result = configs.DB.Table("tasks").Select([]string{"index", "title", "back_ground_color", "description", "deadline", "estimated_time", "actual_time", "priority"}).Where("id = ?", taskID).Scan(res)
 	if result.Error != nil {
 		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}

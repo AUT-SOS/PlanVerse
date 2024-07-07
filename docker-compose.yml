@@ -16,25 +16,26 @@ services:
        condition: service_healthy
     env_file:
       - ./.env
+    ports:
+      - "8080:8080"
     networks:
       - pv_net
 
   db:
-    image: postgres:13-alpine
+    image: postgres:latest
     container_name: postgres
     restart: always
     environment:
       POSTGRES_PASSWORD: strong-password
       POSTGRES_USER: root
       POSTGRES_DB: postgres
-      PGDATA: /var/lib/postgresql/pgdata
     healthcheck:
       test: ["CMD-SHELL", "pg_isready"]
       interval: 10s
       timeout: 5s
       retries: 5
     volumes:
-      - ./khoshk/postgres_data:/var/lib/postgresql/pgdata
+      - pg-volume:/var/lib/postgresql/data
     ports:
       - "5435:5432"
     networks:
@@ -57,3 +58,7 @@ services:
       - "6379:6379"
     networks:
       - pv_net
+
+
+volumes:
+  pg-volume:

@@ -47,7 +47,7 @@ func StateListHandler(ctx echo.Context) error {
 		go func(index int, wg *sync.WaitGroup) {
 			defer wg.Done()
 			var taskShows []models.TaskShow
-			configs.DB.Table("tasks").Select([]string{"id", "index", "title", "back_ground_color", "description"}).Where("state_id = ?", res[index].ID).Scan(&taskShows)
+			configs.DB.Table("tasks").Select([]string{"id", "index", "title", "back_ground_color", "description", "deadline", "estimated_time", "actual_time", "priority"}).Where("state_id = ?", res[index].ID).Scan(&taskShows)
 			for j, task := range taskShows {
 				var performers []int
 				configs.DB.Table("tasks_performers").Select("user_id").Where("task_id = ?", task.ID).Scan(&performers)
@@ -254,7 +254,7 @@ func GetStateHandler(ctx echo.Context) error {
 		go func(index int, wg *sync.WaitGroup, mu *sync.Mutex) {
 			defer wg.Done()
 			var task models.GetTaskResponse
-			configs.DB.Table("tasks").Select([]string{"index", "title", "back_ground_color", "description"}).Where("id = ?", taskIDs[index]).Scan(&task)
+			configs.DB.Table("tasks").Select([]string{"index", "title", "back_ground_color", "description", "deadline", "estimated_time", "actual_time", "priority"}).Where("id = ?", taskIDs[index]).Scan(&task)
 			var performerIDs []int
 			configs.DB.Table("tasks_performers").Select("user_id").Where("task_id = ?", taskIDs[index]).Scan(&performerIDs)
 			task.ID = taskIDs[index]

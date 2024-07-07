@@ -21,11 +21,11 @@ func ConnectToDatabase() {
 		db, err := gorm.Open(postgres.New(postgres.Config{
 			DSN: fmt.Sprintf(
 				"host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
-				os.Getenv("DATABASE_HOST"),
-				os.Getenv("DATABASE_PORT"),
-				os.Getenv("DATABASE_USERNAME"),
-				os.Getenv("DATABASE_PASSWORD"),
-				os.Getenv("DATABASE_DB"),
+				os.Getenv("POSTGRES_HOST"),
+				os.Getenv("POSTGRES_PORT"),
+				os.Getenv("POSTGRES_USER"),
+				os.Getenv("POSTGRES_PASSWORD"),
+				os.Getenv("POSTGRES_DB"),
 			),
 		}), &gorm.Config{})
 		if err != nil {

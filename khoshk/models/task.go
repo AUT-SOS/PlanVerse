@@ -29,6 +29,10 @@ type TaskShow struct {
 	BackGroundColor string `json:"back_ground_color"`
 	Performers      []int  `json:"performers"`
 	Description     string `json:"description"`
+	Deadline        string `json:"deadline"`
+	EstimatedTime   int    `json:"estimated_time"`
+	ActualTime      int    `json:"actual_time"`
+	Priority        int    `json:"priority"`
 }
 
 type CreateTaskRequest struct {
@@ -70,6 +74,10 @@ type GetTaskResponse struct {
 	BackGroundColor string `json:"back_ground_color"`
 	Description     string `json:"description"`
 	Performers      []int  `json:"performers"`
+	Deadline        string `json:"deadline"`
+	EstimatedTime   int    `json:"estimated_time"`
+	ActualTime      int    `json:"actual_time"`
+	Priority        int    `json:"priority"`
 }
 
 type WSMessage struct {
