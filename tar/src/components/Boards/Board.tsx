@@ -13,7 +13,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "../../redux/store";
 import { SpinningLoading } from "../../ui/SpinningLoading";
 import { ProjectActions } from "../../redux/slices/project.slice";
-import { Text0, Text1 } from "../../ui/Text";
+import { Text0, Text1, Text2, Text3 } from "../../ui/Text";
 import { Home } from "../../ui/Icons/Home";
 import { Members } from "../../ui/Icons/Members";
 import { Settings } from "../../ui/Icons/Settings";
@@ -43,6 +43,12 @@ import { showFailToastMessage } from "../../main";
 import { CreateProject } from "../Home/Home";
 import { TaskBoard } from "./TaskBoard";
 import { Logout } from "../../ui/Icons/Logout";
+import { Slider } from "@mui/material";
+import { Datepicker } from "@ijavad805/react-datepicker";
+import moment from "moment";
+import { AuthActions } from "../../redux/slices/auth.slice";
+import { NumberInput } from "@mui/base/Unstable_NumberInput/NumberInput";
+import { Unstable_NumberInput } from "@mui/base";
 
 type Props = {};
 
@@ -56,6 +62,20 @@ enum ModalType {
   TaskInfo,
 }
 
+let ws;
+
+const connectToWS = (userId?: string) => {
+  console.log(">>WS", userId);
+  if (!userId) return;
+  ws = new WebSocket(`ws://localhost:8080/ws/${userId}`);
+  ws.onmessage = (message) => {
+    console.log(">>WS", message.data);
+  };
+  ws.onopen = () => {
+    console.log(">>WS", "Opened");
+  };
+};
+
 export const Board: React.FC<Props> = (props) => {
   const projId = useParams().id;
   const navigate = useNavigate();
@@ -65,14 +85,6 @@ export const Board: React.FC<Props> = (props) => {
     navigate("/home");
     return;
   }
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      dispatch(ProjectActions.getStates(projId));
-      dispatch((ProjectActions.getFullProject(projId)));
-    }, 3000)
-    return () => clearInterval(timer)
-  }, [])
 
   const transition = useTransition(projId, {
     from: {
@@ -118,8 +130,9 @@ export const Board: React.FC<Props> = (props) => {
   >(undefined);
 
   useEffect(() => {
+    connectToWS(myId);
     dispatch(ProjectActions.getFullProject(projId));
-  }, []);
+  }, [myId]);
   const [visible, setVisible] = useState(false);
   const [sliderContent, setSliderContent] = useState(SliderTypes.Members);
 
@@ -477,6 +490,16 @@ const TaskInfo: React.FC<TaskInfoProps> = (props) => {
     },
     []
   );
+  const handlePriorityChange = useCallback((priority: number) => {
+    setTask((prev) => ({ ...prev, priority }));
+  }, []);
+
+  const handleDeadlineChange = useCallback((deadline: string) => {
+    setTask((prev) => ({ ...prev, deadline }));
+  }, []);
+  const handleEstimatedTimeChange = useCallback((time: number) => {
+    setTask((prev) => ({ ...prev, estimated_time: time }));
+  }, []);
 
   const [assigned, setAssign] = useState<number[]>(props.task.performers ?? []);
 
@@ -575,6 +598,21 @@ const TaskInfo: React.FC<TaskInfoProps> = (props) => {
           }}
           placeholder="Description"
         />
+        <TaskPriority
+          task={task}
+          onChange={handlePriorityChange}
+          isAdmin={props.amIAdmin}
+        />
+        <TaskDeadline
+          task={task}
+          onChange={handleDeadlineChange}
+          isAdmin={props.amIAdmin}
+        />
+        {/* <TaskEstimatedTime
+          task={task}
+          onChange={handleEstimatedTimeChange}
+          isAdmin={props.amIAdmin}
+        /> */}
         <div className={styles.AssignList}>
           {filteredMembers.map((item) => {
             const isAssigned =
@@ -632,5 +670,89 @@ const TaskInfo: React.FC<TaskInfoProps> = (props) => {
     </div>
   ) : (
     <SpinningLoading size={50} />
+  );
+};
+
+type TaskPriorityProps = {
+  task: Task;
+  onChange: (val: number) => void;
+  isAdmin?: boolean;
+};
+
+const TaskPriority: React.FC<TaskPriorityProps> = (props) => {
+  return (
+    <div className={styles.PriorityWrapper}>
+      <Text2 text="Priority:" />
+      <Slider
+        aria-label="Priority"
+        value={props.task.priority}
+        valueLabelDisplay="auto"
+        step={1}
+        marks
+        min={1}
+        max={5}
+        disabled={!props.isAdmin}
+        onChange={(e, value) => props.onChange(value as number)}
+        color="warning"
+        className={styles.PrioritySlider}
+      />
+    </div>
+  );
+};
+
+type TaskDeadlineProps = {
+  task: Task;
+  onChange: (val: string) => void;
+  isAdmin?: boolean;
+};
+
+const TaskDeadline: React.FC<TaskDeadlineProps> = (props) => {
+  return (
+    <div className={styles.PriorityWrapper}>
+      <Text2 text="Deadline:" />
+      <Datepicker
+        footer={(moment, setValue) => {
+          return (
+            <>
+              <div
+                onClick={() => {
+                  if (setValue) setValue(moment());
+                }}
+              >
+                Today
+              </div>
+            </>
+          );
+        }}
+        closeWhenSelectADay={true}
+        disabled={!props.isAdmin}
+        format={"YYYY-MM-DD"}
+        lang={"en"}
+        loading={false}
+        modeTheme={"dark"}
+        theme="red"
+        defaultValue={moment(props.task.deadline) ?? moment()}
+        adjustPosition={"auto"}
+        onChange={(val: any) => {
+          props.onChange(val._i);
+        }}
+      />
+    </div>
+  );
+};
+
+type TaskEstimatedTimeSetter = {
+  task: Task;
+  onChange: (val: number) => void;
+  isAdmin?: boolean;
+};
+
+const TaskEstimatedTime: React.FC<TaskEstimatedTimeSetter> = (props) => {
+  console.log(">>", props.task)
+  return (
+    <div>
+      <Text2 text="Estimated Time:" />
+      <Unstable_NumberInput disabled={!props.isAdmin} onChange={(e, v) => props.onChange(v ?? 0)} value={props.task.estimated_time ?? 0}/>
+    </div>
   );
 };

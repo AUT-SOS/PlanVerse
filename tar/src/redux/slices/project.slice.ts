@@ -64,7 +64,8 @@ const ProjectsSlice = createSlice({
     editTask(
       state,
       action: PayloadAction<CreateTaskType & { task_id: string }>
-    ) {},
+    ) {
+    },
     createState(state, action: PayloadAction<CreateStateType>) {},
     editState(state, action: PayloadAction<State & { project_id: string }>) {
       const index = state.states?.findIndex(

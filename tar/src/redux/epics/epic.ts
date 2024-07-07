@@ -1,5 +1,6 @@
 import { StateObservable, combineEpics } from "redux-observable";
 import {
+  connectToWsEpic,
   getMyIdEpic,
   loginEpic,
   resendEmailEpic,
@@ -78,5 +79,6 @@ export const rootEpic = combineEpics(
   changeStateEpic,
   getTaskEpic,
   deleteTaskEpic,
-  assignEpic
+  assignEpic,
+  connectToWsEpic
 );

@@ -43,7 +43,10 @@ export const createTaskEpic: Epic = (action$, state$) =>
         taskInfo.title,
         taskInfo.back_ground_color,
         taskInfo.description,
-        taskInfo.index
+        taskInfo.index,
+        taskInfo.deadline,
+        taskInfo.estimated_time,
+        taskInfo.priority
       ).pipe(
         mergeMap(() => {
           return of(
@@ -91,7 +94,10 @@ export const editTaskEpic: Epic = (action$, state$) =>
         taskInfo.title,
         taskInfo.back_ground_color,
         taskInfo.description,
-        taskInfo.index
+        taskInfo.index,
+        taskInfo.deadline,
+        taskInfo.estimated_time,
+        taskInfo.priority
       ).pipe(
         mergeMap(() => {
           if (
