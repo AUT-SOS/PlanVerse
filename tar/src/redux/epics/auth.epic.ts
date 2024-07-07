@@ -1,11 +1,6 @@
 import { ofType } from "redux-observable";
 import { AuthActions } from "../slices/auth.slice";
-import {
-  catchError,
-  merge,
-  mergeMap,
-  of,
-} from "rxjs";
+import { catchError, EMPTY, exhaustMap, merge, mergeMap, of } from "rxjs";
 import { API } from "../../api/API";
 import { Epic, handleError } from "./epic";
 import {
@@ -18,6 +13,7 @@ import {
 import { showFailToastMessage, showSuccessToastMessage } from "../../main";
 import { ReqActions } from "../slices/req.slice";
 import { UserActions } from "../slices/user.slice";
+import { webSocket } from "rxjs/webSocket";
 
 export const loginEpic: Epic = (action$, state$) =>
   action$.pipe(
@@ -26,7 +22,9 @@ export const loginEpic: Epic = (action$, state$) =>
       const loginInfo = action.payload as LoginForm;
       return API.login(loginInfo.email!, loginInfo.password!).pipe(
         mergeMap((res) => {
-          document.cookie = `access_token=${res.responseHeaders.authorization.slice(0)}`;
+          document.cookie = `access_token=${res.responseHeaders.authorization.slice(
+            0
+          )}`;
           const uid = JSON.parse(JSON.stringify(res.response)).user_id;
           return merge(
             of(
@@ -104,7 +102,7 @@ export const getMyIdEpic: Epic = (action$, state$) =>
             API.getUser(myId).pipe(
               mergeMap((res) => {
                 const resObj = res.response as any;
-                
+
                 return of(
                   UserActions.setMe({
                     ...resObj,
@@ -176,6 +174,24 @@ export const resendEmailEpic: Epic = (action$, state$) =>
           showSuccessToastMessage("Email was resent");
           return merge(
             of(ReqActions.setState({ requestState: RequestState.None }))
+          );
+        }),
+        handleError("There was an error resendig")
+      );
+    })
+  );
+
+export const connectToWsEpic: Epic = (action$, state$) =>
+  action$.pipe(
+    ofType(AuthActions.connectWS.type),
+    exhaustMap(() => {
+      return API.connectWS().pipe(
+        mergeMap(() => {
+          return webSocket("ws://localhost:8080").pipe(
+            mergeMap((item) => {
+              console.log(item);
+              return EMPTY;
+            })
           );
         }),
         handleError("There was an error resendig")

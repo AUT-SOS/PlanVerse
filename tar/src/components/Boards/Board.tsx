@@ -46,6 +46,9 @@ import { Logout } from "../../ui/Icons/Logout";
 import { Slider } from "@mui/material";
 import { Datepicker } from "@ijavad805/react-datepicker";
 import moment from "moment";
+import { AuthActions } from "../../redux/slices/auth.slice";
+import { NumberInput } from "@mui/base/Unstable_NumberInput/NumberInput";
+import { Unstable_NumberInput } from "@mui/base";
 
 type Props = {};
 
@@ -58,6 +61,20 @@ enum ModalType {
   ProjectSetting,
   TaskInfo,
 }
+
+let ws;
+
+const connectToWS = (userId?: string) => {
+  console.log(">>WS", userId);
+  if (!userId) return;
+  ws = new WebSocket(`ws://localhost:8080/ws/${userId}`);
+  ws.onmessage = (message) => {
+    console.log(">>WS", message.data);
+  };
+  ws.onopen = () => {
+    console.log(">>WS", "Opened");
+  };
+};
 
 export const Board: React.FC<Props> = (props) => {
   const projId = useParams().id;
@@ -113,8 +130,9 @@ export const Board: React.FC<Props> = (props) => {
   >(undefined);
 
   useEffect(() => {
+    connectToWS(myId);
     dispatch(ProjectActions.getFullProject(projId));
-  }, []);
+  }, [myId]);
   const [visible, setVisible] = useState(false);
   const [sliderContent, setSliderContent] = useState(SliderTypes.Members);
 
@@ -472,6 +490,16 @@ const TaskInfo: React.FC<TaskInfoProps> = (props) => {
     },
     []
   );
+  const handlePriorityChange = useCallback((priority: number) => {
+    setTask((prev) => ({ ...prev, priority }));
+  }, []);
+
+  const handleDeadlineChange = useCallback((deadline: string) => {
+    setTask((prev) => ({ ...prev, deadline }));
+  }, []);
+  const handleEstimatedTimeChange = useCallback((time: number) => {
+    setTask((prev) => ({ ...prev, estimated_time: time }));
+  }, []);
 
   const [assigned, setAssign] = useState<number[]>(props.task.performers ?? []);
 
@@ -572,16 +600,19 @@ const TaskInfo: React.FC<TaskInfoProps> = (props) => {
         />
         <TaskPriority
           task={task}
-          project_id={props.projId}
-          state_id={props.state_id}
+          onChange={handlePriorityChange}
           isAdmin={props.amIAdmin}
         />
         <TaskDeadline
           task={task}
-          project_id={props.projId}
-          state_id={props.state_id}
+          onChange={handleDeadlineChange}
           isAdmin={props.amIAdmin}
         />
+        {/* <TaskEstimatedTime
+          task={task}
+          onChange={handleEstimatedTimeChange}
+          isAdmin={props.amIAdmin}
+        /> */}
         <div className={styles.AssignList}>
           {filteredMembers.map((item) => {
             const isAssigned =
@@ -644,37 +675,24 @@ const TaskInfo: React.FC<TaskInfoProps> = (props) => {
 
 type TaskPriorityProps = {
   task: Task;
-  project_id: string;
-  state_id: string;
+  onChange: (val: number) => void;
   isAdmin?: boolean;
 };
 
 const TaskPriority: React.FC<TaskPriorityProps> = (props) => {
-  const dispatch = useDispatch();
-
-  const handleValueChange = (priority: number) => {
-    dispatch(
-      ProjectActions.editTask({
-        ...props.task,
-        priority,
-        project_id: props.project_id,
-        state_id: props.state_id,
-      })
-    );
-  };
   return (
     <div className={styles.PriorityWrapper}>
       <Text2 text="Priority:" />
       <Slider
         aria-label="Priority"
-        defaultValue={props.task.priority}
+        value={props.task.priority}
         valueLabelDisplay="auto"
         step={1}
         marks
         min={1}
         max={5}
         disabled={!props.isAdmin}
-        onChange={(e, value) => handleValueChange(value as number)}
+        onChange={(e, value) => props.onChange(value as number)}
         color="warning"
         className={styles.PrioritySlider}
       />
@@ -684,24 +702,11 @@ const TaskPriority: React.FC<TaskPriorityProps> = (props) => {
 
 type TaskDeadlineProps = {
   task: Task;
-  project_id: string;
-  state_id: string;
+  onChange: (val: string) => void;
   isAdmin?: boolean;
 };
 
 const TaskDeadline: React.FC<TaskDeadlineProps> = (props) => {
-  const dispatch = useDispatch();
-
-  const handleValueChange = (deadline: string) => {
-    dispatch(
-      ProjectActions.editTask({
-        ...props.task,
-        deadline,
-        project_id: props.project_id,
-        state_id: props.state_id,
-      })
-    );
-  };
   return (
     <div className={styles.PriorityWrapper}>
       <Text2 text="Deadline:" />
@@ -723,15 +728,31 @@ const TaskDeadline: React.FC<TaskDeadlineProps> = (props) => {
         disabled={!props.isAdmin}
         format={"YYYY-MM-DD"}
         lang={"en"}
-        loading={false} // show loading in datepicker if is open
-        modeTheme={"dark"} // dark and light
-        theme="red" // blue , orange , red , green , yellow
+        loading={false}
+        modeTheme={"dark"}
+        theme="red"
         defaultValue={moment(props.task.deadline) ?? moment()}
-        adjustPosition={"auto"} // auto, right-top, left-top, right-bottom, left-bottom, modal
+        adjustPosition={"auto"}
         onChange={(val: any) => {
-          handleValueChange(val._i);
+          props.onChange(val._i);
         }}
       />
+    </div>
+  );
+};
+
+type TaskEstimatedTimeSetter = {
+  task: Task;
+  onChange: (val: number) => void;
+  isAdmin?: boolean;
+};
+
+const TaskEstimatedTime: React.FC<TaskEstimatedTimeSetter> = (props) => {
+  console.log(">>", props.task)
+  return (
+    <div>
+      <Text2 text="Estimated Time:" />
+      <Unstable_NumberInput disabled={!props.isAdmin} onChange={(e, v) => props.onChange(v ?? 0)} value={props.task.estimated_time ?? 0}/>
     </div>
   );
 };

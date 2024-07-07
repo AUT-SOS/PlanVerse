@@ -2,6 +2,14 @@ import { ajax } from "rxjs/ajax";
 import { END_POINT, API_HEADERS } from "../utils/consts";
 
 export const API = {
+  connectWS() {
+    return ajax.get(`${END_POINT}/create-ws`, {
+      ...API_HEADERS,
+      Authorization: getAccessToken(),
+      "Connection": "Upgrade",
+      "Upgrade": "websocket",
+    });
+  },
   login(email: string, password: string) {
     return ajax.post(
       `${END_POINT}/login`,

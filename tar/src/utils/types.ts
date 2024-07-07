@@ -94,7 +94,7 @@ export type Task = {
   back_ground_color: string;
   index: number
   deadline?: string
-	estimated_time?: string
+	estimated_time?: number
 	priority?: number
 };
 
@@ -106,7 +106,7 @@ export type CreateTaskType = {
   description: string;
   index: number
   deadline?: string
-	estimated_time?: string
+	estimated_time?: number
 	priority?: number
 };
 
@@ -124,7 +124,7 @@ export type EditTaskType = {
   back_ground_color: string;
   description: string;
   deadline?: string
-	estimated_time?: string
+	estimated_time?: number
 	priority?: number
 };
 
