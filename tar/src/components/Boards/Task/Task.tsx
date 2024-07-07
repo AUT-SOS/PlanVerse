@@ -19,9 +19,8 @@ export const TaskFC: React.FC<Props> = React.memo((props) => {
   const [taskInfo, setTaskInfo] = useState<Task>(props.task);
   const members = useSelector((state: RootState) => state.project.members);
   useEffect(() => {
-    setTaskInfo(props.task)
-  },[props.task])
-  
+    setTaskInfo(props.task);
+  }, [props.task]);
 
   const projId = useParams().id!;
 
@@ -65,7 +64,18 @@ export const TaskFC: React.FC<Props> = React.memo((props) => {
         <div className={styles.AssignedList}>
           {props.task.performers.map((item) => {
             const target = members.find((a) => Number(a.id) == item);
-            return <img title={target?.username} className={styles.AssignedPic} src={target?.profile_pic} alt="" />;
+            return (
+              <img
+                title={target?.username}
+                className={styles.AssignedPic}
+                src={
+                  target?.profile_pic && target?.profile_pic.length > 0
+                    ? target.profile_pic
+                    : "/public/DefaultPFP.jpg"
+                }
+                alt=""
+              />
+            );
           })}
         </div>
       )}

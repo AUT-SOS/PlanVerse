@@ -198,3 +198,15 @@
   padding: 5px 0;
   overflow: auto;
 }
+
+.PriorityWrapper{
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: auto;
+  gap: 20px
+}
+
+.PrioritySlider{
+  width: 50%;
+}

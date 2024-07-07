@@ -2,6 +2,14 @@ import { ajax } from "rxjs/ajax";
 import { END_POINT, API_HEADERS } from "../utils/consts";
 
 export const API = {
+  connectWS() {
+    return ajax.get(`${END_POINT}/create-ws`, {
+      ...API_HEADERS,
+      Authorization: getAccessToken(),
+      "Connection": "Upgrade",
+      "Upgrade": "websocket",
+    });
+  },
   login(email: string, password: string) {
     return ajax.post(
       `${END_POINT}/login`,
@@ -250,16 +258,21 @@ export const API = {
       title: string,
       back_ground_color: string,
       description: string,
-      index: number
+      index: number,
+      deadline?: string,
+      estimated_time?: number,
+      priority?: number
     ) {
       return ajax.post(
-        `${END_POINT}/create-task/${id}`,
+        `${END_POINT}/create-task/${id}/${state_id}`,
         {
-          state_id,
           title,
           back_ground_color,
           description,
           index,
+          deadline,
+          estimated_time,
+          priority,
         },
         {
           ...API_HEADERS,
@@ -275,9 +288,8 @@ export const API = {
       admin_access: boolean
     ) {
       return ajax.post(
-        `${END_POINT}/edit-state/${id}`,
+        `${END_POINT}/edit-state/${id}/${state_id}`,
         {
-          state_id,
           title,
           back_ground_color,
           admin_access,
@@ -294,16 +306,21 @@ export const API = {
       title: string,
       back_ground_color: string,
       description: string,
-      index: number
+      index: number,
+      deadline?: string,
+      estimated_time?: number,
+      priority?: number
     ) {
       return ajax.post(
-        `${END_POINT}/edit-task/${id}`,
+        `${END_POINT}/edit-task/${id}/${task_id}`,
         {
-          task_id,
           title,
           back_ground_color,
           description,
           index,
+          deadline,
+          estimated_time,
+          priority,
         },
         {
           ...API_HEADERS,
@@ -323,9 +340,8 @@ export const API = {
     },
     changeState(id: string, task_id: string, state_id: string) {
       return ajax.post(
-        `${END_POINT}/change-state/${id}`,
+        `${END_POINT}/change-state/${id}/${task_id}`,
         {
-          task_id,
           state_id,
         },
         {
@@ -352,9 +368,8 @@ export const API = {
     },
     addAssign(id: string, task_id: string, performer_id: string) {
       return ajax.post(
-        `${END_POINT}/add-performer/${id}`,
+        `${END_POINT}/add-performer/${id}/${task_id}`,
         {
-          task_id,
           performer_id,
         },
         {
@@ -365,9 +380,8 @@ export const API = {
     },
     removeAssign(id: string, task_id: string, performer_id: string) {
       return ajax.post(
-        `${END_POINT}/remove-performer/${id}`,
+        `${END_POINT}/remove-performer/${id}/${task_id}`,
         {
-          task_id,
           performer_id,
         },
         {

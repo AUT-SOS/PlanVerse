@@ -17,3 +17,4 @@ export const validateUsername = (username? : string) => {
   ? username.length >= 3
   : true;
 }
+
