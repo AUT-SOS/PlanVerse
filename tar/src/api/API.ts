@@ -260,7 +260,7 @@ export const API = {
       description: string,
       index: number,
       deadline?: string,
-      estimated_time?: string,
+      estimated_time?: number,
       priority?: number
     ) {
       return ajax.post(
@@ -308,7 +308,7 @@ export const API = {
       description: string,
       index: number,
       deadline?: string,
-      estimated_time?: string,
+      estimated_time?: number,
       priority?: number
     ) {
       return ajax.post(
