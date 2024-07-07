@@ -26,7 +26,7 @@ export const loginEpic: Epic = (action$, state$) =>
       const loginInfo = action.payload as LoginForm;
       return API.login(loginInfo.email!, loginInfo.password!).pipe(
         mergeMap((res) => {
-          document.cookie = `access_token=${res.responseHeaders.authorization}`;
+          document.cookie = `access_token=${res.responseHeaders.authorization.slice(0)}`;
           const uid = JSON.parse(JSON.stringify(res.response)).user_id;
           return merge(
             of(
@@ -70,7 +70,6 @@ export const signupEpic: Epic = (action$, state$) =>
       ).pipe(
         mergeMap((res) => {
           document.cookie = `access_token=${res.responseHeaders.authorization}`;
-
           return merge(
             of(
               AuthActions.changeAuthState({

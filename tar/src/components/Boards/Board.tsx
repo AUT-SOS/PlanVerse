@@ -13,7 +13,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "../../redux/store";
 import { SpinningLoading } from "../../ui/SpinningLoading";
 import { ProjectActions } from "../../redux/slices/project.slice";
-import { Text0, Text1 } from "../../ui/Text";
+import { Text0, Text1, Text2, Text3 } from "../../ui/Text";
 import { Home } from "../../ui/Icons/Home";
 import { Members } from "../../ui/Icons/Members";
 import { Settings } from "../../ui/Icons/Settings";
@@ -43,6 +43,9 @@ import { showFailToastMessage } from "../../main";
 import { CreateProject } from "../Home/Home";
 import { TaskBoard } from "./TaskBoard";
 import { Logout } from "../../ui/Icons/Logout";
+import { Slider } from "@mui/material";
+import { Datepicker } from "@ijavad805/react-datepicker";
+import moment from "moment";
 
 type Props = {};
 
@@ -65,14 +68,6 @@ export const Board: React.FC<Props> = (props) => {
     navigate("/home");
     return;
   }
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      dispatch(ProjectActions.getStates(projId));
-      dispatch((ProjectActions.getFullProject(projId)));
-    }, 3000)
-    return () => clearInterval(timer)
-  }, [])
 
   const transition = useTransition(projId, {
     from: {
@@ -575,6 +570,18 @@ const TaskInfo: React.FC<TaskInfoProps> = (props) => {
           }}
           placeholder="Description"
         />
+        <TaskPriority
+          task={task}
+          project_id={props.projId}
+          state_id={props.state_id}
+          isAdmin={props.amIAdmin}
+        />
+        <TaskDeadline
+          task={task}
+          project_id={props.projId}
+          state_id={props.state_id}
+          isAdmin={props.amIAdmin}
+        />
         <div className={styles.AssignList}>
           {filteredMembers.map((item) => {
             const isAssigned =
@@ -632,5 +639,99 @@ const TaskInfo: React.FC<TaskInfoProps> = (props) => {
     </div>
   ) : (
     <SpinningLoading size={50} />
+  );
+};
+
+type TaskPriorityProps = {
+  task: Task;
+  project_id: string;
+  state_id: string;
+  isAdmin?: boolean;
+};
+
+const TaskPriority: React.FC<TaskPriorityProps> = (props) => {
+  const dispatch = useDispatch();
+
+  const handleValueChange = (priority: number) => {
+    dispatch(
+      ProjectActions.editTask({
+        ...props.task,
+        priority,
+        project_id: props.project_id,
+        state_id: props.state_id,
+      })
+    );
+  };
+  return (
+    <div className={styles.PriorityWrapper}>
+      <Text2 text="Priority:" />
+      <Slider
+        aria-label="Priority"
+        defaultValue={props.task.priority}
+        valueLabelDisplay="auto"
+        step={1}
+        marks
+        min={1}
+        max={5}
+        disabled={!props.isAdmin}
+        onChange={(e, value) => handleValueChange(value as number)}
+        color="warning"
+        className={styles.PrioritySlider}
+      />
+    </div>
+  );
+};
+
+type TaskDeadlineProps = {
+  task: Task;
+  project_id: string;
+  state_id: string;
+  isAdmin?: boolean;
+};
+
+const TaskDeadline: React.FC<TaskDeadlineProps> = (props) => {
+  const dispatch = useDispatch();
+
+  const handleValueChange = (deadline: string) => {
+    dispatch(
+      ProjectActions.editTask({
+        ...props.task,
+        deadline,
+        project_id: props.project_id,
+        state_id: props.state_id,
+      })
+    );
+  };
+  return (
+    <div className={styles.PriorityWrapper}>
+      <Text2 text="Deadline:" />
+      <Datepicker
+        footer={(moment, setValue) => {
+          return (
+            <>
+              <div
+                onClick={() => {
+                  if (setValue) setValue(moment());
+                }}
+              >
+                Today
+              </div>
+            </>
+          );
+        }}
+        closeWhenSelectADay={true}
+        disabled={!props.isAdmin}
+        format={"YYYY-MM-DD"}
+        lang={"en"}
+        loading={false} // show loading in datepicker if is open
+        modeTheme={"dark"} // dark and light
+        theme="red" // blue , orange , red , green , yellow
+        defaultValue={moment(props.task.deadline) ?? moment()}
+        adjustPosition={"auto"} // auto, right-top, left-top, right-bottom, left-bottom, modal
+        onChange={(val: any) => {
+          handleValueChange(val._i);
+        }}
+      />
+    </div>
   );
 };
