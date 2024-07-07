@@ -17,20 +17,34 @@ import (
 )
 
 func ProjectListHandler(ctx echo.Context) error {
+	startTime := time.Now()
+	method := ctx.Request().Method
+	endpoint := ctx.Request().URL.Path
 	var projectsList []models.ProjectListResponse
 	userIDCtx := ctx.Get("user_id")
 	userID := userIDCtx.(int)
 	result := configs.DB.Table("projects").Select([]string{"projects.id", "projects.title", "projects.back_ground_pic", "projects.members_number", "projects_members.is_admin"}).Joins("inner join projects_members on projects.id = projects_members.project_id").Where("projects_members.user_id = ?", userID).Scan(&projectsList)
 	if result.Error != nil {
+		models.FailedRequests.WithLabelValues(method, endpoint).Inc()
+		models.FailedDBRequests.WithLabelValues(method, endpoint).Inc()
+		models.ResponseTime.WithLabelValues(method, endpoint).Observe(time.Since(startTime).Seconds())
 		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
+	models.SuccessDBRequests.WithLabelValues(method, endpoint).Inc()
+	models.SuccessRequests.WithLabelValues(method, endpoint).Inc()
+	models.ResponseTime.WithLabelValues(method, endpoint).Observe(time.Since(startTime).Seconds())
 	return ctx.JSON(http.StatusOK, projectsList)
 }
 
 func CreateProjectHandler(ctx echo.Context) error {
+	startTime := time.Now()
+	method := ctx.Request().Method
+	endpoint := ctx.Request().URL.Path
 	req := new(models.CreateProjectRequest)
 	res := new(models.CreateProjectResponse)
 	if err := ctx.Bind(req); err != nil {
+		models.FailedRequests.WithLabelValues(method, endpoint).Inc()
+		models.ResponseTime.WithLabelValues(method, endpoint).Observe(time.Since(startTime).Seconds())
 		return ctx.JSON(http.StatusBadRequest, messages.InvalidRequestBody)
 	}
 	userIDCtx := ctx.Get("user_id")
@@ -38,10 +52,16 @@ func CreateProjectHandler(ctx echo.Context) error {
 	var user models.User
 	result := configs.DB.Where("id = ?", userID).Find(&user)
 	if result.Error != nil {
+		models.FailedRequests.WithLabelValues(method, endpoint).Inc()
+		models.FailedDBRequests.WithLabelValues(method, endpoint).Inc()
+		models.ResponseTime.WithLabelValues(method, endpoint).Observe(time.Since(startTime).Seconds())
 		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
+	models.SuccessDBRequests.WithLabelValues(method, endpoint).Inc()
 	link, err := helpers.GenerateRandomLink(req.Title)
 	if err != nil {
+		models.FailedRequests.WithLabelValues(method, endpoint).Inc()
+		models.ResponseTime.WithLabelValues(method, endpoint).Observe(time.Since(startTime).Seconds())
 		return ctx.JSON(http.StatusInternalServerError, messages.FailedToGenerateLink)
 	}
 	joinLink := models.JoinLink{
@@ -74,28 +94,47 @@ func CreateProjectHandler(ctx echo.Context) error {
 		States:        defaultStates,
 	}
 	if err = configs.DB.Create(&newProject).Error; err != nil {
+		models.FailedRequests.WithLabelValues(method, endpoint).Inc()
+		models.ResponseTime.WithLabelValues(method, endpoint).Observe(time.Since(startTime).Seconds())
 		return ctx.JSON(http.StatusInternalServerError, messages.FailedToCreateProject)
 	}
 	result = configs.DB.Table("projects_members").Where("project_id = ?", newProject.ID).Update("is_admin", true)
 	if result.Error != nil {
+		models.FailedRequests.WithLabelValues(method, endpoint).Inc()
+		models.FailedDBRequests.WithLabelValues(method, endpoint).Inc()
+		models.ResponseTime.WithLabelValues(method, endpoint).Observe(time.Since(startTime).Seconds())
 		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
+	models.SuccessDBRequests.WithLabelValues(method, endpoint).Inc()
 	result = configs.DB.Table("projects_members").Where("project_id = ?", newProject.ID).Update("promotion_time", time.Now())
 	if result.Error != nil {
+		models.FailedRequests.WithLabelValues(method, endpoint).Inc()
+		models.FailedDBRequests.WithLabelValues(method, endpoint).Inc()
+		models.ResponseTime.WithLabelValues(method, endpoint).Observe(time.Since(startTime).Seconds())
 		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
+	models.SuccessDBRequests.WithLabelValues(method, endpoint).Inc()
 	res.ProjectID = int(newProject.ID)
 	res.Link = joinLink.Link
+	models.SuccessRequests.WithLabelValues(method, endpoint).Inc()
+	models.ResponseTime.WithLabelValues(method, endpoint).Observe(time.Since(startTime).Seconds())
 	return ctx.JSON(http.StatusOK, res)
 }
 
 func ShareProjectHandler(ctx echo.Context) error {
+	startTime := time.Now()
+	method := ctx.Request().Method
+	endpoint := ctx.Request().URL.Path
 	req := new(models.ShareProjectRequest)
 	if err := ctx.Bind(req); err != nil {
+		models.FailedRequests.WithLabelValues(method, endpoint).Inc()
+		models.ResponseTime.WithLabelValues(method, endpoint).Observe(time.Since(startTime).Seconds())
 		return ctx.JSON(http.StatusBadRequest, messages.InvalidRequestBody)
 	}
 	projectID, err := strconv.Atoi(ctx.Param("project-id"))
 	if err != nil {
+		models.FailedRequests.WithLabelValues(method, endpoint).Inc()
+		models.ResponseTime.WithLabelValues(method, endpoint).Observe(time.Since(startTime).Seconds())
 		return ctx.JSON(http.StatusBadRequest, messages.WrongProjectID)
 	}
 	userIDCtx := ctx.Get("user_id")
@@ -103,9 +142,15 @@ func ShareProjectHandler(ctx echo.Context) error {
 	var projectIDs []int
 	result := configs.DB.Table("projects_members").Select("project_id").Where("user_id = ?", userID).Scan(&projectIDs)
 	if result.Error != nil {
+		models.FailedRequests.WithLabelValues(method, endpoint).Inc()
+		models.FailedDBRequests.WithLabelValues(method, endpoint).Inc()
+		models.ResponseTime.WithLabelValues(method, endpoint).Observe(time.Since(startTime).Seconds())
 		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
+	models.SuccessDBRequests.WithLabelValues(method, endpoint).Inc()
 	if len(projectIDs) == 0 {
+		models.FailedRequests.WithLabelValues(method, endpoint).Inc()
+		models.ResponseTime.WithLabelValues(method, endpoint).Observe(time.Since(startTime).Seconds())
 		return ctx.JSON(http.StatusNotAcceptable, messages.UserNoProject)
 	}
 	exist := false
@@ -116,28 +161,44 @@ func ShareProjectHandler(ctx echo.Context) error {
 		}
 	}
 	if !exist {
+		models.FailedRequests.WithLabelValues(method, endpoint).Inc()
+		models.ResponseTime.WithLabelValues(method, endpoint).Observe(time.Since(startTime).Seconds())
 		return ctx.JSON(http.StatusNotAcceptable, messages.NotMember)
 	}
 	var user models.User
 	result = configs.DB.Select("username").Where("id = ?", userID).Find(&user)
 	if result.Error != nil {
+		models.FailedRequests.WithLabelValues(method, endpoint).Inc()
+		models.FailedDBRequests.WithLabelValues(method, endpoint).Inc()
+		models.ResponseTime.WithLabelValues(method, endpoint).Observe(time.Since(startTime).Seconds())
 		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
+	models.SuccessDBRequests.WithLabelValues(method, endpoint).Inc()
 	var joinLink models.JoinLink
 	result = configs.DB.Select("link").Where("project_id = ?", projectID).Find(&joinLink)
 	if result.Error != nil {
+		models.FailedRequests.WithLabelValues(method, endpoint).Inc()
+		models.FailedDBRequests.WithLabelValues(method, endpoint).Inc()
+		models.ResponseTime.WithLabelValues(method, endpoint).Observe(time.Since(startTime).Seconds())
 		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
+	models.SuccessDBRequests.WithLabelValues(method, endpoint).Inc()
 	var project models.Project
 	result = configs.DB.Where("id = ?", projectID).Preload("InvitedMembers").Find(&project)
 	if result.Error != nil {
+		models.FailedRequests.WithLabelValues(method, endpoint).Inc()
+		models.FailedDBRequests.WithLabelValues(method, endpoint).Inc()
+		models.ResponseTime.WithLabelValues(method, endpoint).Observe(time.Since(startTime).Seconds())
 		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
+	models.SuccessDBRequests.WithLabelValues(method, endpoint).Inc()
 	var projectMembersEmail []string
 	result = configs.DB.Table("projects").Select([]string{"users.email"}).Joins("inner join projects_members on projects.id = projects_members.project_id").Joins("inner join users on users.id = projects_members.user_id").Where("projects.id = ?", projectID).Scan(&projectMembersEmail)
 	for i := range req.Emails {
 		for j := range projectMembersEmail {
 			if projectMembersEmail[j] == req.Emails[i] {
+				models.FailedRequests.WithLabelValues(method, endpoint).Inc()
+				models.ResponseTime.WithLabelValues(method, endpoint).Observe(time.Since(startTime).Seconds())
 				return ctx.JSON(http.StatusNotAcceptable, messages.AlreadyMember)
 			}
 		}
@@ -150,37 +211,62 @@ func ShareProjectHandler(ctx echo.Context) error {
 	var users []models.User
 	result = configs.DB.Where("email in ?", req.Emails).Find(&users)
 	if result.Error != nil {
+		models.FailedRequests.WithLabelValues(method, endpoint).Inc()
+		models.FailedDBRequests.WithLabelValues(method, endpoint).Inc()
+		models.ResponseTime.WithLabelValues(method, endpoint).Observe(time.Since(startTime).Seconds())
 		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
+	models.SuccessDBRequests.WithLabelValues(method, endpoint).Inc()
 	for _, u := range users {
 		project.InvitedMembers = append(project.InvitedMembers, u)
 	}
 	result = configs.DB.Save(&project)
 	if result.Error != nil {
+		models.FailedRequests.WithLabelValues(method, endpoint).Inc()
+		models.FailedDBRequests.WithLabelValues(method, endpoint).Inc()
+		models.ResponseTime.WithLabelValues(method, endpoint).Observe(time.Since(startTime).Seconds())
 		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
+	models.SuccessDBRequests.WithLabelValues(method, endpoint).Inc()
+	models.SuccessRequests.WithLabelValues(method, endpoint).Inc()
+	models.ResponseTime.WithLabelValues(method, endpoint).Observe(time.Since(startTime).Seconds())
 	return ctx.JSON(http.StatusOK, messages.SentInvitationEmail)
 }
 
 func ShowProjectHandler(ctx echo.Context) error {
+	startTime := time.Now()
+	method := ctx.Request().Method
+	endpoint := ctx.Request().URL.Path
 	req := new(models.ShowProjectRequest)
 	res := new(models.ShowProjectResponse)
 	if err := json.NewDecoder(ctx.Request().Body).Decode(req); err != nil {
+		models.FailedRequests.WithLabelValues(method, endpoint).Inc()
+		models.ResponseTime.WithLabelValues(method, endpoint).Observe(time.Since(startTime).Seconds())
 		return ctx.JSON(http.StatusBadRequest, messages.InvalidRequestBody)
 	}
 	var projectID int
 	result := configs.DB.Table("join_links").Select("project_id").Where("link = ?", req.Link).Scan(&projectID)
 	if result.Error != nil {
+		models.FailedRequests.WithLabelValues(method, endpoint).Inc()
+		models.FailedDBRequests.WithLabelValues(method, endpoint).Inc()
+		models.ResponseTime.WithLabelValues(method, endpoint).Observe(time.Since(startTime).Seconds())
 		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
+	models.SuccessDBRequests.WithLabelValues(method, endpoint).Inc()
 	if projectID == 0 {
+		models.FailedRequests.WithLabelValues(method, endpoint).Inc()
+		models.ResponseTime.WithLabelValues(method, endpoint).Observe(time.Since(startTime).Seconds())
 		return ctx.JSON(http.StatusNotAcceptable, messages.WrongLink)
 	}
 	var project models.Project
 	result = configs.DB.Where("id = ?", projectID).Preload("Members").Find(&project)
 	if result.Error != nil {
+		models.FailedRequests.WithLabelValues(method, endpoint).Inc()
+		models.FailedDBRequests.WithLabelValues(method, endpoint).Inc()
+		models.ResponseTime.WithLabelValues(method, endpoint).Observe(time.Since(startTime).Seconds())
 		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
+	models.SuccessDBRequests.WithLabelValues(method, endpoint).Inc()
 	res.ProjectID = projectID
 	res.Title = project.Title
 	res.BackGroundPic = project.BackGroundPic
@@ -195,12 +281,19 @@ func ShowProjectHandler(ctx echo.Context) error {
 		}
 		res.Members = append(res.Members, user)
 	}
+	models.SuccessRequests.WithLabelValues(method, endpoint).Inc()
+	models.ResponseTime.WithLabelValues(method, endpoint).Observe(time.Since(startTime).Seconds())
 	return ctx.JSON(http.StatusOK, res)
 }
 
 func JoinProjectHandler(ctx echo.Context) error {
+	startTime := time.Now()
+	method := ctx.Request().Method
+	endpoint := ctx.Request().URL.Path
 	projectID, err := strconv.Atoi(ctx.Param("project-id"))
 	if err != nil {
+		models.FailedRequests.WithLabelValues(method, endpoint).Inc()
+		models.ResponseTime.WithLabelValues(method, endpoint).Observe(time.Since(startTime).Seconds())
 		return ctx.JSON(http.StatusBadRequest, messages.WrongProjectID)
 	}
 	userIDCtx := ctx.Get("user_id")
@@ -208,26 +301,42 @@ func JoinProjectHandler(ctx echo.Context) error {
 	var project models.Project
 	result := configs.DB.Where("id = ?", projectID).Preload("Members").Find(&project)
 	if result.Error != nil {
+		models.FailedRequests.WithLabelValues(method, endpoint).Inc()
+		models.FailedDBRequests.WithLabelValues(method, endpoint).Inc()
+		models.ResponseTime.WithLabelValues(method, endpoint).Observe(time.Since(startTime).Seconds())
 		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
+	models.SuccessDBRequests.WithLabelValues(method, endpoint).Inc()
 	if project.ID == 0 {
+		models.FailedRequests.WithLabelValues(method, endpoint).Inc()
+		models.ResponseTime.WithLabelValues(method, endpoint).Observe(time.Since(startTime).Seconds())
 		return ctx.JSON(http.StatusNotAcceptable, messages.WrongProjectID)
 	}
 	for _, member := range project.Members {
 		if int(member.ID) == userID {
+			models.FailedRequests.WithLabelValues(method, endpoint).Inc()
+			models.ResponseTime.WithLabelValues(method, endpoint).Observe(time.Since(startTime).Seconds())
 			return ctx.JSON(http.StatusNotAcceptable, messages.AlreadyJoined)
 		}
 	}
 	var user models.User
 	result = configs.DB.Where("id = ?", userID).Find(&user)
 	if result.Error != nil {
+		models.FailedRequests.WithLabelValues(method, endpoint).Inc()
+		models.FailedDBRequests.WithLabelValues(method, endpoint).Inc()
+		models.ResponseTime.WithLabelValues(method, endpoint).Observe(time.Since(startTime).Seconds())
 		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
+	models.SuccessDBRequests.WithLabelValues(method, endpoint).Inc()
 	var projectIDs []int
 	result = configs.DB.Table("invited_members").Select("project_id").Where("user_id = ?", userID).Find(&projectIDs)
 	if result.Error != nil {
+		models.FailedRequests.WithLabelValues(method, endpoint).Inc()
+		models.FailedDBRequests.WithLabelValues(method, endpoint).Inc()
+		models.ResponseTime.WithLabelValues(method, endpoint).Observe(time.Since(startTime).Seconds())
 		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
+	models.SuccessDBRequests.WithLabelValues(method, endpoint).Inc()
 	isInvited := false
 	for i := 0; i < len(projectIDs); i++ {
 		if projectIDs[i] == projectID {
@@ -236,28 +345,47 @@ func JoinProjectHandler(ctx echo.Context) error {
 		}
 	}
 	if !isInvited {
+		models.FailedRequests.WithLabelValues(method, endpoint).Inc()
+		models.ResponseTime.WithLabelValues(method, endpoint).Observe(time.Since(startTime).Seconds())
 		return ctx.JSON(http.StatusNotAcceptable, messages.Uninvited)
 	}
 	result = configs.DB.Unscoped().Where("project_id = ? and user_id = ?", projectID, userID).Delete(&models.InvitedMembers{})
 	if result.Error != nil {
+		models.FailedRequests.WithLabelValues(method, endpoint).Inc()
+		models.FailedDBRequests.WithLabelValues(method, endpoint).Inc()
+		models.ResponseTime.WithLabelValues(method, endpoint).Observe(time.Since(startTime).Seconds())
 		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
+	models.SuccessDBRequests.WithLabelValues(method, endpoint).Inc()
 	project.Members = append(project.Members, user)
 	project.MembersNumber += 1
 	result = configs.DB.Save(&project)
 	if result.Error != nil {
+		models.FailedRequests.WithLabelValues(method, endpoint).Inc()
+		models.FailedDBRequests.WithLabelValues(method, endpoint).Inc()
+		models.ResponseTime.WithLabelValues(method, endpoint).Observe(time.Since(startTime).Seconds())
 		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
+	models.SuccessDBRequests.WithLabelValues(method, endpoint).Inc()
+	models.SuccessRequests.WithLabelValues(method, endpoint).Inc()
+	models.ResponseTime.WithLabelValues(method, endpoint).Observe(time.Since(startTime).Seconds())
 	return ctx.JSON(http.StatusOK, messages.UserAddedToProject)
 }
 
 func ChangeRoleMemberHandler(ctx echo.Context) error {
+	startTime := time.Now()
+	method := ctx.Request().Method
+	endpoint := ctx.Request().URL.Path
 	projectID, err := strconv.Atoi(ctx.Param("project-id"))
 	if err != nil {
+		models.FailedRequests.WithLabelValues(method, endpoint).Inc()
+		models.ResponseTime.WithLabelValues(method, endpoint).Observe(time.Since(startTime).Seconds())
 		return ctx.JSON(http.StatusBadRequest, messages.WrongProjectID)
 	}
 	memberID, err := strconv.Atoi(ctx.Param("user-id"))
 	if err != nil {
+		models.FailedRequests.WithLabelValues(method, endpoint).Inc()
+		models.ResponseTime.WithLabelValues(method, endpoint).Observe(time.Since(startTime).Seconds())
 		return ctx.JSON(http.StatusBadRequest, messages.WrongUserID)
 	}
 	userIDCtx := ctx.Get("user_id")
@@ -265,9 +393,15 @@ func ChangeRoleMemberHandler(ctx echo.Context) error {
 	var projectIDs []int
 	result := configs.DB.Table("projects_members").Select("project_id").Where("user_id = ?", memberID).Scan(&projectIDs)
 	if result.Error != nil {
+		models.FailedRequests.WithLabelValues(method, endpoint).Inc()
+		models.FailedDBRequests.WithLabelValues(method, endpoint).Inc()
+		models.ResponseTime.WithLabelValues(method, endpoint).Observe(time.Since(startTime).Seconds())
 		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
+	models.SuccessDBRequests.WithLabelValues(method, endpoint).Inc()
 	if len(projectIDs) == 0 {
+		models.FailedRequests.WithLabelValues(method, endpoint).Inc()
+		models.ResponseTime.WithLabelValues(method, endpoint).Observe(time.Since(startTime).Seconds())
 		return ctx.JSON(http.StatusNotAcceptable, messages.UserNoProject)
 	}
 	exist := false
@@ -278,52 +412,89 @@ func ChangeRoleMemberHandler(ctx echo.Context) error {
 		}
 	}
 	if !exist {
+		models.FailedRequests.WithLabelValues(method, endpoint).Inc()
+		models.ResponseTime.WithLabelValues(method, endpoint).Observe(time.Since(startTime).Seconds())
 		return ctx.JSON(http.StatusNotAcceptable, messages.NotMember)
 	}
 	var isAdmin bool
 	result = configs.DB.Table("projects_members").Select("is_admin").Where("project_id = ? and user_id = ?", projectID, memberID).Scan(&isAdmin)
 	if result.Error != nil {
+		models.FailedRequests.WithLabelValues(method, endpoint).Inc()
+		models.FailedDBRequests.WithLabelValues(method, endpoint).Inc()
+		models.ResponseTime.WithLabelValues(method, endpoint).Observe(time.Since(startTime).Seconds())
 		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
+	models.SuccessDBRequests.WithLabelValues(method, endpoint).Inc()
 	if isAdmin {
+		models.FailedRequests.WithLabelValues(method, endpoint).Inc()
+		models.ResponseTime.WithLabelValues(method, endpoint).Observe(time.Since(startTime).Seconds())
 		return ctx.JSON(http.StatusNotAcceptable, messages.AlreadyAdmin)
 	}
 	var email string
 	result = configs.DB.Table("users").Select("email").Where("id = ?", memberID).Scan(&email)
 	if result.Error != nil {
+		models.FailedRequests.WithLabelValues(method, endpoint).Inc()
+		models.FailedDBRequests.WithLabelValues(method, endpoint).Inc()
+		models.ResponseTime.WithLabelValues(method, endpoint).Observe(time.Since(startTime).Seconds())
 		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
+	models.SuccessDBRequests.WithLabelValues(method, endpoint).Inc()
 	var projectTitle string
 	result = configs.DB.Table("projects").Select("title").Where("id = ?", projectID).Scan(&projectTitle)
 	if result.Error != nil {
+		models.FailedRequests.WithLabelValues(method, endpoint).Inc()
+		models.FailedDBRequests.WithLabelValues(method, endpoint).Inc()
+		models.ResponseTime.WithLabelValues(method, endpoint).Observe(time.Since(startTime).Seconds())
 		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
+	models.SuccessDBRequests.WithLabelValues(method, endpoint).Inc()
 	var username string
 	result = configs.DB.Table("users").Select("username").Where("id = ?", userID).Scan(&username)
 	if result.Error != nil {
+		models.FailedRequests.WithLabelValues(method, endpoint).Inc()
+		models.FailedDBRequests.WithLabelValues(method, endpoint).Inc()
+		models.ResponseTime.WithLabelValues(method, endpoint).Observe(time.Since(startTime).Seconds())
 		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
+	models.SuccessDBRequests.WithLabelValues(method, endpoint).Inc()
 	result = configs.DB.Table("projects_members").Where("project_id = ? and user_id = ?", projectID, memberID).Update("is_admin", true)
 	if result.Error != nil {
+		models.FailedRequests.WithLabelValues(method, endpoint).Inc()
+		models.FailedDBRequests.WithLabelValues(method, endpoint).Inc()
+		models.ResponseTime.WithLabelValues(method, endpoint).Observe(time.Since(startTime).Seconds())
 		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
+	models.SuccessDBRequests.WithLabelValues(method, endpoint).Inc()
 	result = configs.DB.Table("projects_members").Where("project_id = ? and user_id = ?", projectID, memberID).Update("promotion_time", time.Now())
 	if result.Error != nil {
+		models.FailedRequests.WithLabelValues(method, endpoint).Inc()
+		models.FailedDBRequests.WithLabelValues(method, endpoint).Inc()
+		models.ResponseTime.WithLabelValues(method, endpoint).Observe(time.Since(startTime).Seconds())
 		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
+	models.SuccessDBRequests.WithLabelValues(method, endpoint).Inc()
 	go func() {
 		services.SendMail("PlanVerse Notification", fmt.Sprintf("you've been promoted to admin role in %s project by %s!", projectTitle, username), []string{email})
 	}()
+	models.SuccessRequests.WithLabelValues(method, endpoint).Inc()
+	models.ResponseTime.WithLabelValues(method, endpoint).Observe(time.Since(startTime).Seconds())
 	return ctx.JSON(http.StatusOK, messages.MemberRoleChanged)
 }
 
 func ChangeRoleAdminHandler(ctx echo.Context) error {
+	startTime := time.Now()
+	method := ctx.Request().Method
+	endpoint := ctx.Request().URL.Path
 	projectID, err := strconv.Atoi(ctx.Param("project-id"))
 	if err != nil {
+		models.FailedRequests.WithLabelValues(method, endpoint).Inc()
+		models.ResponseTime.WithLabelValues(method, endpoint).Observe(time.Since(startTime).Seconds())
 		return ctx.JSON(http.StatusBadRequest, messages.WrongProjectID)
 	}
 	adminID, err := strconv.Atoi(ctx.Param("user-id"))
 	if err != nil {
+		models.FailedRequests.WithLabelValues(method, endpoint).Inc()
+		models.ResponseTime.WithLabelValues(method, endpoint).Observe(time.Since(startTime).Seconds())
 		return ctx.JSON(http.StatusBadRequest, messages.WrongUserID)
 	}
 	userIDCtx := ctx.Get("user_id")
@@ -331,9 +502,15 @@ func ChangeRoleAdminHandler(ctx echo.Context) error {
 	var projectIDs []int
 	result := configs.DB.Table("projects_members").Select("project_id").Where("user_id = ?", adminID).Scan(&projectIDs)
 	if result.Error != nil {
+		models.FailedRequests.WithLabelValues(method, endpoint).Inc()
+		models.FailedDBRequests.WithLabelValues(method, endpoint).Inc()
+		models.ResponseTime.WithLabelValues(method, endpoint).Observe(time.Since(startTime).Seconds())
 		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
+	models.SuccessDBRequests.WithLabelValues(method, endpoint).Inc()
 	if len(projectIDs) == 0 {
+		models.FailedRequests.WithLabelValues(method, endpoint).Inc()
+		models.ResponseTime.WithLabelValues(method, endpoint).Observe(time.Since(startTime).Seconds())
 		return ctx.JSON(http.StatusNotAcceptable, messages.UserNoProject)
 	}
 	exist := false
@@ -344,63 +521,108 @@ func ChangeRoleAdminHandler(ctx echo.Context) error {
 		}
 	}
 	if !exist {
+		models.FailedRequests.WithLabelValues(method, endpoint).Inc()
+		models.ResponseTime.WithLabelValues(method, endpoint).Observe(time.Since(startTime).Seconds())
 		return ctx.JSON(http.StatusNotAcceptable, messages.NotMember)
 	}
 	var ownerID int
 	result = configs.DB.Table("projects").Select("owner_id").Where("id = ?", projectID).Scan(&ownerID)
 	if result.Error != nil {
+		models.FailedRequests.WithLabelValues(method, endpoint).Inc()
+		models.FailedDBRequests.WithLabelValues(method, endpoint).Inc()
+		models.ResponseTime.WithLabelValues(method, endpoint).Observe(time.Since(startTime).Seconds())
 		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
+	models.SuccessDBRequests.WithLabelValues(method, endpoint).Inc()
 	if ownerID == 0 {
+		models.FailedRequests.WithLabelValues(method, endpoint).Inc()
+		models.ResponseTime.WithLabelValues(method, endpoint).Observe(time.Since(startTime).Seconds())
 		return ctx.JSON(http.StatusNotAcceptable, messages.WrongProjectID)
 	}
 	if userID != ownerID {
+		models.FailedRequests.WithLabelValues(method, endpoint).Inc()
+		models.ResponseTime.WithLabelValues(method, endpoint).Observe(time.Since(startTime).Seconds())
 		return ctx.JSON(http.StatusNotAcceptable, messages.OwnerAccess)
 	}
 	if adminID == ownerID {
+		models.FailedRequests.WithLabelValues(method, endpoint).Inc()
+		models.ResponseTime.WithLabelValues(method, endpoint).Observe(time.Since(startTime).Seconds())
 		return ctx.JSON(http.StatusNotAcceptable, messages.OwnerChange)
 	}
 	var isAdmin bool
 	result = configs.DB.Table("projects_members").Select("is_admin").Where("project_id = ? and user_id = ?", projectID, adminID).Scan(&isAdmin)
 	if result.Error != nil {
+		models.FailedRequests.WithLabelValues(method, endpoint).Inc()
+		models.FailedDBRequests.WithLabelValues(method, endpoint).Inc()
+		models.ResponseTime.WithLabelValues(method, endpoint).Observe(time.Since(startTime).Seconds())
 		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
+	models.SuccessDBRequests.WithLabelValues(method, endpoint).Inc()
 	if !isAdmin {
+		models.FailedRequests.WithLabelValues(method, endpoint).Inc()
+		models.ResponseTime.WithLabelValues(method, endpoint).Observe(time.Since(startTime).Seconds())
 		return ctx.JSON(http.StatusNotAcceptable, messages.AlreadyMemberRole)
 	}
 	var email string
 	result = configs.DB.Table("users").Select("email").Where("id = ?", adminID).Scan(&email)
 	if result.Error != nil {
+		models.FailedRequests.WithLabelValues(method, endpoint).Inc()
+		models.FailedDBRequests.WithLabelValues(method, endpoint).Inc()
+		models.ResponseTime.WithLabelValues(method, endpoint).Observe(time.Since(startTime).Seconds())
 		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
+	models.SuccessDBRequests.WithLabelValues(method, endpoint).Inc()
 	var projectTitle string
 	result = configs.DB.Table("projects").Select("title").Where("id = ?", projectID).Scan(&projectTitle)
 	if result.Error != nil {
+		models.FailedRequests.WithLabelValues(method, endpoint).Inc()
+		models.FailedDBRequests.WithLabelValues(method, endpoint).Inc()
+		models.ResponseTime.WithLabelValues(method, endpoint).Observe(time.Since(startTime).Seconds())
 		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
+	models.SuccessDBRequests.WithLabelValues(method, endpoint).Inc()
 	var username string
 	result = configs.DB.Table("users").Select("username").Where("id = ?", userID).Scan(&username)
 	if result.Error != nil {
+		models.FailedRequests.WithLabelValues(method, endpoint).Inc()
+		models.FailedDBRequests.WithLabelValues(method, endpoint).Inc()
+		models.ResponseTime.WithLabelValues(method, endpoint).Observe(time.Since(startTime).Seconds())
 		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
+	models.SuccessDBRequests.WithLabelValues(method, endpoint).Inc()
 	result = configs.DB.Table("projects_members").Where("project_id = ? and user_id = ?", projectID, adminID).Update("is_admin", false)
 	if result.Error != nil {
+		models.FailedRequests.WithLabelValues(method, endpoint).Inc()
+		models.FailedDBRequests.WithLabelValues(method, endpoint).Inc()
+		models.ResponseTime.WithLabelValues(method, endpoint).Observe(time.Since(startTime).Seconds())
 		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
+	models.SuccessDBRequests.WithLabelValues(method, endpoint).Inc()
 	result = configs.DB.Table("projects_members").Where("project_id = ? and user_id = ?", projectID, adminID).Update("promotion_time", time.Time{})
 	if result.Error != nil {
+		models.FailedRequests.WithLabelValues(method, endpoint).Inc()
+		models.FailedDBRequests.WithLabelValues(method, endpoint).Inc()
+		models.ResponseTime.WithLabelValues(method, endpoint).Observe(time.Since(startTime).Seconds())
 		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
+	models.SuccessDBRequests.WithLabelValues(method, endpoint).Inc()
 	go func() {
 		services.SendMail("PlanVerse Notification", fmt.Sprintf("you've been demoted to member role in %s project by %s!", projectTitle, username), []string{email})
 	}()
+	models.SuccessRequests.WithLabelValues(method, endpoint).Inc()
+	models.ResponseTime.WithLabelValues(method, endpoint).Observe(time.Since(startTime).Seconds())
 	return ctx.JSON(http.StatusOK, messages.AdminRoleChanged)
 }
 
 func GetProjectHandler(ctx echo.Context) error {
+	startTime := time.Now()
+	method := ctx.Request().Method
+	endpoint := ctx.Request().URL.Path
 	res := new(models.GetProjectResponse)
 	projectID, err := strconv.Atoi(ctx.Param("project-id"))
 	if err != nil {
+		models.FailedRequests.WithLabelValues(method, endpoint).Inc()
+		models.ResponseTime.WithLabelValues(method, endpoint).Observe(time.Since(startTime).Seconds())
 		return ctx.JSON(http.StatusBadRequest, messages.WrongProjectID)
 	}
 	userIDCtx := ctx.Get("user_id")
@@ -408,9 +630,15 @@ func GetProjectHandler(ctx echo.Context) error {
 	var projectIDs []int
 	result := configs.DB.Table("projects_members").Select([]string{"project_id"}).Where("user_id = ?", userID).Scan(&projectIDs)
 	if result.Error != nil {
+		models.FailedRequests.WithLabelValues(method, endpoint).Inc()
+		models.FailedDBRequests.WithLabelValues(method, endpoint).Inc()
+		models.ResponseTime.WithLabelValues(method, endpoint).Observe(time.Since(startTime).Seconds())
 		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
+	models.SuccessDBRequests.WithLabelValues(method, endpoint).Inc()
 	if len(projectIDs) == 0 {
+		models.FailedRequests.WithLabelValues(method, endpoint).Inc()
+		models.ResponseTime.WithLabelValues(method, endpoint).Observe(time.Since(startTime).Seconds())
 		return ctx.JSON(http.StatusNotAcceptable, messages.UserNoProject)
 	}
 	isMember := false
@@ -421,26 +649,43 @@ func GetProjectHandler(ctx echo.Context) error {
 		}
 	}
 	if !isMember {
+		models.FailedRequests.WithLabelValues(method, endpoint).Inc()
+		models.ResponseTime.WithLabelValues(method, endpoint).Observe(time.Since(startTime).Seconds())
 		return ctx.JSON(http.StatusNotAcceptable, messages.NotMember)
 	}
 	result = configs.DB.Table("projects").Select([]string{"title", "back_ground_pic", "description", "owner_id", "members_number"}).Where("id = ?", projectID).Scan(res)
 	if result.Error != nil {
+		models.FailedRequests.WithLabelValues(method, endpoint).Inc()
+		models.FailedDBRequests.WithLabelValues(method, endpoint).Inc()
+		models.ResponseTime.WithLabelValues(method, endpoint).Observe(time.Since(startTime).Seconds())
 		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
+	models.SuccessDBRequests.WithLabelValues(method, endpoint).Inc()
 	var joinLink models.JoinLink
 	result = configs.DB.Table("join_links").Select("link").Where("project_id = ?", projectID).Scan(&joinLink)
 	if result.Error != nil {
+		models.FailedRequests.WithLabelValues(method, endpoint).Inc()
+		models.FailedDBRequests.WithLabelValues(method, endpoint).Inc()
+		models.ResponseTime.WithLabelValues(method, endpoint).Observe(time.Since(startTime).Seconds())
 		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
+	models.SuccessDBRequests.WithLabelValues(method, endpoint).Inc()
 	res.ID = projectID
 	res.Link = joinLink.Link
+	models.SuccessRequests.WithLabelValues(method, endpoint).Inc()
+	models.ResponseTime.WithLabelValues(method, endpoint).Observe(time.Since(startTime).Seconds())
 	return ctx.JSON(http.StatusOK, res)
 }
 
 func GetProjectMembersHandler(ctx echo.Context) error {
+	startTime := time.Now()
+	method := ctx.Request().Method
+	endpoint := ctx.Request().URL.Path
 	var res []models.GetMemberResponse
 	projectID, err := strconv.Atoi(ctx.Param("project-id"))
 	if err != nil {
+		models.FailedRequests.WithLabelValues(method, endpoint).Inc()
+		models.ResponseTime.WithLabelValues(method, endpoint).Observe(time.Since(startTime).Seconds())
 		return ctx.JSON(http.StatusBadRequest, messages.WrongProjectID)
 	}
 	userIDCtx := ctx.Get("user_id")
@@ -448,9 +693,15 @@ func GetProjectMembersHandler(ctx echo.Context) error {
 	var projectIDs []int
 	result := configs.DB.Table("projects_members").Select("project_id").Where("user_id = ?", userID).Scan(&projectIDs)
 	if result.Error != nil {
+		models.FailedRequests.WithLabelValues(method, endpoint).Inc()
+		models.FailedDBRequests.WithLabelValues(method, endpoint).Inc()
+		models.ResponseTime.WithLabelValues(method, endpoint).Observe(time.Since(startTime).Seconds())
 		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
+	models.SuccessDBRequests.WithLabelValues(method, endpoint).Inc()
 	if len(projectIDs) == 0 {
+		models.FailedRequests.WithLabelValues(method, endpoint).Inc()
+		models.ResponseTime.WithLabelValues(method, endpoint).Observe(time.Since(startTime).Seconds())
 		return ctx.JSON(http.StatusNotAcceptable, messages.UserNoProject)
 	}
 	isMember := false
@@ -461,13 +712,19 @@ func GetProjectMembersHandler(ctx echo.Context) error {
 		}
 	}
 	if !isMember {
+		models.FailedRequests.WithLabelValues(method, endpoint).Inc()
+		models.ResponseTime.WithLabelValues(method, endpoint).Observe(time.Since(startTime).Seconds())
 		return ctx.JSON(http.StatusNotAcceptable, messages.NotMember)
 	}
 	var project models.Project
 	result = configs.DB.Where("id = ?", projectID).Preload("Members").Find(&project)
 	if result.Error != nil {
+		models.FailedRequests.WithLabelValues(method, endpoint).Inc()
+		models.FailedDBRequests.WithLabelValues(method, endpoint).Inc()
+		models.ResponseTime.WithLabelValues(method, endpoint).Observe(time.Since(startTime).Seconds())
 		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
+	models.SuccessDBRequests.WithLabelValues(method, endpoint).Inc()
 	res = make([]models.GetMemberResponse, len(project.Members))
 	showRoles := make([]bool, len(project.Members))
 	var wg sync.WaitGroup
@@ -486,12 +743,19 @@ func GetProjectMembersHandler(ctx echo.Context) error {
 		}(i, &wg)
 	}
 	wg.Wait()
+	models.SuccessRequests.WithLabelValues(method, endpoint).Inc()
+	models.ResponseTime.WithLabelValues(method, endpoint).Observe(time.Since(startTime).Seconds())
 	return ctx.JSON(http.StatusOK, res)
 }
 
 func LeaveProjectHandler(ctx echo.Context) error {
+	startTime := time.Now()
+	method := ctx.Request().Method
+	endpoint := ctx.Request().URL.Path
 	projectID, err := strconv.Atoi(ctx.Param("project-id"))
 	if err != nil {
+		models.FailedRequests.WithLabelValues(method, endpoint).Inc()
+		models.ResponseTime.WithLabelValues(method, endpoint).Observe(time.Since(startTime).Seconds())
 		return ctx.JSON(http.StatusBadRequest, messages.WrongProjectID)
 	}
 	userIDCtx := ctx.Get("user_id")
@@ -499,9 +763,15 @@ func LeaveProjectHandler(ctx echo.Context) error {
 	var projectIDs []int
 	result := configs.DB.Table("projects_members").Select("project_id").Where("user_id = ?", userID).Scan(&projectIDs)
 	if result.Error != nil {
+		models.FailedRequests.WithLabelValues(method, endpoint).Inc()
+		models.FailedDBRequests.WithLabelValues(method, endpoint).Inc()
+		models.ResponseTime.WithLabelValues(method, endpoint).Observe(time.Since(startTime).Seconds())
 		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
+	models.SuccessDBRequests.WithLabelValues(method, endpoint).Inc()
 	if len(projectIDs) == 0 {
+		models.FailedRequests.WithLabelValues(method, endpoint).Inc()
+		models.ResponseTime.WithLabelValues(method, endpoint).Observe(time.Since(startTime).Seconds())
 		return ctx.JSON(http.StatusNotAcceptable, messages.UserNoProject)
 	}
 	isMember := false
@@ -512,31 +782,51 @@ func LeaveProjectHandler(ctx echo.Context) error {
 		}
 	}
 	if !isMember {
+		models.FailedRequests.WithLabelValues(method, endpoint).Inc()
+		models.ResponseTime.WithLabelValues(method, endpoint).Observe(time.Since(startTime).Seconds())
 		return ctx.JSON(http.StatusNotAcceptable, messages.NotMember)
 	}
 	var membersNumber int
 	result = configs.DB.Table("projects").Select("members_number").Where("id = ?", projectID).Scan(&membersNumber)
 	if result.Error != nil {
+		models.FailedRequests.WithLabelValues(method, endpoint).Inc()
+		models.FailedDBRequests.WithLabelValues(method, endpoint).Inc()
+		models.ResponseTime.WithLabelValues(method, endpoint).Observe(time.Since(startTime).Seconds())
 		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
+	models.SuccessDBRequests.WithLabelValues(method, endpoint).Inc()
 	if membersNumber == 0 {
+		models.FailedRequests.WithLabelValues(method, endpoint).Inc()
+		models.ResponseTime.WithLabelValues(method, endpoint).Observe(time.Since(startTime).Seconds())
 		return ctx.JSON(http.StatusNotAcceptable, messages.WrongProjectID)
 	}
 	result = configs.DB.Unscoped().Where("user_id = ? and project_id = ?", userID, projectID).Delete(&models.ProjectsMembers{})
 	if result.Error != nil {
+		models.FailedRequests.WithLabelValues(method, endpoint).Inc()
+		models.FailedDBRequests.WithLabelValues(method, endpoint).Inc()
+		models.ResponseTime.WithLabelValues(method, endpoint).Observe(time.Since(startTime).Seconds())
 		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
+	models.SuccessDBRequests.WithLabelValues(method, endpoint).Inc()
 	membersNumber -= 1
 	if membersNumber == 0 {
 		result = configs.DB.Unscoped().Where("project_id = ?", projectID).Delete(&models.InvitedMembers{})
 		if result.Error != nil {
+			models.FailedRequests.WithLabelValues(method, endpoint).Inc()
+			models.FailedDBRequests.WithLabelValues(method, endpoint).Inc()
+			models.ResponseTime.WithLabelValues(method, endpoint).Observe(time.Since(startTime).Seconds())
 			return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 		}
+		models.SuccessDBRequests.WithLabelValues(method, endpoint).Inc()
 		var stateIDs []int
 		result = configs.DB.Table("states").Select("id").Where("project_id = ?", projectID).Scan(&stateIDs)
 		if result.Error != nil {
+			models.FailedRequests.WithLabelValues(method, endpoint).Inc()
+			models.FailedDBRequests.WithLabelValues(method, endpoint).Inc()
+			models.ResponseTime.WithLabelValues(method, endpoint).Observe(time.Since(startTime).Seconds())
 			return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 		}
+		models.SuccessDBRequests.WithLabelValues(method, endpoint).Inc()
 		var wg sync.WaitGroup
 		for i := range stateIDs {
 			wg.Add(1)
@@ -553,77 +843,137 @@ func LeaveProjectHandler(ctx echo.Context) error {
 		wg.Wait()
 		result = configs.DB.Unscoped().Where("project_id = ?", projectID).Delete(&models.State{})
 		if result.Error != nil {
+			models.FailedRequests.WithLabelValues(method, endpoint).Inc()
+			models.FailedDBRequests.WithLabelValues(method, endpoint).Inc()
+			models.ResponseTime.WithLabelValues(method, endpoint).Observe(time.Since(startTime).Seconds())
 			return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 		}
+		models.SuccessDBRequests.WithLabelValues(method, endpoint).Inc()
 		result = configs.DB.Unscoped().Where("project_id = ?", projectID).Delete(&models.JoinLink{})
 		if result.Error != nil {
+			models.FailedRequests.WithLabelValues(method, endpoint).Inc()
+			models.FailedDBRequests.WithLabelValues(method, endpoint).Inc()
+			models.ResponseTime.WithLabelValues(method, endpoint).Observe(time.Since(startTime).Seconds())
 			return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 		}
+		models.SuccessDBRequests.WithLabelValues(method, endpoint).Inc()
 		result = configs.DB.Unscoped().Where("id = ?", projectID).Delete(&models.Project{})
 		if result.Error != nil {
+			models.FailedRequests.WithLabelValues(method, endpoint).Inc()
+			models.FailedDBRequests.WithLabelValues(method, endpoint).Inc()
+			models.ResponseTime.WithLabelValues(method, endpoint).Observe(time.Since(startTime).Seconds())
 			return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 		}
+		models.SuccessDBRequests.WithLabelValues(method, endpoint).Inc()
+		models.SuccessRequests.WithLabelValues(method, endpoint).Inc()
+		models.ResponseTime.WithLabelValues(method, endpoint).Observe(time.Since(startTime).Seconds())
 		return ctx.JSON(http.StatusOK, messages.UserLeavedProject)
 	}
 	var ownerID int
 	result = configs.DB.Table("projects").Select("owner_id").Where("id = ?", projectID).Scan(&ownerID)
 	if result.Error != nil {
+		models.FailedRequests.WithLabelValues(method, endpoint).Inc()
+		models.FailedDBRequests.WithLabelValues(method, endpoint).Inc()
+		models.ResponseTime.WithLabelValues(method, endpoint).Observe(time.Since(startTime).Seconds())
 		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
+	models.SuccessDBRequests.WithLabelValues(method, endpoint).Inc()
 	if ownerID == userID {
 		newOwnerID, err := helpers.DetectMin(projectID)
 		if err != nil {
+			models.FailedRequests.WithLabelValues(method, endpoint).Inc()
+			models.ResponseTime.WithLabelValues(method, endpoint).Observe(time.Since(startTime).Seconds())
 			return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 		}
 		if newOwnerID != 0 {
 			result = configs.DB.Table("projects").Where("id = ?", projectID).Update("owner_id", newOwnerID)
 			if result.Error != nil {
+				models.FailedRequests.WithLabelValues(method, endpoint).Inc()
+				models.FailedDBRequests.WithLabelValues(method, endpoint).Inc()
+				models.ResponseTime.WithLabelValues(method, endpoint).Observe(time.Since(startTime).Seconds())
 				return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 			}
+			models.SuccessDBRequests.WithLabelValues(method, endpoint).Inc()
 		}
 		result = configs.DB.Table("projects").Where("id = ?", projectID).Update("members_number", membersNumber)
 		if result.Error != nil {
+			models.FailedRequests.WithLabelValues(method, endpoint).Inc()
+			models.FailedDBRequests.WithLabelValues(method, endpoint).Inc()
+			models.ResponseTime.WithLabelValues(method, endpoint).Observe(time.Since(startTime).Seconds())
 			return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 		}
+		models.SuccessDBRequests.WithLabelValues(method, endpoint).Inc()
 		return ctx.JSON(http.StatusOK, messages.UserLeavedProject)
 	}
 	result = configs.DB.Table("projects").Where("id = ?", projectID).Update("members_number", membersNumber)
 	if result.Error != nil {
+		models.FailedRequests.WithLabelValues(method, endpoint).Inc()
+		models.FailedDBRequests.WithLabelValues(method, endpoint).Inc()
+		models.ResponseTime.WithLabelValues(method, endpoint).Observe(time.Since(startTime).Seconds())
 		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
+	models.SuccessDBRequests.WithLabelValues(method, endpoint).Inc()
+	models.SuccessRequests.WithLabelValues(method, endpoint).Inc()
+	models.ResponseTime.WithLabelValues(method, endpoint).Observe(time.Since(startTime).Seconds())
 	return ctx.JSON(http.StatusOK, messages.UserLeavedProject)
 }
 
 func EditProjectHandler(ctx echo.Context) error {
+	startTime := time.Now()
+	method := ctx.Request().Method
+	endpoint := ctx.Request().URL.Path
 	req := new(models.EditProjectRequest)
 	if err := ctx.Bind(req); err != nil {
+		models.FailedRequests.WithLabelValues(method, endpoint).Inc()
+		models.ResponseTime.WithLabelValues(method, endpoint).Observe(time.Since(startTime).Seconds())
 		return ctx.JSON(http.StatusBadRequest, messages.InvalidRequestBody)
 	}
 	projectID, err := strconv.Atoi(ctx.Param("project-id"))
 	if err != nil {
+		models.FailedRequests.WithLabelValues(method, endpoint).Inc()
+		models.ResponseTime.WithLabelValues(method, endpoint).Observe(time.Since(startTime).Seconds())
 		return ctx.JSON(http.StatusBadRequest, messages.WrongProjectID)
 	}
 	var project models.Project
 	result := configs.DB.Where("id = ?", projectID).Find(&project)
 	if result.Error != nil {
+		models.FailedRequests.WithLabelValues(method, endpoint).Inc()
+		models.FailedDBRequests.WithLabelValues(method, endpoint).Inc()
+		models.ResponseTime.WithLabelValues(method, endpoint).Observe(time.Since(startTime).Seconds())
 		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
+	models.SuccessDBRequests.WithLabelValues(method, endpoint).Inc()
 	if result.Error != nil {
+		models.FailedRequests.WithLabelValues(method, endpoint).Inc()
+		models.FailedDBRequests.WithLabelValues(method, endpoint).Inc()
+		models.ResponseTime.WithLabelValues(method, endpoint).Observe(time.Since(startTime).Seconds())
 		return ctx.JSON(http.StatusNotAcceptable, messages.WrongProjectID)
 	}
+	models.SuccessDBRequests.WithLabelValues(method, endpoint).Inc()
 	project.Title = req.Title
 	project.BackGroundPic = req.BackGroundPic
 	project.Description = req.Description
 	result = configs.DB.Save(&project)
 	if result.Error != nil {
+		models.FailedRequests.WithLabelValues(method, endpoint).Inc()
+		models.FailedDBRequests.WithLabelValues(method, endpoint).Inc()
+		models.ResponseTime.WithLabelValues(method, endpoint).Observe(time.Since(startTime).Seconds())
 		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
+	models.SuccessDBRequests.WithLabelValues(method, endpoint).Inc()
+	models.SuccessRequests.WithLabelValues(method, endpoint).Inc()
+	models.ResponseTime.WithLabelValues(method, endpoint).Observe(time.Since(startTime).Seconds())
 	return ctx.JSON(http.StatusOK, messages.ProjectEdited)
 }
 
 func DeleteProjectHandler(ctx echo.Context) error {
+	startTime := time.Now()
+	method := ctx.Request().Method
+	endpoint := ctx.Request().URL.Path
 	projectID, err := strconv.Atoi(ctx.Param("project-id"))
 	if err != nil {
+		models.FailedRequests.WithLabelValues(method, endpoint).Inc()
+		models.ResponseTime.WithLabelValues(method, endpoint).Observe(time.Since(startTime).Seconds())
 		return ctx.JSON(http.StatusBadRequest, messages.WrongProjectID)
 	}
 	userIDCtx := ctx.Get("user_id")
@@ -631,27 +981,47 @@ func DeleteProjectHandler(ctx echo.Context) error {
 	var ownerID int
 	result := configs.DB.Table("projects").Select("owner_id").Where("id = ?", projectID).Scan(&ownerID)
 	if result.Error != nil {
+		models.FailedRequests.WithLabelValues(method, endpoint).Inc()
+		models.FailedDBRequests.WithLabelValues(method, endpoint).Inc()
+		models.ResponseTime.WithLabelValues(method, endpoint).Observe(time.Since(startTime).Seconds())
 		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
+	models.SuccessDBRequests.WithLabelValues(method, endpoint).Inc()
 	if ownerID == 0 {
+		models.FailedRequests.WithLabelValues(method, endpoint).Inc()
+		models.ResponseTime.WithLabelValues(method, endpoint).Observe(time.Since(startTime).Seconds())
 		return ctx.JSON(http.StatusNotAcceptable, messages.WrongProjectID)
 	}
 	if userID != ownerID {
+		models.FailedRequests.WithLabelValues(method, endpoint).Inc()
+		models.ResponseTime.WithLabelValues(method, endpoint).Observe(time.Since(startTime).Seconds())
 		return ctx.JSON(http.StatusNotAcceptable, messages.OwnerAccess)
 	}
 	result = configs.DB.Unscoped().Where("project_id = ?", projectID).Delete(&models.InvitedMembers{})
 	if result.Error != nil {
+		models.FailedRequests.WithLabelValues(method, endpoint).Inc()
+		models.FailedDBRequests.WithLabelValues(method, endpoint).Inc()
+		models.ResponseTime.WithLabelValues(method, endpoint).Observe(time.Since(startTime).Seconds())
 		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
+	models.SuccessDBRequests.WithLabelValues(method, endpoint).Inc()
 	result = configs.DB.Unscoped().Where("project_id = ?", projectID).Delete(&models.ProjectsMembers{})
 	if result.Error != nil {
+		models.FailedRequests.WithLabelValues(method, endpoint).Inc()
+		models.FailedDBRequests.WithLabelValues(method, endpoint).Inc()
+		models.ResponseTime.WithLabelValues(method, endpoint).Observe(time.Since(startTime).Seconds())
 		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
+	models.SuccessDBRequests.WithLabelValues(method, endpoint).Inc()
 	var stateIDs []int
 	result = configs.DB.Table("states").Select("id").Where("project_id = ?", projectID).Scan(&stateIDs)
 	if result.Error != nil {
+		models.FailedRequests.WithLabelValues(method, endpoint).Inc()
+		models.FailedDBRequests.WithLabelValues(method, endpoint).Inc()
+		models.ResponseTime.WithLabelValues(method, endpoint).Observe(time.Since(startTime).Seconds())
 		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
+	models.SuccessDBRequests.WithLabelValues(method, endpoint).Inc()
 	var wg sync.WaitGroup
 	for i := range stateIDs {
 		wg.Add(1)
@@ -668,15 +1038,29 @@ func DeleteProjectHandler(ctx echo.Context) error {
 	wg.Wait()
 	result = configs.DB.Unscoped().Where("project_id = ?", projectID).Delete(&models.State{})
 	if result.Error != nil {
+		models.FailedRequests.WithLabelValues(method, endpoint).Inc()
+		models.FailedDBRequests.WithLabelValues(method, endpoint).Inc()
+		models.ResponseTime.WithLabelValues(method, endpoint).Observe(time.Since(startTime).Seconds())
 		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
+	models.SuccessDBRequests.WithLabelValues(method, endpoint).Inc()
 	result = configs.DB.Unscoped().Where("project_id = ?", projectID).Delete(&models.JoinLink{})
 	if result.Error != nil {
+		models.FailedRequests.WithLabelValues(method, endpoint).Inc()
+		models.FailedDBRequests.WithLabelValues(method, endpoint).Inc()
+		models.ResponseTime.WithLabelValues(method, endpoint).Observe(time.Since(startTime).Seconds())
 		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
+	models.SuccessDBRequests.WithLabelValues(method, endpoint).Inc()
 	result = configs.DB.Unscoped().Where("id = ?", projectID).Delete(&models.Project{})
 	if result.Error != nil {
+		models.FailedRequests.WithLabelValues(method, endpoint).Inc()
+		models.FailedDBRequests.WithLabelValues(method, endpoint).Inc()
+		models.ResponseTime.WithLabelValues(method, endpoint).Observe(time.Since(startTime).Seconds())
 		return ctx.JSON(http.StatusInternalServerError, messages.InternalError)
 	}
+	models.SuccessDBRequests.WithLabelValues(method, endpoint).Inc()
+	models.SuccessRequests.WithLabelValues(method, endpoint).Inc()
+	models.ResponseTime.WithLabelValues(method, endpoint).Observe(time.Since(startTime).Seconds())
 	return ctx.JSON(http.StatusOK, messages.ProjectDeleted)
 }

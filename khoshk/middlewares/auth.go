@@ -11,7 +11,7 @@ import (
 
 func AuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(ctx echo.Context) error {
-		if ctx.Path() == "/register" || ctx.Path() == "/login" || ctx.Path() == "/refresh" {
+		if ctx.Path() == "/register" || ctx.Path() == "/login" || ctx.Path() == "/refresh" || ctx.Path() == "/metrics" || ctx.Path() == "/ws" {
 			return next(ctx)
 		}
 		tokenString := ctx.Request().Header.Get("Authorization")

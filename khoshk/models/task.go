@@ -7,19 +7,19 @@ import (
 
 type Task struct {
 	gorm.Model
-	Title           string        `gorm:"not null"`
-	Description     string        `gorm:"not null"`
-	BackGroundColor string        `gorm:"not null"`
-	EstimatedTime   time.Duration `gorm:"not null"`
-	ActualTime      time.Duration `gorm:"not null"`
-	Deadline        time.Time     `gorm:"not null"`
-	Priority        int           `gorm:"not null"`
-	Index           int           `gorm:"not null"`
-	StateID         int           `gorm:"not null"`
-	State           State         `gorm:"foreignKey:StateID"`
-	Performers      []User        `gorm:"many2many:tasks_performers"`
-	Comments        []Comment     `gorm:"foreignKey:TaskID"`
-	Labels          []Label       `gorm:"many2many:tasks_labels"`
+	Title           string    `gorm:"not null"`
+	Description     string    `gorm:"not null"`
+	BackGroundColor string    `gorm:"not null"`
+	EstimatedTime   int       `gorm:"not null"`
+	ActualTime      int       `gorm:"not null"`
+	Deadline        time.Time `gorm:"not null"`
+	Priority        int       `gorm:"not null"`
+	Index           int       `gorm:"not null"`
+	StateID         int       `gorm:"not null"`
+	State           State     `gorm:"foreignKey:StateID"`
+	Performers      []User    `gorm:"many2many:tasks_performers"`
+	Comments        []Comment `gorm:"foreignKey:TaskID"`
+	Labels          []Label   `gorm:"many2many:tasks_labels"`
 }
 
 type TaskShow struct {

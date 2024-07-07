@@ -14,8 +14,12 @@ services:
        condition: service_healthy
      redis:
        condition: service_healthy
+     prometheus:
+       condition: service_started
     env_file:
       - ./.env
+    environment:
+      PROMETHEUS_URL: http://prometheus:9090
     ports:
       - "8080:8080"
     networks:
@@ -59,6 +63,28 @@ services:
     networks:
       - pv_net
 
+  prometheus:
+    image: prom/prometheus
+    container_name: prometheus
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+    ports:
+      - '9090:9090'
+    networks:
+      - pv_net
+
+  grafana:
+    image: grafana/grafana-oss
+    container_name: grafana
+    ports:
+      - '3000:3000'
+    networks:
+      - pv_net
+
 
 volumes:
   pg-volume:
+  prometheus_data:

@@ -10,7 +10,7 @@ import (
 
 func VerifyMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(ctx echo.Context) error {
-		if ctx.Path() == "/register" || ctx.Path() == "/login" || ctx.Path() == "/refresh" || ctx.Path() == "/verify" || ctx.Path() == "/resend-email" {
+		if ctx.Path() == "/register" || ctx.Path() == "/login" || ctx.Path() == "/refresh" || ctx.Path() == "/verify" || ctx.Path() == "/resend-email" || ctx.Path() == "/metrics" || ctx.Path() == "/ws" {
 			return next(ctx)
 		}
 		userIDCtx := ctx.Get("user_id")
